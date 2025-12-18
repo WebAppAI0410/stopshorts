@@ -1,10 +1,11 @@
 import '../global.css';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
   return (
-    <>
+    <SafeAreaProvider>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -12,6 +13,6 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: '#F8F9FA' },
         }}
       />
-    </>
+    </SafeAreaProvider>
   );
 }

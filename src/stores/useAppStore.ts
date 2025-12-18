@@ -100,34 +100,56 @@ export const useAppStore = create<AppState>()(
         const { stats, interventionDurationMinutes } = get();
         const existingIndex = stats.findIndex((s) => s.date === today);
 
+        // 古いデータのクリーンアップ (90日以上前のデータを削除)
+        const MAX_STATS_DAYS = 90;
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - MAX_STATS_DAYS);
+        const cutoffString = cutoffDate.toISOString().split('T')[0];
+
+        const createEmptyAppStats = () => ({
+          tiktok: { interventionCount: 0, blockedMinutes: 0 },
+          youtubeShorts: { interventionCount: 0, blockedMinutes: 0 },
+          instagramReels: { interventionCount: 0, blockedMinutes: 0 },
+        });
+
+        let updatedStats: DailyStats[];
+
         if (existingIndex >= 0) {
-          const updated = [...stats];
-          const current = updated[existingIndex];
-          current.interventionCount += 1;
-          current.totalBlockedMinutes += interventionDurationMinutes;
-          if (!current.apps[app]) {
-            current.apps[app] = { interventionCount: 0, blockedMinutes: 0 };
-          }
-          current.apps[app].interventionCount += 1;
-          current.apps[app].blockedMinutes += interventionDurationMinutes;
-          set({ stats: updated });
+          // イミュータブルな更新パターン
+          updatedStats = stats.map((stat, index) => {
+            if (index !== existingIndex) return stat;
+            return {
+              ...stat,
+              interventionCount: stat.interventionCount + 1,
+              totalBlockedMinutes: stat.totalBlockedMinutes + interventionDurationMinutes,
+              apps: {
+                ...stat.apps,
+                [app]: {
+                  interventionCount: (stat.apps[app]?.interventionCount ?? 0) + 1,
+                  blockedMinutes: (stat.apps[app]?.blockedMinutes ?? 0) + interventionDurationMinutes,
+                },
+              },
+            };
+          });
         } else {
           const newStats: DailyStats = {
             date: today,
             interventionCount: 1,
             totalBlockedMinutes: interventionDurationMinutes,
             apps: {
-              tiktok: { interventionCount: 0, blockedMinutes: 0 },
-              youtubeShorts: { interventionCount: 0, blockedMinutes: 0 },
-              instagramReels: { interventionCount: 0, blockedMinutes: 0 },
+              ...createEmptyAppStats(),
+              [app]: {
+                interventionCount: 1,
+                blockedMinutes: interventionDurationMinutes,
+              },
             },
           };
-          newStats.apps[app] = {
-            interventionCount: 1,
-            blockedMinutes: interventionDurationMinutes,
-          };
-          set({ stats: [...stats, newStats] });
+          updatedStats = [...stats, newStats];
         }
+
+        // 古いデータを除外して設定
+        const filteredStats = updatedStats.filter((s) => s.date >= cutoffString);
+        set({ stats: filteredStats });
       },
 
       reset: () => set(initialState),

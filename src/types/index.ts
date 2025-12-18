@@ -40,15 +40,18 @@ export interface UserState {
   interventionDurationMinutes: number;
 }
 
+// App Statistics Entry
+export interface AppStats {
+  interventionCount: number;
+  blockedMinutes: number;
+}
+
 // Statistics
 export interface DailyStats {
   date: string; // YYYY-MM-DD
   interventionCount: number;
   totalBlockedMinutes: number;
-  apps: Record<ManagedApp, {
-    interventionCount: number;
-    blockedMinutes: number;
-  }>;
+  apps: Partial<Record<ManagedApp, AppStats>>;
 }
 
 // Coaching Context
