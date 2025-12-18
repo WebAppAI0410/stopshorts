@@ -1,0 +1,142 @@
+{
+  "common": {
+    "appName": "StopShorts",
+    "tagline": "5分で止める、人生を取り戻す",
+    "continue": "続ける",
+    "skip": "スキップ",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "save": "保存",
+    "back": "戻る",
+    "next": "次へ",
+    "done": "完了",
+    "close": "閉じる",
+    "retry": "再試行"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "ショート動画の依存から\n解放されませんか？",
+      "subtitle": "StopShortsは、あなたの時間を取り戻すお手伝いをします",
+      "startButton": "始める"
+    },
+    "purpose": {
+      "title": "あなたの目的を\n教えてください",
+      "subtitle": "最適なサポートを提供するために",
+      "options": {
+        "sleep": "睡眠の質を改善したい",
+        "study": "勉強・学習に集中したい",
+        "work": "仕事の生産性を上げたい",
+        "creative": "創作活動に時間を使いたい",
+        "mental": "メンタルヘルスを改善したい"
+      }
+    },
+    "permission": {
+      "title": "アクセス許可が必要です",
+      "subtitle": "アプリの機能を有効にするために",
+      "screenTime": {
+        "title": "スクリーンタイム",
+        "description": "アプリの使用を管理するために必要です"
+      },
+      "grantButton": "許可する"
+    },
+    "appSelection": {
+      "title": "管理するアプリを\n選択してください",
+      "subtitle": "後からいつでも変更できます",
+      "apps": {
+        "tiktok": "TikTok",
+        "youtubeShorts": "YouTube Shorts",
+        "instagramReels": "Instagram Reels"
+      }
+    }
+  },
+  "home": {
+    "greeting": {
+      "morning": "おはようございます",
+      "afternoon": "こんにちは",
+      "evening": "こんばんは"
+    },
+    "stats": {
+      "todayInterventions": "今日の介入回数",
+      "timeSaved": "節約した時間",
+      "streak": "継続日数"
+    }
+  },
+  "shield": {
+    "title": "{{minutes}}分が経過しました",
+    "messages": {
+      "sleep": {
+        "default": "質の良い睡眠は、明日の自分への投資です",
+        "night": "もうすぐ就寝時間です。スマホを置いて、リラックスしましょう"
+      },
+      "study": {
+        "default": "集中力は有限です。賢く使いましょう",
+        "break": "短い休憩の後、また集中できます"
+      },
+      "work": {
+        "default": "1つのタスクに集中することで、生産性は倍増します",
+        "deadline": "締め切りが近づいています。優先順位を確認しましょう"
+      },
+      "creative": {
+        "default": "創造性は静かな時間に育ちます",
+        "inspiration": "インスピレーションは、スマホの外にもあります"
+      },
+      "mental": {
+        "default": "自分を大切にする時間を過ごしましょう",
+        "breathing": "深呼吸をして、今この瞬間に意識を向けましょう"
+      }
+    },
+    "buttons": {
+      "close": "アプリを閉じる",
+      "extend": "{{minutes}}分延長"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "sections": {
+      "profile": "プロフィール",
+      "apps": "管理アプリ",
+      "time": "時間設定",
+      "subscription": "サブスクリプション",
+      "about": "このアプリについて"
+    },
+    "sleepProfile": {
+      "title": "睡眠プロファイル",
+      "bedtime": "就寝時間",
+      "wakeTime": "起床時間"
+    }
+  },
+  "subscription": {
+    "trial": {
+      "title": "無料トライアル",
+      "description": "すべての機能を1日間お試しいただけます",
+      "remaining": "残り{{hours}}時間"
+    },
+    "plans": {
+      "monthly": {
+        "title": "30日プラン",
+        "price": "¥980"
+      },
+      "quarterly": {
+        "title": "90日プラン",
+        "price": "¥1,980",
+        "savings": "33%お得"
+      },
+      "annual": {
+        "title": "年間プラン",
+        "price": "¥3,980",
+        "savings": "66%お得"
+      }
+    },
+    "features": {
+      "continuous": "継続的な介入",
+      "unlimited": "無制限のアプリ管理",
+      "personalization": "パーソナライズ文言",
+      "statistics": "詳細統計"
+    }
+  },
+  "errors": {
+    "generic": "エラーが発生しました",
+    "network": "ネットワーク接続を確認してください",
+    "permission": "必要な権限が付与されていません"
+  }
+}
