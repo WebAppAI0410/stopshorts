@@ -86,11 +86,34 @@ export default function AppSelectionScreen() {
                         typography.bodyLarge,
                         {
                             color: colors.textSecondary,
-                            marginBottom: spacing.xl,
+                            marginBottom: spacing.md,
                         }
                     ]}>
                         {t('onboarding.v3.appSelection.subtitle')}
                     </Text>
+                    <View style={[
+                        styles.infoBox,
+                        {
+                            backgroundColor: colors.backgroundCard,
+                            borderColor: colors.border,
+                            borderRadius: borderRadius.md,
+                            padding: spacing.md,
+                            marginBottom: spacing.lg,
+                        }
+                    ]}>
+                        <View style={styles.infoRow}>
+                            <Ionicons name="analytics-outline" size={16} color={colors.accent} style={{ marginRight: spacing.sm }} />
+                            <Text style={[typography.bodySmall, { color: colors.textSecondary, flex: 1 }]}>
+                                {t('onboarding.v3.appSelection.description')}
+                            </Text>
+                        </View>
+                        <View style={[styles.infoRow, { marginTop: spacing.sm }]}>
+                            <Ionicons name="settings-outline" size={16} color={colors.textMuted} style={{ marginRight: spacing.sm }} />
+                            <Text style={[typography.bodySmall, { color: colors.textMuted, flex: 1 }]}>
+                                {t('onboarding.v3.appSelection.editableNote')}
+                            </Text>
+                        </View>
+                    </View>
                 </Animated.View>
 
                 <View style={styles.optionsContainer}>
@@ -175,6 +198,13 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingTop: 8,
         paddingBottom: 120,
+    },
+    infoBox: {
+        borderWidth: 1,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
     },
     optionsContainer: {
         gap: 12,

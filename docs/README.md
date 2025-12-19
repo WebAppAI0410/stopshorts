@@ -13,6 +13,7 @@
 ```
 docs/
 ├── README.md                              # 本ドキュメント
+├── requirements_implementation_matrix.md  # 要件・実装 対応表（現行実装準拠）
 ├── specs/                                 # 仕様書
 │   ├── 01_requirements.md                 # 要件定義書
 │   └── 02_pricing_monetization.md         # 料金体系・マネタイズ設計
