@@ -162,7 +162,7 @@ export interface IfThenPlan {
 
 // Onboarding Commitment Summary
 export interface OnboardingCommitment {
-  motivation: MotivationType;
+  motivation?: MotivationType;            // Optional - not used in v3 onboarding flow
   goal: GoalType;                         // User's selected goal from onboarding
   screenTimeData: ScreenTimeData | null;  // null if permission denied
   manualDailyHours?: number;              // Fallback if no Screen Time access

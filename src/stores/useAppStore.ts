@@ -357,10 +357,9 @@ export const useAppStore = create<AppState>()(
       completeOnboarding: () => {
         const state = get();
 
-        // Validate required onboarding data
-        if (!state.motivation || !state.alternativeActivity || !state.ifThenPlan || !state.goal) {
+        // Validate required onboarding data (motivation is optional in v3 flow)
+        if (!state.alternativeActivity || !state.ifThenPlan || !state.goal) {
           console.error('[Onboarding] Cannot complete: missing required data', {
-            motivation: !!state.motivation,
             alternativeActivity: !!state.alternativeActivity,
             ifThenPlan: !!state.ifThenPlan,
             goal: !!state.goal,
@@ -374,9 +373,9 @@ export const useAppStore = create<AppState>()(
         // Map GoalType to UserPurpose for personalization
         const mappedPurpose = goalTypeToPurpose(state.goal);
 
-        // Create commitment summary (non-null assertions removed - validated above)
+        // Create commitment summary (motivation is optional in v3 flow)
         const commitment: OnboardingCommitment = {
-          motivation: state.motivation,
+          ...(state.motivation && { motivation: state.motivation }),
           goal: state.goal,
           screenTimeData: state.screenTimeData,
           alternativeActivity: state.alternativeActivity,
