@@ -4,8 +4,17 @@
  * Uses PanResponder for compatibility with Expo Go
  */
 
-import React, { useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, PanResponder, Animated } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  PanResponder,
+  Animated,
+  LayoutChangeEvent,
+  GestureResponderEvent,
+  PanResponderGestureState,
+} from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface IntensitySliderProps {
@@ -21,6 +30,8 @@ interface IntensitySliderProps {
 
 const SLIDER_HEIGHT = 8;
 const THUMB_SIZE = 32;
+const MIN_VALUE = 1;
+const MAX_VALUE = 10;
 
 export function IntensitySlider({
   value,
@@ -30,46 +41,110 @@ export function IntensitySlider({
 }: IntensitySliderProps) {
   const { colors, typography, spacing } = useTheme();
 
-  const sliderWidth = useRef(0);
-  const thumbPosition = useRef(new Animated.Value((value - 1) / 9)).current;
+  // Track slider dimensions and position
+  const [sliderWidth, setSliderWidth] = useState(0);
+  const sliderRef = useRef<View>(null);
+  const sliderPageX = useRef(0);
+
+  // Animation values
+  const thumbPosition = useRef(new Animated.Value(0)).current;
   const isPressedAnim = useRef(new Animated.Value(1)).current;
 
-  // Sync thumbPosition when value changes externally
-  useEffect(() => {
-    Animated.spring(thumbPosition, {
-      toValue: (value - 1) / 9,
-      useNativeDriver: false,
-      friction: 8,
-      tension: 100,
-    }).start();
-  }, [value, thumbPosition]);
+  // Convert value (1-10) to position (0-1)
+  const valueToPosition = useCallback((val: number): number => {
+    return (val - MIN_VALUE) / (MAX_VALUE - MIN_VALUE);
+  }, []);
 
-  const updateValue = useCallback(
-    (position: number) => {
-      const newPosition = Math.max(0, Math.min(1, position / sliderWidth.current));
-      const intensity = Math.round(newPosition * 9) + 1;
-      onChange(intensity);
+  // Convert position (0-1) to value (1-10)
+  const positionToValue = useCallback((pos: number): number => {
+    const clampedPos = Math.max(0, Math.min(1, pos));
+    return Math.round(clampedPos * (MAX_VALUE - MIN_VALUE)) + MIN_VALUE;
+  }, []);
+
+  // Update thumb position when value changes externally
+  useEffect(() => {
+    const targetPosition = valueToPosition(value);
+    Animated.spring(thumbPosition, {
+      toValue: targetPosition,
+      useNativeDriver: false,
+      friction: 10,
+      tension: 120,
+    }).start();
+  }, [value, thumbPosition, valueToPosition]);
+
+  // Handle layout to get slider dimensions
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width } = event.nativeEvent.layout;
+    setSliderWidth(width);
+
+    // Measure absolute position on screen
+    sliderRef.current?.measureInWindow((x) => {
+      sliderPageX.current = x;
+    });
+  }, []);
+
+  // Calculate position from touch/gesture coordinates
+  const getPositionFromX = useCallback(
+    (pageX: number): number => {
+      if (sliderWidth === 0) return valueToPosition(value);
+      const relativeX = pageX - sliderPageX.current;
+      return Math.max(0, Math.min(1, relativeX / sliderWidth));
     },
-    [onChange]
+    [sliderWidth, value, valueToPosition]
   );
 
+  // Update value from position
+  const updateFromPosition = useCallback(
+    (position: number) => {
+      const newValue = positionToValue(position);
+      if (newValue !== value) {
+        onChange(newValue);
+      }
+    },
+    [positionToValue, value, onChange]
+  );
+
+  // Refs for callbacks to avoid stale closures in PanResponder
+  const getPositionFromXRef = useRef(getPositionFromX);
+  const updateFromPositionRef = useRef(updateFromPosition);
+  const disabledRef = useRef(disabled);
+
+  useEffect(() => {
+    getPositionFromXRef.current = getPositionFromX;
+    updateFromPositionRef.current = updateFromPosition;
+    disabledRef.current = disabled;
+  }, [getPositionFromX, updateFromPosition, disabled]);
+
+  // Create PanResponder
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => !disabled,
-      onMoveShouldSetPanResponder: () => !disabled,
-      onPanResponderGrant: (_, gestureState) => {
+      onStartShouldSetPanResponder: () => !disabledRef.current,
+      onMoveShouldSetPanResponder: () => !disabledRef.current,
+
+      onPanResponderGrant: (event: GestureResponderEvent) => {
+        if (disabledRef.current) return;
+
+        // Scale up thumb
         Animated.spring(isPressedAnim, {
           toValue: 1.2,
           useNativeDriver: false,
           friction: 8,
         }).start();
-        updateValue(gestureState.x0);
+
+        // Update position from touch
+        const position = getPositionFromXRef.current(event.nativeEvent.pageX);
+        thumbPosition.setValue(position);
+        updateFromPositionRef.current(position);
       },
-      onPanResponderMove: (_, gestureState) => {
-        const newPosition = Math.max(0, Math.min(1, gestureState.moveX / sliderWidth.current));
-        thumbPosition.setValue(newPosition);
-        updateValue(gestureState.moveX);
+
+      onPanResponderMove: (event: GestureResponderEvent) => {
+        if (disabledRef.current) return;
+
+        const position = getPositionFromXRef.current(event.nativeEvent.pageX);
+        thumbPosition.setValue(position);
+        updateFromPositionRef.current(position);
       },
+
       onPanResponderRelease: () => {
         Animated.spring(isPressedAnim, {
           toValue: 1,
@@ -77,6 +152,7 @@ export function IntensitySlider({
           friction: 8,
         }).start();
       },
+
       onPanResponderTerminate: () => {
         Animated.spring(isPressedAnim, {
           toValue: 1,
@@ -103,11 +179,13 @@ export function IntensitySlider({
 
   const currentColor = getIntensityColor(value);
 
+  // Calculate thumb position in pixels
   const thumbTranslateX = thumbPosition.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, sliderWidth.current - THUMB_SIZE],
+    outputRange: [0, Math.max(0, sliderWidth - THUMB_SIZE)],
   });
 
+  // Calculate progress width as percentage
   const progressWidth = thumbPosition.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
@@ -129,10 +207,9 @@ export function IntensitySlider({
 
       {/* Slider track */}
       <View
+        ref={sliderRef}
         style={[styles.track, { backgroundColor: colors.borderSubtle }]}
-        onLayout={(e) => {
-          sliderWidth.current = e.nativeEvent.layout.width;
-        }}
+        onLayout={handleLayout}
         {...panResponder.panHandlers}
       >
         {/* Progress fill */}
@@ -154,8 +231,7 @@ export function IntensitySlider({
               style={[
                 styles.tick,
                 {
-                  backgroundColor:
-                    i < value ? currentColor : colors.borderSubtle,
+                  backgroundColor: i < value ? currentColor : colors.borderSubtle,
                   opacity: i < value ? 0.8 : 0.4,
                 },
               ]}
@@ -170,10 +246,7 @@ export function IntensitySlider({
             {
               backgroundColor: currentColor,
               shadowColor: currentColor,
-              transform: [
-                { translateX: thumbTranslateX },
-                { scale: isPressedAnim },
-              ],
+              transform: [{ translateX: thumbTranslateX }, { scale: isPressedAnim }],
             },
           ]}
         >
