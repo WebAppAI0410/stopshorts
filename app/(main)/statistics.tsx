@@ -6,6 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { StatCard, WeeklyBarChart } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
+import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
 import { t } from '../../src/i18n';
 
 // Fixed demo data to prevent re-renders from changing values
@@ -14,9 +15,20 @@ const DEMO_WEEKLY_DATA = [120, 95, 140, 80, 110, 150, 130];
 export default function StatisticsScreen() {
     const { colors, typography, spacing, borderRadius } = useTheme();
     const { stats } = useAppStore();
+    const {
+        getWeeklyStats,
+        getStreak,
+        lifetime,
+        getEarnedBadges,
+    } = useStatisticsStore();
+
+    // Get data from new statistics store
+    const weeklyStats = getWeeklyStats();
+    const currentStreak = getStreak();
+    const earnedBadges = getEarnedBadges();
 
     // Check if we have real data
-    const hasRealData = stats.length > 0;
+    const hasRealData = stats.length > 0 || lifetime.totalUrgeSurfingCompleted > 0;
 
     // Calculate weekly stats with memoization
     const weeklyData = useMemo(() => {
@@ -45,9 +57,11 @@ export default function StatisticsScreen() {
     // Get current day for highlighting
     const today = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][new Date().getDay()];
 
-    // Streak and interventions - use demo values if no real data
-    const streakDays = hasRealData ? stats.length : 28;
-    const totalInterventions = stats.reduce((sum, s) => sum + s.interventionCount, 0) || 42;
+    // Streak and interventions - use new store data with demo fallback
+    const streakDays = currentStreak || (hasRealData ? stats.length : 28);
+    const totalInterventions = lifetime.totalInterventions || stats.reduce((sum, s) => sum + s.interventionCount, 0) || 42;
+    const totalUrgeSurfing = lifetime.totalUrgeSurfingCompleted || 0;
+    const successRate = weeklyStats.successRate || 0;
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -127,15 +141,100 @@ export default function StatisticsScreen() {
                     />
                     <View style={{ width: spacing.md }} />
                     <StatCard
-                        icon="shield-checkmark-outline"
-                        iconColor={colors.accent}
-                        title={t('statistics.interventions')}
-                        value={totalInterventions}
-                        unit={t('statistics.times')}
-                        subtitle={t('statistics.mindfulPauses')}
-                        progressColor={colors.accent}
+                        icon="water-outline"
+                        iconColor={colors.primary}
+                        title="サーフィング"
+                        value={totalUrgeSurfing}
+                        unit="回"
+                        subtitle={`成功率 ${Math.round(successRate * 100)}%`}
+                        progressColor={colors.primary}
                     />
                 </Animated.View>
+
+                {/* Badges Section */}
+                <Animated.View
+                    entering={FadeInDown.duration(600).delay(400)}
+                    style={[
+                        styles.badgesCard,
+                        {
+                            backgroundColor: colors.backgroundCard,
+                            borderRadius: borderRadius.xl,
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                            marginTop: spacing.lg,
+                        }
+                    ]}
+                >
+                    <Text style={[typography.h3, { color: colors.textPrimary, marginBottom: spacing.md }]}>
+                        獲得バッジ
+                    </Text>
+                    {earnedBadges.length > 0 ? (
+                        <View style={styles.badgesGrid}>
+                            {earnedBadges.map((badge) => (
+                                <View key={badge.id} style={styles.badgeItem}>
+                                    <Text style={{ fontSize: 28 }}>{badge.icon}</Text>
+                                    <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 4, textAlign: 'center' }]}>
+                                        {badge.name}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    ) : (
+                        <View style={styles.emptyBadges}>
+                            <Ionicons name="trophy-outline" size={32} color={colors.textMuted} />
+                            <Text style={[typography.bodySmall, { color: colors.textMuted, marginTop: spacing.sm, textAlign: 'center' }]}>
+                                衝動サーフィングを完了してバッジを獲得しよう
+                            </Text>
+                        </View>
+                    )}
+                </Animated.View>
+
+                {/* Urge Surfing Stats */}
+                {totalUrgeSurfing > 0 && (
+                    <Animated.View
+                        entering={FadeInDown.duration(600).delay(500)}
+                        style={[
+                            styles.surfingStatsCard,
+                            {
+                                backgroundColor: colors.backgroundCard,
+                                borderRadius: borderRadius.xl,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                                marginTop: spacing.lg,
+                            }
+                        ]}
+                    >
+                        <Text style={[typography.h3, { color: colors.textPrimary, marginBottom: spacing.md }]}>
+                            🌊 サーフィング統計
+                        </Text>
+                        <View style={styles.surfingStatsRow}>
+                            <View style={styles.surfingStat}>
+                                <Text style={[typography.statLarge, { color: colors.primary }]}>
+                                    {lifetime.totalUrgeSurfingCompleted}
+                                </Text>
+                                <Text style={[typography.caption, { color: colors.textSecondary }]}>
+                                    完了回数
+                                </Text>
+                            </View>
+                            <View style={styles.surfingStat}>
+                                <Text style={[typography.statLarge, { color: colors.accent }]}>
+                                    {Math.round(lifetime.totalSavedHours * 10) / 10}h
+                                </Text>
+                                <Text style={[typography.caption, { color: colors.textSecondary }]}>
+                                    節約時間
+                                </Text>
+                            </View>
+                            <View style={styles.surfingStat}>
+                                <Text style={[typography.statLarge, { color: colors.streak }]}>
+                                    {lifetime.longestStreak}
+                                </Text>
+                                <Text style={[typography.caption, { color: colors.textSecondary }]}>
+                                    最長連続
+                                </Text>
+                            </View>
+                        </View>
+                    </Animated.View>
+                )}
             </ScrollView>
         </SafeAreaView>
     );
@@ -184,5 +283,31 @@ const styles = StyleSheet.create({
     },
     cardsRow: {
         flexDirection: 'row',
+    },
+    badgesCard: {
+        padding: 16,
+    },
+    badgesGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 16,
+    },
+    badgeItem: {
+        width: 70,
+        alignItems: 'center',
+    },
+    emptyBadges: {
+        alignItems: 'center',
+        padding: 24,
+    },
+    surfingStatsCard: {
+        padding: 16,
+    },
+    surfingStatsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+    },
+    surfingStat: {
+        alignItems: 'center',
     },
 });

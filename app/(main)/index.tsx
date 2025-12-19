@@ -1,34 +1,63 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
     ShieldIcon,
     ProgressBar,
     StreakIndicator,
+    Button,
 } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
+import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
 import { t } from '../../src/i18n';
 
 export default function DashboardScreen() {
+    const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
     const { stats } = useAppStore();
+    const { getTodayStats, getStreak, lifetime, getNewBadges } = useStatisticsStore();
+
+    // Get statistics from new store
+    const todayStatsNew = getTodayStats();
+    const currentStreak = getStreak();
+    const newBadges = getNewBadges();
 
     // Check if we have real data
-    const hasRealData = stats.length > 0;
+    const hasRealData = stats.length > 0 || todayStatsNew.urgeSurfing.completed > 0;
 
-    // Get today's statistics
+    // Get today's statistics (merge old and new)
     const todayDate = new Date().toISOString().split('T')[0];
-    const todayStats = stats.find(s => s.date === todayDate) || {
+    const todayStatsOld = stats.find(s => s.date === todayDate) || {
         interventionCount: 0,
         totalBlockedMinutes: 0
     };
 
-    // Calculate streak (simplified - counts consecutive days with interventions)
-    const streakDays = 7; // Placeholder
-    const completedDays = [true, true, true, true, false, false, false]; // Placeholder
+    // Use new store data if available, otherwise fall back to old
+    const todayStats = {
+        interventionCount: todayStatsNew.interventions.triggered || todayStatsOld.interventionCount,
+        totalBlockedMinutes: Math.round(lifetime.totalSavedHours * 60) || todayStatsOld.totalBlockedMinutes,
+        urgeSurfingCompleted: todayStatsNew.urgeSurfing.completed,
+    };
+
+    // Calculate streak from new store
+    const streakDays = currentStreak || 7;
+
+    // Generate completed days for streak indicator
+    const completedDays = Array.from({ length: 7 }, (_, i) => {
+        if (currentStreak > 0) {
+            return i < Math.min(currentStreak, 7);
+        }
+        // Demo data if no streak
+        return i < 4;
+    });
+
+    const handleStartSurfing = () => {
+        router.push('/(main)/urge-surfing');
+    };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -139,9 +168,76 @@ export default function DashboardScreen() {
                     <StreakIndicator streakDays={streakDays} completedDays={completedDays} />
                 </Animated.View>
 
-                {/* Daily Tip Card */}
+                {/* Urge Surfing Card */}
                 <Animated.View
                     entering={FadeInDown.duration(600).delay(300)}
+                    style={[
+                        styles.surfingCard,
+                        {
+                            backgroundColor: colors.backgroundCard,
+                            borderRadius: borderRadius.xl,
+                            borderWidth: 1,
+                            borderColor: colors.primary + '40',
+                            marginTop: spacing.lg,
+                        }
+                    ]}
+                >
+                    <View style={styles.surfingCardContent}>
+                        <View style={[styles.surfingIcon, { backgroundColor: colors.primary + '20' }]}>
+                            <Text style={{ fontSize: 32 }}>🌊</Text>
+                        </View>
+                        <View style={styles.surfingInfo}>
+                            <Text style={[typography.h3, { color: colors.textPrimary }]}>
+                                衝動サーフィング
+                            </Text>
+                            <Text style={[typography.bodySmall, { color: colors.textSecondary, marginTop: spacing.xs }]}>
+                                今日 {todayStats.urgeSurfingCompleted} 回完了
+                            </Text>
+                        </View>
+                    </View>
+                    <Button
+                        title="練習する"
+                        onPress={handleStartSurfing}
+                        variant="outline"
+                        size="sm"
+                        style={{ marginTop: spacing.md }}
+                    />
+                </Animated.View>
+
+                {/* New Badges */}
+                {newBadges.length > 0 && (
+                    <Animated.View
+                        entering={FadeInDown.duration(600).delay(350)}
+                        style={[
+                            styles.badgeCard,
+                            {
+                                backgroundColor: colors.warning + '15',
+                                borderRadius: borderRadius.xl,
+                                borderWidth: 1,
+                                borderColor: colors.warning + '40',
+                                marginTop: spacing.lg,
+                            }
+                        ]}
+                    >
+                        <Text style={[typography.label, { color: colors.warning }]}>
+                            🎉 新しいバッジを獲得！
+                        </Text>
+                        <View style={styles.badgeRow}>
+                            {newBadges.map((badge) => (
+                                <View key={badge.id} style={styles.badgeItem}>
+                                    <Text style={{ fontSize: 32 }}>{badge.icon}</Text>
+                                    <Text style={[typography.caption, { color: colors.textPrimary, marginTop: 4 }]}>
+                                        {badge.name}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    </Animated.View>
+                )}
+
+                {/* Daily Tip Card */}
+                <Animated.View
+                    entering={FadeInDown.duration(600).delay(400)}
                     style={[
                         styles.tipCard,
                         {
@@ -248,5 +344,35 @@ const styles = StyleSheet.create({
     tipContent: {
         flex: 1,
         marginLeft: 16,
+    },
+    surfingCard: {
+        padding: 16,
+    },
+    surfingCardContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    surfingIcon: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    surfingInfo: {
+        flex: 1,
+        marginLeft: 16,
+    },
+    badgeCard: {
+        padding: 16,
+        alignItems: 'center',
+    },
+    badgeRow: {
+        flexDirection: 'row',
+        marginTop: 12,
+        gap: 24,
+    },
+    badgeItem: {
+        alignItems: 'center',
     },
 });
