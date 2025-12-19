@@ -43,13 +43,13 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
 
     const handlePressOut = () => {
         scale.value = withSpring(1);
-        onPress();
     };
 
     return (
         <AnimatedPressable
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
+            onPress={onPress}
             style={[
                 styles.container,
                 {
