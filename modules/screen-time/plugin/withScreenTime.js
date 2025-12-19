@@ -11,9 +11,8 @@ const { withEntitlementsPlist, withInfoPlist, withXcodeProject } = require('@exp
 function withScreenTime(config) {
     // Add Family Controls entitlement
     config = withEntitlementsPlist(config, (config) => {
-        config.modResults['com.apple.developer.family-controls'] = {
-            AuthorizationMode: 'Individual',
-        };
+        // Family Controls entitlement must be a boolean true
+        config.modResults['com.apple.developer.family-controls'] = true;
         return config;
     });
 
