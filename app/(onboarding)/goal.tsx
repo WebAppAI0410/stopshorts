@@ -15,7 +15,7 @@ type GoalOption = {
 };
 
 const goalOptions: GoalOption[] = [
-    { id: 'concentration', icon: 'target-outline' },
+    { id: 'concentration', icon: 'locate-outline' },
     { id: 'sleep', icon: 'moon-outline' },
     { id: 'time', icon: 'time-outline' },
     { id: 'mental', icon: 'leaf-outline' },
