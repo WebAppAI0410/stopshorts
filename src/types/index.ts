@@ -1,8 +1,14 @@
 // User Purpose Types
 export type UserPurpose = 'sleep' | 'study' | 'work' | 'creative' | 'mental' | 'other';
 
+// Goal Types (Simplified purpose for onboarding v2)
+export type GoalType = 'concentration' | 'sleep' | 'time' | 'mental';
+
 // Managed App Types
 export type ManagedApp = 'tiktok' | 'youtubeShorts' | 'instagramReels';
+
+// Target App IDs (Extended set for app selection)
+export type TargetAppId = 'tiktok' | 'youtubeShorts' | 'instagramReels' | 'twitter' | 'facebookReels' | 'snapchat';
 
 // Implementation Intent Types
 export type IntentType = 'breathe' | 'stretch' | 'water' | 'checklist' | 'custom';

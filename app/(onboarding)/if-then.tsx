@@ -83,7 +83,7 @@ export default function IfThenScreen() {
                             entering={FadeInRight.duration(500).delay(300 + index * 80)}
                         >
                             <SelectionCard
-                                title={t(`onboarding.v3.ifThen.actions.${option.id}`)}
+                                title={t(`onboarding.v3.ifThen.options.${option.id}`)}
                                 icon={option.icon}
                                 selected={selectedAction === option.id}
                                 onPress={() => setSelectedAction(option.id)}
@@ -153,7 +153,7 @@ export default function IfThenScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={8} currentStep={6} />
+                    <ProgressIndicator totalSteps={10} currentStep={8} />
                 </View>
             </Animated.View>
         </SafeAreaView>

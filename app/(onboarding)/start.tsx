@@ -20,42 +20,17 @@ export default function StartScreen() {
     const ifThenPlan = useAppStore((state) => state.ifThenPlan);
     const completeOnboarding = useAppStore((state) => state.completeOnboarding);
 
-    // Motivation display names
+    // Get motivation display name from translation
     const getMotivationDisplayName = (motivationType: string | null): string => {
-        switch (motivationType) {
-            case 'meaningful_time':
-                return '意味ある時間を過ごす';
-            case 'pursue_goals':
-                return 'やりたいことに向き合う';
-            case 'relationships':
-                return '大切な人との時間を守る';
-            case 'self_control':
-                return '自分をコントロールする';
-            default:
-                return '';
-        }
+        if (!motivationType) return '';
+        return t(`onboarding.v3.motivation.options.${motivationType}.title`);
     };
 
-    // If-Then action display names
+    // Get If-Then action display name from translation
     const getIfThenActionDisplayName = (planAction: string | null, customAction?: string): string => {
-        switch (planAction) {
-            case 'breathe':
-                return '深呼吸を3回する';
-            case 'read_page':
-                return '本を1ページ読む';
-            case 'look_outside':
-                return '外の景色を見る';
-            case 'short_walk':
-                return '5分散歩する';
-            case 'stretch':
-                return 'ストレッチする';
-            case 'water':
-                return '水を飲む';
-            case 'custom':
-                return customAction || '';
-            default:
-                return '';
-        }
+        if (!planAction) return '';
+        if (planAction === 'custom') return customAction || '';
+        return t(`onboarding.v3.ifThen.options.${planAction}`);
     };
 
     const handleStart = () => {
@@ -65,8 +40,8 @@ export default function StartScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <GlowOrb position="top-right" size="lg" color="accent" intensity={0.12} />
-            <GlowOrb position="bottom-left" size="md" color="primary" intensity={0.08} />
+            <GlowOrb position="top-right" size="large" color="accent" intensity={0.12} />
+            <GlowOrb position="bottom-left" size="medium" color="primary" intensity={0.08} />
 
             <ScrollView
                 style={styles.scrollView}
@@ -137,7 +112,7 @@ export default function StartScreen() {
                     <View style={[
                         styles.divider,
                         {
-                            backgroundColor: colors.divider,
+                            backgroundColor: colors.borderSubtle,
                             marginBottom: spacing.lg,
                         }
                     ]} />
@@ -170,7 +145,7 @@ export default function StartScreen() {
                     <View style={[
                         styles.divider,
                         {
-                            backgroundColor: colors.divider,
+                            backgroundColor: colors.borderSubtle,
                             marginBottom: spacing.lg,
                         }
                     ]} />
@@ -203,7 +178,7 @@ export default function StartScreen() {
                     <View style={[
                         styles.divider,
                         {
-                            backgroundColor: colors.divider,
+                            backgroundColor: colors.borderSubtle,
                             marginBottom: spacing.lg,
                         }
                     ]} />
@@ -266,7 +241,7 @@ export default function StartScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={8} currentStep={8} />
+                    <ProgressIndicator totalSteps={10} currentStep={10} />
                 </View>
             </Animated.View>
         </SafeAreaView>

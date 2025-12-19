@@ -241,8 +241,10 @@
     },
     "v3": {
       "welcome": {
-        "title": "「変わりたい」と思った\nあなたへ",
-        "subtitle": "その気持ちが、すべての始まりです。\n\nここから先は、あなた自身との約束を\n一緒に作っていきます。",
+        "title": "ショート動画を、やめる。",
+        "subtitle": "TikTok、YouTube Shorts、Instagram Reels。\n気づいたら1時間。その習慣を、終わりにします。",
+        "appDescription": "StopShortsは、ショート動画アプリの使用を5分で強制的に意識させるアプリです。",
+        "philosophy": "「習慣そのものを断ち切る」",
         "startButton": "始める"
       },
       "motivation": {
@@ -266,17 +268,67 @@
           }
         }
       },
+      "theProblem": {
+        "title": "知っていますか？",
+        "subtitle": "ショート動画があなたに与える影響",
+        "cards": {
+          "concentration": {
+            "title": "集中力の低下",
+            "description": "10万人規模の研究で、ショート動画の多用と認知能力の低下に相関が確認されています。"
+          },
+          "dopamine": {
+            "title": "ドーパミン中毒",
+            "description": "脳のドーパミン受容体が20-30%減少。これは薬物依存と同じパターンです。"
+          },
+          "sleep": {
+            "title": "睡眠の質の悪化",
+            "description": "無限スクロールが睡眠開始を遅らせ、深夜のスクリーンタイムを増加させます。"
+          }
+        },
+        "footnote": "2024年、オックスフォード大学は「Brain rot（脳の劣化）」を今年の言葉に選びました。",
+        "footnoteLabel": "2024年 今年の言葉"
+      },
+      "goal": {
+        "title": "何を取り戻しますか？",
+        "subtitle": "ショート動画をやめることで得られるもの",
+        "options": {
+          "concentration": {
+            "title": "集中力",
+            "description": "途切れない集中で、仕事や勉強の効率を上げる"
+          },
+          "sleep": {
+            "title": "睡眠時間",
+            "description": "夜更かしをやめて、質の良い睡眠を取り戻す"
+          },
+          "time": {
+            "title": "自由な時間",
+            "description": "毎日1-2時間。年間で数百時間を取り戻す"
+          },
+          "mental": {
+            "title": "心の余裕",
+            "description": "常に刺激を求める状態から解放される"
+          }
+        }
+      },
       "screenTimePermission": {
         "title": "あなたの現実を\n見てみませんか？",
         "subtitle": "スクリーンタイムのデータを使って\n実際の使用状況をお見せします。",
+        "privacyTitle": "プライバシーについて",
         "privacyNote": "データはあなたのデバイス内でのみ処理されます。\n外部に送信されることはありません。",
         "allowButton": "現実を見る",
-        "skipButton": "スキップする"
+        "allowButtonLoading": "確認中...",
+        "skipButton": "スキップする",
+        "unavailableTitle": "スクリーンタイム機能が利用できません",
+        "unavailableMessage": "iOS 15以上が必要です。手動入力モードで続行します。"
       },
       "realityCheck": {
         "title": "先週のあなた",
+        "analysisTitle": "あなたの使用状況を分析しました",
         "totalTime": "合計 {{hours}}時間{{minutes}}分",
+        "timeDisplay": "{{hours}}時間{{minutes}}分",
+        "hoursDisplay": "{{hours}}時間",
         "peakHours": "よく使う時間帯",
+        "defaultPeakHours": "夜",
         "yearlyProjection": "このペースだと年間",
         "equivalent": "これは本 {{books}}冊分",
         "callToAction": "この時間を取り戻しませんか？",
@@ -293,16 +345,18 @@
       },
       "alternative": {
         "title": "取り戻した時間で、\n何をしますか？",
+        "subtitle": "代わりにやりたいことを選んでください",
         "options": {
           "reading": "読書をする",
           "exercise": "運動する",
-          "hobby": "趣味に没頭する",
+          "meditation": "瞑想する",
           "learning": "新しいことを学ぶ",
-          "rest": "しっかり休む",
+          "hobby": "趣味に没頭する",
+          "social": "人と過ごす",
           "custom": "自分で書く..."
         },
-        "commitment": "私は、ショート動画の代わりに",
-        "commitmentEnd": "に時間を使います。",
+        "customPlaceholder": "やりたいことを入力...",
+        "commitment": "私は、ショート動画の代わりに{{activity}}に時間を使います。",
         "confirmButton": "この約束を守る"
       },
       "ifThen": {
@@ -322,6 +376,7 @@
       },
       "howItWorks": {
         "title": "StopShortsの仕組み",
+        "stepLabel": "ステップ {{step}}",
         "steps": {
           "step1": {
             "title": "アプリを開くと",
@@ -348,6 +403,20 @@
         "ifThenLabel": "開きたくなったら",
         "startButton": "今日から始める",
         "trialNote": "3日間無料で全機能をお試しいただけます"
+      },
+      "appSelection": {
+        "title": "どのアプリを制限しますか？",
+        "subtitle": "5分で介入するアプリを選んでください",
+        "apps": {
+          "tiktok": "TikTok",
+          "youtubeShorts": "YouTube Shorts",
+          "instagramReels": "Instagram Reels",
+          "twitter": "X (Twitter)",
+          "facebookReels": "Facebook Reels",
+          "snapchat": "Snapchat Spotlight"
+        },
+        "addMore": "他のアプリを追加",
+        "validation": "少なくとも1つのアプリを選択してください"
       }
     },
     "purposeDetail": {
@@ -483,6 +552,19 @@
       "title": "睡眠プロファイル",
       "bedtime": "就寝時間",
       "wakeTime": "起床時間"
+    },
+    "yourSettings": {
+      "title": "あなたの設定",
+      "goal": "目標",
+      "alternative": "代替活動",
+      "ifThen": "If-Thenプラン",
+      "targetApps": "対象アプリ",
+      "appsCount": "{{count}}個のアプリ"
+    },
+    "comingSoon": {
+      "title": "準備中",
+      "message": "この機能は準備中です",
+      "addMoreApps": "Family Controlsを使用したカスタムアプリ選択機能は近日公開予定です。"
     }
   },
   "subscription": {

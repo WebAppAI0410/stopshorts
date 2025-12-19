@@ -55,7 +55,7 @@ function SettingRow({
 
 export default function SettingsScreen() {
     const { colors, typography, spacing, borderRadius, themeMode, setThemeMode } = useTheme();
-    const { reset, interventionDurationMinutes, setInterventionDuration } = useAppStore();
+    const { reset, interventionDurationMinutes, setInterventionDuration, goal, alternativeActivity, ifThenPlan, selectedApps } = useAppStore();
 
     const handleReset = () => {
         Alert.alert(
@@ -105,6 +105,42 @@ export default function SettingsScreen() {
                                 const next = modes[(modes.indexOf(themeMode) + 1) % modes.length];
                                 setThemeMode(next);
                             }}
+                        />
+                    </View>
+                </Animated.View>
+
+                <Animated.View entering={FadeInDown.duration(600).delay(150)} style={styles.section}>
+                    <Text style={[typography.label, { color: colors.textMuted, marginBottom: spacing.md }]}>
+                        {t('settings.yourSettings.title').toUpperCase()}
+                    </Text>
+                    <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg, borderColor: colors.border }]}>
+                        <SettingRow
+                            {...settingRowCommonProps}
+                            label={t('settings.yourSettings.goal')}
+                            value={goal ? t(`onboarding.v3.goal.options.${goal}.title`) : '-'}
+                            icon="flag-outline"
+                            onPress={() => Alert.alert(t('settings.comingSoon.title'), t('settings.comingSoon.message'))}
+                        />
+                        <SettingRow
+                            {...settingRowCommonProps}
+                            label={t('settings.yourSettings.alternative')}
+                            value={alternativeActivity ? t(`onboarding.v3.alternative.options.${alternativeActivity}`) : '-'}
+                            icon="swap-horizontal-outline"
+                            onPress={() => Alert.alert(t('settings.comingSoon.title'), t('settings.comingSoon.message'))}
+                        />
+                        <SettingRow
+                            {...settingRowCommonProps}
+                            label={t('settings.yourSettings.ifThen')}
+                            value={ifThenPlan ? t(`onboarding.v3.ifThen.options.${ifThenPlan.action}`) : '-'}
+                            icon="git-branch-outline"
+                            onPress={() => Alert.alert(t('settings.comingSoon.title'), t('settings.comingSoon.message'))}
+                        />
+                        <SettingRow
+                            {...settingRowCommonProps}
+                            label={t('settings.yourSettings.targetApps')}
+                            value={t('settings.yourSettings.appsCount', { count: selectedApps.length })}
+                            icon="apps-outline"
+                            onPress={() => Alert.alert(t('settings.comingSoon.title'), t('settings.comingSoon.message'))}
                         />
                     </View>
                 </Animated.View>

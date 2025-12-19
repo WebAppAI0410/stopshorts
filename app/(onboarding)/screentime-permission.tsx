@@ -20,17 +20,17 @@ export default function ScreenTimePermissionScreen() {
         if (Platform.OS !== 'ios') {
             // Android doesn't have Screen Time API
             setScreenTimePermission(false);
-            router.push('/(onboarding)/reality-check' as Href);
+            router.push('/(onboarding)/app-selection' as Href);
             return;
         }
 
         if (!screenTimeService.isAvailable()) {
             Alert.alert(
-                'スクリーンタイム機能が利用できません',
-                'iOS 15以上が必要です。手動入力モードで続行します。',
+                t('onboarding.v3.screenTimePermission.unavailableTitle'),
+                t('onboarding.v3.screenTimePermission.unavailableMessage'),
                 [{ text: 'OK', onPress: () => {
                     setScreenTimePermission(false);
-                    router.push('/(onboarding)/reality-check' as Href);
+                    router.push('/(onboarding)/app-selection' as Href);
                 }}]
             );
             return;
@@ -45,11 +45,11 @@ export default function ScreenTimePermissionScreen() {
             } else {
                 setScreenTimePermission(false);
             }
-            router.push('/(onboarding)/reality-check' as Href);
+            router.push('/(onboarding)/app-selection' as Href);
         } catch (error) {
             console.error('Screen Time authorization failed:', error);
             setScreenTimePermission(false);
-            router.push('/(onboarding)/reality-check' as Href);
+            router.push('/(onboarding)/app-selection' as Href);
         } finally {
             setIsRequesting(false);
         }
@@ -57,7 +57,7 @@ export default function ScreenTimePermissionScreen() {
 
     const handleSkip = () => {
         setScreenTimePermission(false);
-        router.push('/(onboarding)/reality-check' as Href);
+        router.push('/(onboarding)/app-selection' as Href);
     };
 
     return (
@@ -130,7 +130,7 @@ export default function ScreenTimePermissionScreen() {
                 style={[styles.footer, { paddingHorizontal: spacing.gutter }]}
             >
                 <Button
-                    title={isRequesting ? '確認中...' : t('onboarding.v3.screenTimePermission.allowButton')}
+                    title={isRequesting ? t('onboarding.v3.screenTimePermission.allowButtonLoading') : t('onboarding.v3.screenTimePermission.allowButton')}
                     onPress={handleAllow}
                     disabled={isRequesting}
                     size="lg"
@@ -141,7 +141,7 @@ export default function ScreenTimePermissionScreen() {
                     </Text>
                 </Pressable>
                 <View style={{ marginTop: spacing.lg }}>
-                    <ProgressIndicator totalSteps={8} currentStep={3} />
+                    <ProgressIndicator totalSteps={10} currentStep={4} />
                 </View>
             </Animated.View>
         </SafeAreaView>

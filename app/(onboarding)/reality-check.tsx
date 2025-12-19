@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, ProgressIndicator, Header, GlowOrb, SelectionCard } from '../../src/components/ui';
+import { Button, ProgressIndicator, Header, GlowOrb } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
@@ -13,18 +13,14 @@ import screenTimeService from '../../src/services/screenTime';
 export default function RealityCheckScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
-    const { hasScreenTimePermission, calculateImpactFromScreenTime, calculateImpactFromManualInput } = useAppStore();
-    const [manualHours, setManualHours] = useState<number | null>(null);
+    const { calculateImpactFromScreenTime } = useAppStore();
 
-    // Get screen time data (currently mock, will be replaced with real data)
+    // Get screen time data (currently mock, will be replaced with real Screen Time API data)
     const screenTimeData = useMemo(() => screenTimeService.getMockData(), []);
 
     const handleContinue = () => {
-        if (hasScreenTimePermission) {
-            calculateImpactFromScreenTime(screenTimeData);
-        } else if (manualHours !== null) {
-            calculateImpactFromManualInput(manualHours);
-        }
+        // Always use screen time data (mock data for development)
+        calculateImpactFromScreenTime(screenTimeData);
         router.push('/(onboarding)/alternative' as Href);
     };
 
@@ -40,10 +36,18 @@ export default function RealityCheckScreen() {
         const books = Math.round(yearlyHours / 6);
         const peakHoursDisplay = screenTimeData.peakHours.length > 0
             ? `${screenTimeData.peakHours[0]} - ${screenTimeData.peakHours[screenTimeData.peakHours.length - 1]}`
-            : '夜';
+            : t('onboarding.v3.realityCheck.defaultPeakHours');
 
         return (
             <View style={styles.dataContainer}>
+                {/* Analysis Header */}
+                <Animated.View entering={FadeInUp.duration(600).delay(100)} style={[styles.analysisHeader, { backgroundColor: colors.accentMuted, borderRadius: borderRadius.lg, padding: spacing.md }]}>
+                    <Ionicons name="analytics-outline" size={20} color={colors.accent} />
+                    <Text style={[typography.bodySmall, { color: colors.accent, marginLeft: spacing.sm, fontWeight: '600' }]}>
+                        {t('onboarding.v3.realityCheck.analysisTitle')}
+                    </Text>
+                </Animated.View>
+
                 <Animated.View entering={FadeInUp.duration(600).delay(200)} style={styles.totalTimeCard}>
                     <Text style={[typography.caption, { color: colors.textSecondary }]}>
                         {t('onboarding.v3.realityCheck.title')}
@@ -56,7 +60,7 @@ export default function RealityCheckScreen() {
                             marginTop: spacing.sm,
                         }
                     ]}>
-                        {hours}時間{mins}分
+                        {t('onboarding.v3.realityCheck.timeDisplay', { hours, minutes: mins })}
                     </Text>
                 </Animated.View>
 
@@ -117,7 +121,7 @@ export default function RealityCheckScreen() {
                             {t('onboarding.v3.realityCheck.yearlyProjection')}
                         </Text>
                         <Text style={[typography.body, { color: colors.textPrimary, fontWeight: '600' }]}>
-                            {yearlyHours}時間
+                            {t('onboarding.v3.realityCheck.hoursDisplay', { hours: yearlyHours })}
                         </Text>
                     </View>
                 </Animated.View>
@@ -134,41 +138,6 @@ export default function RealityCheckScreen() {
         );
     };
 
-    const renderManualInput = () => {
-        const options = [
-            { hours: 0.5, display: '30分くらい' },
-            { hours: 1, display: '1時間くらい' },
-            { hours: 2, display: '2時間くらい' },
-            { hours: 3, display: '3時間以上' },
-        ];
-
-        return (
-            <View style={styles.manualInputContainer}>
-                <Animated.View entering={FadeInUp.duration(600).delay(200)}>
-                    <Text style={[typography.h1, { color: colors.textPrimary, marginBottom: spacing.md }]}>
-                        {t('onboarding.v3.realityCheck.manualInput.title')}
-                    </Text>
-                </Animated.View>
-
-                <View style={styles.optionsContainer}>
-                    {options.map((option, index) => (
-                        <Animated.View
-                            key={option.hours}
-                            entering={FadeInUp.duration(600).delay(300 + index * 100)}
-                        >
-                            <SelectionCard
-                                title={option.display}
-                                selected={manualHours === option.hours}
-                                onPress={() => setManualHours(option.hours)}
-                                compact
-                            />
-                        </Animated.View>
-                    ))}
-                </View>
-            </View>
-        );
-    };
-
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <GlowOrb position="top-right" size="large" color="accent" intensity={0.12} />
@@ -180,7 +149,8 @@ export default function RealityCheckScreen() {
                 contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.gutter }]}
                 showsVerticalScrollIndicator={false}
             >
-                {hasScreenTimePermission ? renderScreenTimeData() : renderManualInput()}
+                {/* Always show analyzed data (using mock data for development) */}
+                {renderScreenTimeData()}
 
                 <Animated.View entering={FadeInDown.duration(600).delay(700)} style={[styles.ctaContainer, { marginTop: spacing.xl }]}>
                     <Text style={[
@@ -202,11 +172,10 @@ export default function RealityCheckScreen() {
                 <Button
                     title={t('onboarding.v3.realityCheck.reclaimButton')}
                     onPress={handleContinue}
-                    disabled={!hasScreenTimePermission && manualHours === null}
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={8} currentStep={4} />
+                    <ProgressIndicator totalSteps={10} currentStep={6} />
                 </View>
             </Animated.View>
         </SafeAreaView>
@@ -226,6 +195,10 @@ const styles = StyleSheet.create({
     },
     dataContainer: {
         gap: 16,
+    },
+    analysisHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     totalTimeCard: {
         alignItems: 'center',
@@ -260,12 +233,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 16,
-    },
-    manualInputContainer: {
-        gap: 16,
-    },
-    optionsContainer: {
-        gap: 8,
     },
     ctaContainer: {
         alignItems: 'center',

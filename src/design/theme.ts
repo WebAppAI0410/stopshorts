@@ -34,7 +34,7 @@ export const palette = {
     text: {
         primary: '#F0F6FC',
         secondary: '#8B949E',
-        muted: '#6E7681',
+        muted: '#9AA0AD', // Improved contrast for dark backgrounds (was #6E7681)
         inverse: '#0D1117',
     },
     // Semantic

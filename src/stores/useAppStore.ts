@@ -22,6 +22,9 @@ import type {
   ScreenTimeData,
   IfThenPlan,
   OnboardingCommitment,
+  // App selection types
+  GoalType,
+  TargetAppId,
 } from '../types';
 
 interface AppState {
@@ -56,6 +59,10 @@ interface AppState {
   customAlternativeActivity: string | null;
   ifThenPlan: IfThenPlan | null;
   onboardingCommitment: OnboardingCommitment | null;
+
+  // App Selection State
+  selectedApps: TargetAppId[];
+  goal: GoalType | null;
 
   // Statistics
   stats: DailyStats[];
@@ -97,6 +104,10 @@ interface AppState {
   completeOnboarding: () => void;
   calculateImpactFromScreenTime: (data: ScreenTimeData) => LifetimeImpact;
   calculateImpactFromManualInput: (dailyHours: number) => LifetimeImpact;
+
+  // App Selection Actions
+  setSelectedApps: (apps: TargetAppId[]) => void;
+  setGoal: (goal: GoalType) => void;
 }
 
 const initialState = {
@@ -132,6 +143,9 @@ const initialState = {
   customAlternativeActivity: null,
   ifThenPlan: null,
   onboardingCommitment: null,
+  // App Selection initial state
+  selectedApps: ['tiktok', 'youtubeShorts', 'instagramReels'] as TargetAppId[],
+  goal: null,
 };
 
 export const useAppStore = create<AppState>()(
@@ -337,16 +351,27 @@ export const useAppStore = create<AppState>()(
 
       completeOnboarding: () => {
         const state = get();
+
+        // Validate required onboarding data
+        if (!state.motivation || !state.alternativeActivity || !state.ifThenPlan) {
+          console.error('[Onboarding] Cannot complete: missing required data', {
+            motivation: !!state.motivation,
+            alternativeActivity: !!state.alternativeActivity,
+            ifThenPlan: !!state.ifThenPlan,
+          });
+          return; // Early return if validation fails
+        }
+
         const now = new Date().toISOString();
         const expiry = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
-        // Create commitment summary
+        // Create commitment summary (non-null assertions removed - validated above)
         const commitment: OnboardingCommitment = {
-          motivation: state.motivation!,
+          motivation: state.motivation,
           screenTimeData: state.screenTimeData,
-          alternativeActivity: state.alternativeActivity!,
+          alternativeActivity: state.alternativeActivity,
           customActivity: state.customAlternativeActivity || undefined,
-          ifThenPlan: state.ifThenPlan!,
+          ifThenPlan: state.ifThenPlan,
           completedAt: now,
         };
 
@@ -420,6 +445,13 @@ export const useAppStore = create<AppState>()(
         set({ lifetimeImpact: impact });
         return impact;
       },
+
+      // App Selection Actions
+      setSelectedApps: (apps) =>
+        set({ selectedApps: apps }),
+
+      setGoal: (goal) =>
+        set({ goal }),
     }),
     {
       name: 'stopshorts-storage',

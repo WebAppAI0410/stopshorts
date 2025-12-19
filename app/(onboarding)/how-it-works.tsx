@@ -42,7 +42,7 @@ export default function HowItWorksScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <GlowOrb position="top-left" size="lg" color="primary" intensity={0.1} />
+            <GlowOrb position="top-left" size="large" color="primary" intensity={0.1} />
             <GlowOrb position="bottom-right" size="xl" color="accent" intensity={0.15} />
 
             <Header />
@@ -89,7 +89,7 @@ export default function HowItWorksScreen() {
                                         typography.caption,
                                         { color: colors.textMuted }
                                     ]}>
-                                        Step {index + 1}
+                                        {t('onboarding.v3.howItWorks.stepLabel', { step: index + 1 })}
                                     </Text>
                                 </View>
                             </View>
@@ -178,7 +178,7 @@ export default function HowItWorksScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={8} currentStep={7} />
+                    <ProgressIndicator totalSteps={10} currentStep={9} />
                 </View>
             </Animated.View>
         </SafeAreaView>

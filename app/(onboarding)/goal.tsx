@@ -6,33 +6,33 @@ import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, ProgressIndicator, Header, SelectionCard } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
-import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
-import type { MotivationType } from '../../src/types';
+import { useAppStore } from '../../src/stores/useAppStore';
 
-type MotivationOption = {
-    id: MotivationType;
+type GoalOption = {
+    id: 'concentration' | 'sleep' | 'time' | 'mental';
     icon: keyof typeof Ionicons.glyphMap;
 };
 
-const motivationOptions: MotivationOption[] = [
-    { id: 'meaningful_time', icon: 'sparkles-outline' },
-    { id: 'pursue_goals', icon: 'flag-outline' },
-    { id: 'relationships', icon: 'people-outline' },
-    { id: 'self_control', icon: 'shield-checkmark-outline' },
+const goalOptions: GoalOption[] = [
+    { id: 'concentration', icon: 'target-outline' },
+    { id: 'sleep', icon: 'moon-outline' },
+    { id: 'time', icon: 'time-outline' },
+    { id: 'mental', icon: 'leaf-outline' },
 ];
 
-export default function MotivationScreen() {
+export default function GoalScreen() {
     const router = useRouter();
     const { colors, typography, spacing } = useTheme();
-    const { setMotivation } = useAppStore();
-    const [selectedMotivation, setSelectedMotivation] = useState<MotivationType | null>(null);
+    const { setGoal } = useAppStore();
+    const [selectedGoal, setSelectedGoal] = useState<GoalOption['id'] | null>(null);
 
     const handleContinue = () => {
-        if (selectedMotivation) {
-            setMotivation(selectedMotivation);
-            router.push('/(onboarding)/screentime-permission' as Href);
-        }
+        if (!selectedGoal) return;
+        setGoal(selectedGoal);
+        // Navigate to the next screen according to the onboarding flow
+        // Step 3 (Goal) → Step 4 (Screen Time Permission)
+        router.push('/(onboarding)/screentime-permission' as Href);
     };
 
     return (
@@ -44,6 +44,7 @@ export default function MotivationScreen() {
                 contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.gutter }]}
                 showsVerticalScrollIndicator={false}
             >
+                {/* Title and Subtitle */}
                 <Animated.View entering={FadeInUp.duration(600).delay(100)}>
                     <Text style={[
                         typography.h1,
@@ -52,7 +53,7 @@ export default function MotivationScreen() {
                             marginBottom: spacing.sm,
                         }
                     ]}>
-                        {t('onboarding.v3.motivation.title')}
+                        {t('onboarding.v3.goal.title')}
                     </Text>
                     <Text style={[
                         typography.bodyLarge,
@@ -61,28 +62,30 @@ export default function MotivationScreen() {
                             marginBottom: spacing.xl,
                         }
                     ]}>
-                        {t('onboarding.v3.motivation.subtitle')}
+                        {t('onboarding.v3.goal.subtitle')}
                     </Text>
                 </Animated.View>
 
+                {/* Goal Options */}
                 <View style={styles.optionsContainer}>
-                    {motivationOptions.map((option, index) => (
+                    {goalOptions.map((option, index) => (
                         <Animated.View
                             key={option.id}
                             entering={FadeInRight.duration(600).delay(200 + index * 100)}
                         >
                             <SelectionCard
-                                title={t(`onboarding.v3.motivation.options.${option.id}.title`)}
-                                subtitle={t(`onboarding.v3.motivation.options.${option.id}.description`)}
+                                title={t(`onboarding.v3.goal.options.${option.id}.title`)}
+                                subtitle={t(`onboarding.v3.goal.options.${option.id}.description`)}
                                 icon={option.icon}
-                                selected={selectedMotivation === option.id}
-                                onPress={() => setSelectedMotivation(option.id)}
+                                selected={selectedGoal === option.id}
+                                onPress={() => setSelectedGoal(option.id)}
                             />
                         </Animated.View>
                     ))}
                 </View>
             </ScrollView>
 
+            {/* Footer */}
             <Animated.View
                 entering={FadeInUp.duration(600).delay(800)}
                 style={[styles.footer, { paddingHorizontal: spacing.gutter }]}
@@ -90,11 +93,11 @@ export default function MotivationScreen() {
                 <Button
                     title={t('common.continue')}
                     onPress={handleContinue}
-                    disabled={!selectedMotivation}
+                    disabled={!selectedGoal}
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={10} currentStep={2} />
+                    <ProgressIndicator totalSteps={10} currentStep={3} />
                 </View>
             </Animated.View>
         </SafeAreaView>

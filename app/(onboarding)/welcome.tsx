@@ -13,13 +13,13 @@ export default function WelcomeScreen() {
     const { colors, typography, spacing, borderRadius } = useTheme();
 
     const handleStart = () => {
-        router.push('/(onboarding)/motivation' as Href);
+        router.push('/(onboarding)/the-problem' as Href);
     };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <GlowOrb position="top-right" size="xl" color="accent" intensity={0.15} />
-            <GlowOrb position="bottom-left" size="lg" color="primary" intensity={0.1} />
+            <GlowOrb position="bottom-left" size="large" color="primary" intensity={0.1} />
 
             <View style={[styles.content, { paddingHorizontal: spacing.gutter }]}>
                 {/* Icon */}
@@ -63,7 +63,7 @@ export default function WelcomeScreen() {
 
                 <View style={{ flex: 1 }} />
 
-                {/* Decorative quote */}
+                {/* App Description Card */}
                 <Animated.View
                     entering={FadeIn.duration(800).delay(800)}
                     style={[
@@ -76,19 +76,25 @@ export default function WelcomeScreen() {
                         }
                     ]}
                 >
-                    <View style={styles.quoteIcon}>
-                        <Ionicons name="sparkles" size={20} color={colors.accent} />
-                    </View>
                     <Text style={[
                         typography.body,
                         {
-                            color: colors.textMuted,
-                            fontStyle: 'italic',
+                            color: colors.textSecondary,
+                            textAlign: 'center',
+                            marginBottom: spacing.md,
+                        }
+                    ]}>
+                        {t('onboarding.v3.welcome.appDescription')}
+                    </Text>
+                    <Text style={[
+                        typography.bodyLarge,
+                        {
+                            color: colors.accent,
+                            fontWeight: '600',
                             textAlign: 'center',
                         }
                     ]}>
-                        変わりたいと思った瞬間が、{'\n'}
-                        変われる瞬間の始まりです。
+                        {t('onboarding.v3.welcome.philosophy')}
                     </Text>
                 </Animated.View>
             </View>
@@ -104,7 +110,7 @@ export default function WelcomeScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={8} currentStep={1} />
+                    <ProgressIndicator totalSteps={10} currentStep={1} />
                 </View>
             </Animated.View>
         </SafeAreaView>
@@ -133,15 +139,6 @@ const styles = StyleSheet.create({
     },
     quoteContainer: {
         width: '100%',
-        position: 'relative',
-    },
-    quoteIcon: {
-        position: 'absolute',
-        top: -10,
-        left: '50%',
-        marginLeft: -10,
-        width: 20,
-        height: 20,
     },
     footer: {
         paddingTop: 20,

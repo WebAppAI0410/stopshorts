@@ -131,7 +131,11 @@ export default function AlternativeScreen() {
                                 marginLeft: spacing.md,
                             }
                         ]}>
-                            {t('onboarding.v3.alternative.commitment')}
+                            {t('onboarding.v3.alternative.commitment', {
+                                activity: selectedActivity === 'custom'
+                                    ? customActivity
+                                    : t(`onboarding.v3.alternative.options.${selectedActivity}`)
+                            })}
                         </Text>
                     </Animated.View>
                 )}
@@ -148,7 +152,7 @@ export default function AlternativeScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={8} currentStep={5} />
+                    <ProgressIndicator totalSteps={10} currentStep={7} />
                 </View>
             </Animated.View>
         </SafeAreaView>
