@@ -239,6 +239,117 @@
       "startTrial": "無料トライアルを始める",
       "subscribe": "このプランで始める"
     },
+    "v3": {
+      "welcome": {
+        "title": "「変わりたい」と思った\nあなたへ",
+        "subtitle": "その気持ちが、すべての始まりです。\n\nここから先は、あなた自身との約束を\n一緒に作っていきます。",
+        "startButton": "始める"
+      },
+      "motivation": {
+        "title": "何を取り戻したいですか？",
+        "options": {
+          "meaningful_time": {
+            "title": "意味ある時間",
+            "description": "ぼんやり過ごす夜を、充実した時間に変えたい"
+          },
+          "pursue_goals": {
+            "title": "やりたいこと",
+            "description": "ずっとやりたかったことに、やっと向き合いたい"
+          },
+          "relationships": {
+            "title": "大切な人との時間",
+            "description": "家族や友人との時間を、スマホに奪われたくない"
+          },
+          "self_control": {
+            "title": "自分をコントロール",
+            "description": "自分で自分を制御できる感覚を取り戻したい"
+          }
+        }
+      },
+      "screenTimePermission": {
+        "title": "あなたの現実を\n見てみませんか？",
+        "subtitle": "スクリーンタイムのデータを使って\n実際の使用状況をお見せします。",
+        "privacyNote": "データはあなたのデバイス内でのみ処理されます。\n外部に送信されることはありません。",
+        "allowButton": "現実を見る",
+        "skipButton": "スキップする"
+      },
+      "realityCheck": {
+        "title": "先週のあなた",
+        "totalTime": "合計 {{hours}}時間{{minutes}}分",
+        "peakHours": "よく使う時間帯",
+        "yearlyProjection": "このペースだと年間",
+        "equivalent": "これは本 {{books}}冊分",
+        "callToAction": "この時間を取り戻しませんか？",
+        "reclaimButton": "取り戻す",
+        "manualInput": {
+          "title": "1日どのくらい使っていますか？",
+          "options": {
+            "30min": "30分くらい",
+            "1hour": "1時間くらい",
+            "2hours": "2時間くらい",
+            "3hours": "3時間以上"
+          }
+        }
+      },
+      "alternative": {
+        "title": "取り戻した時間で、\n何をしますか？",
+        "options": {
+          "reading": "読書をする",
+          "exercise": "運動する",
+          "hobby": "趣味に没頭する",
+          "learning": "新しいことを学ぶ",
+          "rest": "しっかり休む",
+          "custom": "自分で書く..."
+        },
+        "commitment": "私は、ショート動画の代わりに",
+        "commitmentEnd": "に時間を使います。",
+        "confirmButton": "この約束を守る"
+      },
+      "ifThen": {
+        "title": "ショート動画を\n開きたくなったら...",
+        "subtitle": "代わりに何をしますか？",
+        "options": {
+          "breathe": "深呼吸を3回する",
+          "read_page": "本を1ページ読む",
+          "look_outside": "外の景色を見る",
+          "short_walk": "5分だけ散歩する",
+          "stretch": "ストレッチする",
+          "water": "水を飲む",
+          "custom": "自分で決める..."
+        },
+        "note": "シールドにこの選択肢を表示します",
+        "continueButton": "続ける"
+      },
+      "howItWorks": {
+        "title": "StopShortsの仕組み",
+        "steps": {
+          "step1": {
+            "title": "アプリを開くと",
+            "description": "タイマーが静かにスタート"
+          },
+          "step2": {
+            "title": "設定した時間が経つと",
+            "description": "シールドが表示されます"
+          },
+          "step3": {
+            "title": "そのとき、あなたは選べます",
+            "description": "アプリを閉じる、もう少し続ける"
+          }
+        },
+        "note": "強制ではありません。「気づき」を与えるだけ。\n選ぶのは、いつもあなたです。",
+        "understandButton": "理解しました"
+      },
+      "start": {
+        "title": "あなたの約束",
+        "motivationLabel": "理由",
+        "timeLabel": "取り戻す時間",
+        "timeValue": "年間 {{hours}}時間",
+        "alternativeLabel": "代わりにやること",
+        "ifThenLabel": "開きたくなったら",
+        "startButton": "今日から始める",
+        "trialNote": "3日間無料で全機能をお試しいただけます"
+      }
+    },
     "purposeDetail": {
       "subtitle": "より効果的なサポートのために、詳しく教えてください",
       "timeOfDay": {

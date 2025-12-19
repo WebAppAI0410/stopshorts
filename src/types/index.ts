@@ -116,7 +116,56 @@ export interface CoachingContext {
   };
 }
 
-// Usage Assessment (New Feature v2)
+// Motivation Types (Why user wants to change)
+export type MotivationType =
+  | 'meaningful_time'    // ぼんやり過ごす時間を意味ある時間に
+  | 'pursue_goals'       // ずっとやりたかったことに向き合う
+  | 'relationships'      // 大切な人との時間を守る
+  | 'self_control';      // 自分をコントロールする感覚を取り戻す
+
+// Screen Time Data (from iOS API)
+export interface ScreenTimeData {
+  weeklyTotal: number;              // Total minutes in past week
+  dailyAverage: number;             // Average daily minutes
+  appBreakdown: AppUsageData[];     // Per-app breakdown
+  peakHours: string[];              // Most used hours (e.g., ["21:00", "22:00", "23:00"])
+  lastUpdated: string;              // ISO date string
+}
+
+export interface AppUsageData {
+  app: ManagedApp;
+  weeklyMinutes: number;
+  dailyAverage: number;
+  openCount: number;
+}
+
+// If-Then Plan (trigger-action pairs)
+export type IfThenAction =
+  | 'breathe'           // 深呼吸を3回
+  | 'read_page'         // 本を1ページ読む
+  | 'look_outside'      // 外の景色を見る
+  | 'short_walk'        // 5分散歩する
+  | 'stretch'           // ストレッチする
+  | 'water'             // 水を飲む
+  | 'custom';           // カスタム
+
+export interface IfThenPlan {
+  action: IfThenAction;
+  customAction?: string;
+}
+
+// Onboarding Commitment Summary
+export interface OnboardingCommitment {
+  motivation: MotivationType;
+  screenTimeData: ScreenTimeData | null;  // null if permission denied
+  manualDailyHours?: number;              // Fallback if no Screen Time access
+  alternativeActivity: AlternativeActivity;
+  customActivity?: string;
+  ifThenPlan: IfThenPlan;
+  completedAt: string;                    // ISO date string
+}
+
+// Legacy: Usage Assessment (kept for migration)
 export type UsageDuration = '1month' | '6months' | '1year' | '2years' | '3years+';
 export type PeakUsageTime = 'morning' | 'afternoon' | 'evening' | 'night' | 'random';
 export type QuitAttempts = 'never' | 'once' | 'few' | 'many';

@@ -14,8 +14,14 @@ import type {
   UsageAssessment,
   LifetimeImpact,
   AlternativeGoal,
+  AlternativeActivity,
   DailyCheckIn,
   PricingPlanId,
+  // New onboarding types
+  MotivationType,
+  ScreenTimeData,
+  IfThenPlan,
+  OnboardingCommitment,
 } from '../types';
 
 interface AppState {
@@ -41,6 +47,15 @@ interface AppState {
   checkIns: DailyCheckIn[];
   selectedPricingPlan: PricingPlanId | null;
   hasCompletedTutorial: boolean;
+
+  // New Onboarding v3 State
+  motivation: MotivationType | null;
+  screenTimeData: ScreenTimeData | null;
+  hasScreenTimePermission: boolean;
+  alternativeActivity: AlternativeActivity | null;
+  customAlternativeActivity: string | null;
+  ifThenPlan: IfThenPlan | null;
+  onboardingCommitment: OnboardingCommitment | null;
 
   // Statistics
   stats: DailyStats[];
@@ -72,6 +87,16 @@ interface AppState {
   setSelectedPricingPlan: (planId: PricingPlanId) => void;
   setTutorialComplete: () => void;
   calculateLifetimeImpact: (assessment: UsageAssessment) => LifetimeImpact;
+
+  // New Onboarding v3 Actions
+  setMotivation: (motivation: MotivationType) => void;
+  setScreenTimeData: (data: ScreenTimeData) => void;
+  setScreenTimePermission: (hasPermission: boolean) => void;
+  setAlternativeActivity: (activity: AlternativeActivity, custom?: string) => void;
+  setIfThenPlan: (plan: IfThenPlan) => void;
+  completeOnboarding: () => void;
+  calculateImpactFromScreenTime: (data: ScreenTimeData) => LifetimeImpact;
+  calculateImpactFromManualInput: (dailyHours: number) => LifetimeImpact;
 }
 
 const initialState = {
@@ -99,6 +124,14 @@ const initialState = {
   checkIns: [],
   selectedPricingPlan: null,
   hasCompletedTutorial: false,
+  // New Onboarding v3 initial state
+  motivation: null,
+  screenTimeData: null,
+  hasScreenTimePermission: false,
+  alternativeActivity: null,
+  customAlternativeActivity: null,
+  ifThenPlan: null,
+  onboardingCommitment: null,
 };
 
 export const useAppStore = create<AppState>()(
@@ -269,6 +302,111 @@ export const useAppStore = create<AppState>()(
         if (skillHours >= 500) skills.push('資格取得');
 
         const impact = {
+          yearlyLostHours,
+          lifetimeLostYears: Math.round(lifetimeLostYears * 10) / 10,
+          equivalents: {
+            books,
+            movies,
+            skills: skills.length > 0 ? skills : ['新しいスキルの習得'],
+            travels,
+          },
+        };
+
+        set({ lifetimeImpact: impact });
+        return impact;
+      },
+
+      // New Onboarding v3 Actions
+      setMotivation: (motivation) =>
+        set({ motivation }),
+
+      setScreenTimeData: (data) =>
+        set({ screenTimeData: data }),
+
+      setScreenTimePermission: (hasPermission) =>
+        set({ hasScreenTimePermission: hasPermission }),
+
+      setAlternativeActivity: (activity, custom) =>
+        set({
+          alternativeActivity: activity,
+          customAlternativeActivity: custom || null,
+        }),
+
+      setIfThenPlan: (plan) =>
+        set({ ifThenPlan: plan }),
+
+      completeOnboarding: () => {
+        const state = get();
+        const now = new Date().toISOString();
+        const expiry = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+
+        // Create commitment summary
+        const commitment: OnboardingCommitment = {
+          motivation: state.motivation!,
+          screenTimeData: state.screenTimeData,
+          alternativeActivity: state.alternativeActivity!,
+          customActivity: state.customAlternativeActivity || undefined,
+          ifThenPlan: state.ifThenPlan!,
+          completedAt: now,
+        };
+
+        set({
+          hasCompletedOnboarding: true,
+          onboardingCommitment: commitment,
+          subscriptionPlan: 'trial',
+          subscriptionStatus: 'active',
+          trialStartDate: now,
+          subscriptionExpiry: expiry,
+        });
+      },
+
+      calculateImpactFromScreenTime: (data) => {
+        const dailyHours = data.dailyAverage / 60;
+        const yearlyLostHours = dailyHours * 365;
+        const remainingYears = 50;
+        const lifetimeLostYears = (yearlyLostHours * remainingYears) / (24 * 365);
+
+        const books = Math.round(yearlyLostHours / 6);
+        const movies = Math.round(yearlyLostHours / 2);
+        const travels = Math.round(yearlyLostHours / 40);
+
+        const skills: string[] = [];
+        if (yearlyLostHours >= 100) skills.push('新しい言語の基礎');
+        if (yearlyLostHours >= 200) skills.push('楽器の初級レベル');
+        if (yearlyLostHours >= 300) skills.push('プログラミング入門');
+        if (yearlyLostHours >= 500) skills.push('資格取得');
+
+        const impact: LifetimeImpact = {
+          yearlyLostHours,
+          lifetimeLostYears: Math.round(lifetimeLostYears * 10) / 10,
+          equivalents: {
+            books,
+            movies,
+            skills: skills.length > 0 ? skills : ['新しいスキルの習得'],
+            travels,
+          },
+        };
+
+        set({ lifetimeImpact: impact });
+        return impact;
+      },
+
+      calculateImpactFromManualInput: (dailyHours) => {
+        const yearlyLostHours = dailyHours * 365;
+        const remainingYears = 50;
+        const lifetimeLostYears = (yearlyLostHours * remainingYears) / (24 * 365);
+
+        const books = Math.round(yearlyLostHours / 6);
+        const movies = Math.round(yearlyLostHours / 2);
+        const travels = Math.round(yearlyLostHours / 40);
+
+        const skills: string[] = [];
+        if (yearlyLostHours >= 100) skills.push('新しい言語の基礎');
+        if (yearlyLostHours >= 200) skills.push('楽器の初級レベル');
+        if (yearlyLostHours >= 300) skills.push('プログラミング入門');
+        if (yearlyLostHours >= 500) skills.push('資格取得');
+
+        const impact: LifetimeImpact = {
           yearlyLostHours,
           lifetimeLostYears: Math.round(lifetimeLostYears * 10) / 10,
           equivalents: {

@@ -2,78 +2,111 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import {
-    Button,
-    ProgressIndicator,
-    ShieldIcon,
-} from '../../src/components/ui';
+import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
+import { Button, ProgressIndicator, GlowOrb } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { t } from '../../src/i18n';
 
 export default function WelcomeScreen() {
     const router = useRouter();
-    const { colors, typography, spacing } = useTheme();
+    const { colors, typography, spacing, borderRadius } = useTheme();
 
     const handleStart = () => {
-        router.push('/(onboarding)/usage-assessment' as Href);
+        router.push('/(onboarding)/motivation' as Href);
     };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            {/* Background glow effects */}
-            <View style={styles.glowContainer}>
-                <View style={[styles.glowOuter, { backgroundColor: colors.shieldGlow }]} />
-            </View>
+            <GlowOrb position="top-right" size="xl" color="accent" intensity={0.15} />
+            <GlowOrb position="bottom-left" size="lg" color="primary" intensity={0.1} />
 
             <View style={[styles.content, { paddingHorizontal: spacing.gutter }]}>
-                {/* Shield and Logo */}
+                {/* Icon */}
                 <Animated.View
-                    entering={FadeInDown.duration(800).delay(200)}
-                    style={styles.logoSection}
+                    entering={FadeIn.duration(800).delay(200)}
+                    style={styles.iconContainer}
                 >
-                    <ShieldIcon size="large" glowing={true} status="protected" />
-                    <View style={styles.logoText}>
-                        <Text style={[typography.hero, { color: colors.textPrimary }]}>Stop</Text>
-                        <Text style={[typography.hero, { color: colors.accent }]}>Shorts</Text>
+                    <View style={[styles.iconCircle, { backgroundColor: colors.accentMuted }]}>
+                        <Ionicons name="heart" size={48} color={colors.accent} />
                     </View>
                 </Animated.View>
 
-                {/* Tagline */}
-                <Animated.View
-                    entering={FadeInUp.duration(800).delay(600)}
-                    style={{ marginTop: spacing.xl }}
-                >
-                    <Text style={[typography.h2, { color: colors.textPrimary, textAlign: 'center' }]}>
-                        {t('onboarding.welcome.title')}
+                {/* Title */}
+                <Animated.View entering={FadeInUp.duration(800).delay(400)}>
+                    <Text style={[
+                        typography.h1,
+                        {
+                            color: colors.textPrimary,
+                            textAlign: 'center',
+                            marginBottom: spacing.lg,
+                            lineHeight: 40,
+                        }
+                    ]}>
+                        {t('onboarding.v3.welcome.title')}
                     </Text>
-                    <Text style={[typography.bodyLarge, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.md }]}>
-                        {t('onboarding.welcome.subtitle')}
+                </Animated.View>
+
+                {/* Subtitle */}
+                <Animated.View entering={FadeInUp.duration(800).delay(600)}>
+                    <Text style={[
+                        typography.bodyLarge,
+                        {
+                            color: colors.textSecondary,
+                            textAlign: 'center',
+                            lineHeight: 28,
+                        }
+                    ]}>
+                        {t('onboarding.v3.welcome.subtitle')}
                     </Text>
                 </Animated.View>
 
                 <View style={{ flex: 1 }} />
 
-                {/* Footer */}
+                {/* Decorative quote */}
                 <Animated.View
-                    entering={FadeInUp.duration(800).delay(800)}
-                    style={styles.footer}
+                    entering={FadeIn.duration(800).delay(800)}
+                    style={[
+                        styles.quoteContainer,
+                        {
+                            backgroundColor: colors.backgroundCard,
+                            borderRadius: borderRadius.lg,
+                            padding: spacing.lg,
+                            marginBottom: spacing.xl,
+                        }
+                    ]}
                 >
-                    <Button
-                        title={t('onboarding.welcome.start')}
-                        onPress={handleStart}
-                        size="lg"
-                    />
-
-                    <Text style={[typography.caption, { color: colors.textMuted, marginTop: spacing.lg, textAlign: 'center' }]}>
-                        {t('onboarding.welcome.existingUser')}
-                    </Text>
-
-                    <View style={{ marginTop: spacing.xl }}>
-                        <ProgressIndicator totalSteps={12} currentStep={1} />
+                    <View style={styles.quoteIcon}>
+                        <Ionicons name="sparkles" size={20} color={colors.accent} />
                     </View>
+                    <Text style={[
+                        typography.body,
+                        {
+                            color: colors.textMuted,
+                            fontStyle: 'italic',
+                            textAlign: 'center',
+                        }
+                    ]}>
+                        変わりたいと思った瞬間が、{'\n'}
+                        変われる瞬間の始まりです。
+                    </Text>
                 </Animated.View>
             </View>
+
+            {/* Footer */}
+            <Animated.View
+                entering={FadeInUp.duration(600).delay(1000)}
+                style={[styles.footer, { paddingHorizontal: spacing.gutter }]}
+            >
+                <Button
+                    title={t('onboarding.v3.welcome.startButton')}
+                    onPress={handleStart}
+                    size="lg"
+                />
+                <View style={{ marginTop: spacing.xl }}>
+                    <ProgressIndicator totalSteps={8} currentStep={1} />
+                </View>
+            </Animated.View>
         </SafeAreaView>
     );
 }
@@ -82,29 +115,36 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    glowContainer: {
-        ...StyleSheet.absoluteFillObject,
-        alignItems: 'center',
-        paddingTop: 100,
-    },
-    glowOuter: {
-        width: 300,
-        height: 300,
-        borderRadius: 150,
-        opacity: 0.3,
-    },
     content: {
         flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
         paddingTop: 60,
     },
-    logoSection: {
-        alignItems: 'center',
+    iconContainer: {
+        marginBottom: 32,
     },
-    logoText: {
-        flexDirection: 'row',
-        marginTop: 24,
+    iconCircle: {
+        width: 96,
+        height: 96,
+        borderRadius: 48,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    quoteContainer: {
+        width: '100%',
+        position: 'relative',
+    },
+    quoteIcon: {
+        position: 'absolute',
+        top: -10,
+        left: '50%',
+        marginLeft: -10,
+        width: 20,
+        height: 20,
     },
     footer: {
+        paddingTop: 20,
         paddingBottom: 40,
     },
 });
