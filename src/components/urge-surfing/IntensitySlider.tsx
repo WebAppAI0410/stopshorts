@@ -3,7 +3,7 @@
  * Slider to measure urge intensity (1-10)
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -11,7 +11,6 @@ import Animated, {
   useAnimatedStyle,
   runOnJS,
   withSpring,
-  interpolateColor,
 } from 'react-native-reanimated';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -40,6 +39,14 @@ export function IntensitySlider({
   const sliderWidth = useSharedValue(0);
   const thumbPosition = useSharedValue((value - 1) / 9);
   const isPressed = useSharedValue(false);
+
+  // Sync thumbPosition when value changes externally
+  useEffect(() => {
+    thumbPosition.value = withSpring((value - 1) / 9, {
+      damping: 15,
+      stiffness: 150,
+    });
+  }, [value, thumbPosition]);
 
   const updateValue = useCallback(
     (newValue: number) => {

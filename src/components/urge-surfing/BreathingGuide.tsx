@@ -3,7 +3,7 @@
  * Guided breathing animation for urge surfing
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -63,8 +63,8 @@ export function BreathingGuide({
   const ringScale = useSharedValue(1);
   const ringOpacity = useSharedValue(0);
 
-  // Total cycle duration
-  const cycleDuration = inhaleMs + holdMs + exhaleMs + 500; // 500ms rest
+  // Track timeouts for cleanup
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
   const handleCycleComplete = useCallback(
     (cycle: number) => {
@@ -78,6 +78,19 @@ export function BreathingGuide({
     setIsRunning(false);
     onComplete();
   }, [onComplete]);
+
+  // Helper to add timeout and track it
+  const addTimeout = useCallback((callback: () => void, delay: number) => {
+    const timeout = setTimeout(callback, delay);
+    timeoutsRef.current.push(timeout);
+    return timeout;
+  }, []);
+
+  // Clear all tracked timeouts
+  const clearAllTimeouts = useCallback(() => {
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+  }, []);
 
   // Run breathing animation
   useEffect(() => {
@@ -100,7 +113,7 @@ export function BreathingGuide({
       );
 
       // Hold phase
-      const holdTimeout = setTimeout(() => {
+      addTimeout(() => {
         setPhase('hold');
         // Subtle pulse during hold
         scale.value = withSequence(
@@ -110,7 +123,7 @@ export function BreathingGuide({
       }, inhaleMs);
 
       // Exhale phase
-      const exhaleTimeout = setTimeout(() => {
+      addTimeout(() => {
         setPhase('exhale');
         scale.value = withTiming(1, {
           duration: exhaleMs,
@@ -120,36 +133,31 @@ export function BreathingGuide({
       }, inhaleMs + holdMs);
 
       // Rest and next cycle
-      const restTimeout = setTimeout(() => {
+      addTimeout(() => {
         setPhase('rest');
         runOnJS(handleCycleComplete)(cycleNum + 1);
 
         if (cycleNum + 1 < cycles) {
           setCurrentCycle(cycleNum + 1);
           // Short pause before next cycle
-          setTimeout(() => {
+          addTimeout(() => {
             runCycle(cycleNum + 1);
           }, 500);
         } else {
           runOnJS(handleAllComplete)();
         }
       }, inhaleMs + holdMs + exhaleMs);
-
-      return () => {
-        clearTimeout(holdTimeout);
-        clearTimeout(exhaleTimeout);
-        clearTimeout(restTimeout);
-      };
     };
 
     // Start first cycle after brief delay
-    const startDelay = setTimeout(() => {
+    addTimeout(() => {
       setCurrentCycle(0);
       runCycle(0);
     }, 500);
 
+    // Cleanup all timeouts on unmount or when dependencies change
     return () => {
-      clearTimeout(startDelay);
+      clearAllTimeouts();
     };
   }, [
     isRunning,
@@ -163,6 +171,8 @@ export function BreathingGuide({
     ringOpacity,
     handleCycleComplete,
     handleAllComplete,
+    addTimeout,
+    clearAllTimeouts,
   ]);
 
   // Animated styles

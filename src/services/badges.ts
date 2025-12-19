@@ -126,8 +126,9 @@ export function calculateStreak(
   const today = new Date();
   let streak = 0;
   const currentDate = new Date(today);
+  const MAX_STREAK_DAYS = 1000; // Safety limit to prevent infinite loop
 
-  while (true) {
+  while (streak < MAX_STREAK_DAYS) {
     const dateKey = currentDate.toISOString().split('T')[0];
     const stats = dailyStats[dateKey];
 

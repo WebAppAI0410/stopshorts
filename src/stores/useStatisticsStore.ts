@@ -15,8 +15,8 @@ import type {
 import { getDateKey, getTimeOfDay } from '../types/statistics';
 import { BADGE_DEFINITIONS, checkBadges, calculateStreak } from '../services/badges';
 
-// Record types for actions
-interface UrgeSurfingRecord {
+// Record type for store actions (excludes timestamp which is auto-generated)
+interface UrgeSurfingRecordInput {
   intensityBefore: number;
   intensityAfter: number;
   durationSeconds: number;
@@ -29,7 +29,7 @@ interface StatisticsState {
   lifetime: LifetimeStatistics;
 
   // Actions
-  recordUrgeSurfing: (record: UrgeSurfingRecord) => void;
+  recordUrgeSurfing: (record: UrgeSurfingRecordInput) => void;
   recordIntervention: (proceeded: boolean) => void;
   recordUsageTime: (appId: string, minutes: number) => void;
   recordTrainingSession: (minutes: number) => void;

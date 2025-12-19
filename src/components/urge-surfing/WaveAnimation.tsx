@@ -17,8 +17,6 @@ import Animated, {
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const AnimatedPath = Animated.createAnimatedComponent(Path);
-
 interface WaveAnimationProps {
   /** Current progress (0-1) */
   progress: number;
@@ -83,17 +81,6 @@ export function WaveAnimation({
       false
     );
   }, [waveOffset, wavePhase]);
-
-  // Wave position based on progress (wave calms down as progress increases)
-  const waveYPosition = useDerivedValue(() => {
-    // Start at 0.3 (high), end at 0.7 (low)
-    return interpolate(progress, [0, 0.5, 1], [0.3, 0.15, 0.7]);
-  });
-
-  // Wave amplitude decreases as progress increases (calmer at the end)
-  const waveAmplitude = useDerivedValue(() => {
-    return interpolate(progress, [0, 0.5, 1], [25, 30, 10]);
-  });
 
   // Animated wave container style (horizontal movement)
   const animatedWaveStyle = useAnimatedStyle(() => ({

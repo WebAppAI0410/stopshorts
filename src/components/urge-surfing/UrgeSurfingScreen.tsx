@@ -18,7 +18,7 @@ import { Button } from '../ui';
 import { WaveAnimation } from './WaveAnimation';
 import { IntensitySlider } from './IntensitySlider';
 import { BreathingGuide } from './BreathingGuide';
-import { t } from '../../i18n';
+// TODO: Use t() for i18n when translations are ready
 
 type SurfingPhase = 'initial' | 'surfing' | 'complete';
 
