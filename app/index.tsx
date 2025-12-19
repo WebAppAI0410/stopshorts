@@ -1,17 +1,24 @@
-import { View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect } from 'react';
+import { Redirect } from 'expo-router';
+import { useAppStore } from '../src/stores/useAppStore';
 
-export default function HomeScreen() {
-  return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 items-center justify-center px-6">
-        <Text className="text-4xl font-bold text-primary mb-4">
-          StopShorts
-        </Text>
-        <Text className="text-lg text-gray-600 text-center">
-          5分で止める、人生を取り戻す
-        </Text>
-      </View>
-    </SafeAreaView>
-  );
+// 開発中は毎回オンボーディングを表示する場合は true に
+const FORCE_ONBOARDING = __DEV__ && true; // false に変更で通常動作
+
+export default function Index() {
+  const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
+  const reset = useAppStore((state) => state.reset);
+
+  useEffect(() => {
+    if (FORCE_ONBOARDING) {
+      reset();
+    }
+  }, [reset]);
+
+  // FORCE_ONBOARDINGがtrueの場合、常にオンボーディングへ
+  if (FORCE_ONBOARDING || !hasCompletedOnboarding) {
+    return <Redirect href="/(onboarding)/welcome" />;
+  }
+
+  return <Redirect href="/(main)" />;
 }

@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "stopshorts",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -17,7 +16,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.stopshorts.app",
       "infoPlist": {
-        "NSUserTrackingUsageDescription": "アプリの使用状況を分析し、より良い体験を提供するために使用します。"
+        "NSUserTrackingUsageDescription": "アプリの使用状況を分析し、より良い体験を提供するために使用します。",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -35,10 +35,18 @@
     },
     "plugins": [
       "expo-router",
-      "expo-localization"
+      "expo-localization",
+      "expo-dev-client"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0c46ad4b-81b5-4c52-a35e-aca3b18fca50"
+      }
+    },
+    "owner": "webappai"
   }
 }

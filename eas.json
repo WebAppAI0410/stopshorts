@@ -11,6 +11,13 @@
         "simulator": false
       }
     },
+    "development-simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      }
+    },
     "preview": {
       "distribution": "internal",
       "ios": {
@@ -19,15 +26,6 @@
     },
     "production": {
       "autoIncrement": true
-    }
-  },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "",
-        "ascAppId": "",
-        "appleTeamId": ""
-      }
     }
   }
 }
