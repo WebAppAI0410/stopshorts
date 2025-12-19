@@ -1,4 +1,4 @@
-import { requireNativeModule, Platform } from 'expo-modules-core';
+import { Platform } from 'expo-modules-core';
 
 // Types
 export type AuthorizationStatus =
@@ -23,9 +23,21 @@ export interface ScreenTimeModuleType {
     clearAllShields(): Promise<boolean>;
 }
 
-// Get the native module (only available on iOS)
-const ScreenTimeModule: ScreenTimeModuleType | null =
-    Platform.OS === 'ios' ? requireNativeModule('ScreenTime') : null;
+// Get the native module (only available on iOS with development build)
+// Returns null in Expo Go since custom native modules are not supported
+let ScreenTimeModule: ScreenTimeModuleType | null = null;
+
+if (Platform.OS === 'ios') {
+    try {
+        // Dynamic import to avoid crash in Expo Go
+        const { requireNativeModule } = require('expo-modules-core');
+        ScreenTimeModule = requireNativeModule('ScreenTime');
+    } catch {
+        // Native module not available (Expo Go or module not linked)
+        console.log('[ScreenTime] Native module not available - using mock mode');
+        ScreenTimeModule = null;
+    }
+}
 
 /**
  * Check if Screen Time API is available on this device
