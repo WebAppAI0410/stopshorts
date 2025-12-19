@@ -1,21 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable, PanResponder } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
 import Animated, {
     FadeIn,
     FadeInDown,
     FadeInUp,
-    FadeOut,
-    SlideInRight,
     useAnimatedStyle,
     useSharedValue,
     withSpring,
     withTiming,
-    withDelay,
-    runOnJS,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -49,6 +44,34 @@ export default function TutorialScreen() {
 
     const translateY = useSharedValue(0);
     const shieldOpacity = useSharedValue(0);
+
+    // PanResponder for swipe gestures
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: () => true,
+            onPanResponderMove: (_, gestureState) => {
+                if (currentStep === 1 && !showShield) {
+                    translateY.value = gestureState.dy;
+                }
+            },
+            onPanResponderRelease: (_, gestureState) => {
+                if (currentStep === 1 && !showShield) {
+                    if (gestureState.dy < -50) {
+                        // Swipe up - next video
+                        translateY.value = withSpring(0);
+                        setCurrentVideo((currentVideo + 1) % MOCK_VIDEOS.length);
+                    } else if (gestureState.dy > 50) {
+                        // Swipe down - previous video
+                        translateY.value = withSpring(0);
+                        setCurrentVideo(currentVideo === 0 ? MOCK_VIDEOS.length - 1 : currentVideo - 1);
+                    } else {
+                        translateY.value = withSpring(0);
+                    }
+                }
+            },
+        })
+    ).current;
 
     useEffect(() => {
         if (currentStep === 1) {
@@ -95,28 +118,6 @@ export default function TutorialScreen() {
         setTutorialComplete();
         router.push('/(onboarding)/implementation-intent' as Href);
     };
-
-    const swipeGesture = Gesture.Pan()
-        .onUpdate((e) => {
-            if (currentStep === 1 && !showShield) {
-                translateY.value = e.translationY;
-            }
-        })
-        .onEnd((e) => {
-            if (currentStep === 1 && !showShield) {
-                if (e.translationY < -50) {
-                    // Swipe up - next video
-                    translateY.value = withSpring(0);
-                    runOnJS(setCurrentVideo)((currentVideo + 1) % MOCK_VIDEOS.length);
-                } else if (e.translationY > 50) {
-                    // Swipe down - previous video
-                    translateY.value = withSpring(0);
-                    runOnJS(setCurrentVideo)(currentVideo === 0 ? MOCK_VIDEOS.length - 1 : currentVideo - 1);
-                } else {
-                    translateY.value = withSpring(0);
-                }
-            }
-        });
 
     const animatedVideoStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: translateY.value }],
@@ -210,114 +211,113 @@ export default function TutorialScreen() {
         const video = MOCK_VIDEOS[currentVideo];
 
         return (
-            <GestureHandlerRootView style={{ flex: 1 }}>
-                <View style={[styles.mockAppContainer, { backgroundColor: '#000000' }]}>
-                    <GestureDetector gesture={swipeGesture}>
-                        <Animated.View style={[styles.videoContainer, animatedVideoStyle]}>
-                            {/* Gradient background to simulate video */}
-                            <LinearGradient
-                                colors={['#1a1a2e', '#16213e', '#0f3460']}
-                                style={StyleSheet.absoluteFill}
-                            />
+            <View style={[styles.mockAppContainer, { backgroundColor: '#000000' }]}>
+                <Animated.View
+                    style={[styles.videoContainer, animatedVideoStyle]}
+                    {...panResponder.panHandlers}
+                >
+                    {/* Gradient background to simulate video */}
+                    <LinearGradient
+                        colors={['#1a1a2e', '#16213e', '#0f3460']}
+                        style={StyleSheet.absoluteFill}
+                    />
 
-                            {/* Timer display */}
-                            <View style={[styles.timerBadge, { top: 50 }]}>
-                                <Text style={styles.timerText}>{timeElapsed}秒経過</Text>
-                            </View>
+                    {/* Timer display */}
+                    <View style={[styles.timerBadge, { top: 50 }]}>
+                        <Text style={styles.timerText}>{timeElapsed}秒経過</Text>
+                    </View>
 
-                            {/* Video content placeholder */}
-                            <View style={styles.videoContent}>
-                                <Ionicons name="play-circle-outline" size={80} color="rgba(255,255,255,0.3)" />
-                                <Text style={styles.swipeHint}>
-                                    {t('onboarding.tutorial.mockApp.swipeHint')}
+                    {/* Video content placeholder */}
+                    <View style={styles.videoContent}>
+                        <Ionicons name="play-circle-outline" size={80} color="rgba(255,255,255,0.3)" />
+                        <Text style={styles.swipeHint}>
+                            {t('onboarding.tutorial.mockApp.swipeHint')}
+                        </Text>
+                    </View>
+
+                    {/* Right side actions */}
+                    <View style={styles.actionsContainer}>
+                        <View style={styles.actionItem}>
+                            <Ionicons name="heart" size={32} color="#FFFFFF" />
+                            <Text style={styles.actionText}>{video.likes}</Text>
+                        </View>
+                        <View style={styles.actionItem}>
+                            <Ionicons name="chatbubble-ellipses" size={32} color="#FFFFFF" />
+                            <Text style={styles.actionText}>{video.comments}</Text>
+                        </View>
+                        <View style={styles.actionItem}>
+                            <Ionicons name="share-social" size={32} color="#FFFFFF" />
+                            <Text style={styles.actionText}>{t('onboarding.tutorial.mockApp.shareCount')}</Text>
+                        </View>
+                    </View>
+
+                    {/* Bottom info */}
+                    <View style={styles.videoInfo}>
+                        <Text style={styles.username}>{video.user}</Text>
+                        <Text style={styles.description}>{video.description}</Text>
+                    </View>
+                </Animated.View>
+
+                {/* Shield overlay */}
+                {showShield && (
+                    <Animated.View
+                        style={[styles.shieldOverlay, animatedShieldStyle]}
+                        entering={FadeIn.duration(500)}
+                    >
+                        <View style={[styles.shieldContent, { backgroundColor: 'rgba(13, 17, 23, 0.95)' }]}>
+                            <Animated.View entering={FadeInDown.duration(600).delay(200)}>
+                                <View style={styles.shieldIcon}>
+                                    <Ionicons name="shield-checkmark" size={64} color={colors.accent} />
+                                </View>
+                                <Text style={[typography.h1, { color: '#FFFFFF', textAlign: 'center', marginTop: spacing.lg }]}>
+                                    5分が経過しました
                                 </Text>
-                            </View>
+                                <Text style={[typography.bodyLarge, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.md }]}>
+                                    続けますか？それとも今日の目標に向かいますか？
+                                </Text>
+                            </Animated.View>
 
-                            {/* Right side actions */}
-                            <View style={styles.actionsContainer}>
-                                <View style={styles.actionItem}>
-                                    <Ionicons name="heart" size={32} color="#FFFFFF" />
-                                    <Text style={styles.actionText}>{video.likes}</Text>
-                                </View>
-                                <View style={styles.actionItem}>
-                                    <Ionicons name="chatbubble-ellipses" size={32} color="#FFFFFF" />
-                                    <Text style={styles.actionText}>{video.comments}</Text>
-                                </View>
-                                <View style={styles.actionItem}>
-                                    <Ionicons name="share-social" size={32} color="#FFFFFF" />
-                                    <Text style={styles.actionText}>{t('onboarding.tutorial.mockApp.shareCount')}</Text>
-                                </View>
-                            </View>
-
-                            {/* Bottom info */}
-                            <View style={styles.videoInfo}>
-                                <Text style={styles.username}>{video.user}</Text>
-                                <Text style={styles.description}>{video.description}</Text>
-                            </View>
-                        </Animated.View>
-                    </GestureDetector>
-
-                    {/* Shield overlay */}
-                    {showShield && (
-                        <Animated.View
-                            style={[styles.shieldOverlay, animatedShieldStyle]}
-                            entering={FadeIn.duration(500)}
-                        >
-                            <View style={[styles.shieldContent, { backgroundColor: 'rgba(13, 17, 23, 0.95)' }]}>
-                                <Animated.View entering={FadeInDown.duration(600).delay(200)}>
-                                    <View style={styles.shieldIcon}>
-                                        <Ionicons name="shield-checkmark" size={64} color={colors.accent} />
-                                    </View>
-                                    <Text style={[typography.h1, { color: '#FFFFFF', textAlign: 'center', marginTop: spacing.lg }]}>
-                                        5分が経過しました
-                                    </Text>
-                                    <Text style={[typography.bodyLarge, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.md }]}>
-                                        続けますか？それとも今日の目標に向かいますか？
-                                    </Text>
-                                </Animated.View>
-
-                                <Animated.View
-                                    entering={FadeInUp.duration(600).delay(400)}
-                                    style={{ marginTop: spacing.xl, width: '100%' }}
+                            <Animated.View
+                                entering={FadeInUp.duration(600).delay(400)}
+                                style={{ marginTop: spacing.xl, width: '100%' }}
+                            >
+                                <Pressable
+                                    onPress={handleShieldClose}
+                                    style={[
+                                        styles.shieldButton,
+                                        {
+                                            backgroundColor: colors.accent,
+                                            borderRadius: borderRadius.lg,
+                                            padding: spacing.md,
+                                        },
+                                    ]}
                                 >
-                                    <Pressable
-                                        onPress={handleShieldClose}
-                                        style={[
-                                            styles.shieldButton,
-                                            {
-                                                backgroundColor: colors.accent,
-                                                borderRadius: borderRadius.lg,
-                                                padding: spacing.md,
-                                            },
-                                        ]}
-                                    >
-                                        <Text style={[typography.button, { color: '#FFFFFF', textAlign: 'center' }]}>
-                                            アプリを閉じる
-                                        </Text>
-                                    </Pressable>
-                                    <Pressable
-                                        style={[
-                                            styles.shieldButton,
-                                            {
-                                                backgroundColor: 'transparent',
-                                                borderColor: colors.border,
-                                                borderWidth: 1,
-                                                borderRadius: borderRadius.lg,
-                                                padding: spacing.md,
-                                                marginTop: spacing.md,
-                                            },
-                                        ]}
-                                    >
-                                        <Text style={[typography.button, { color: colors.textSecondary, textAlign: 'center' }]}>
-                                            5分延長する
-                                        </Text>
-                                    </Pressable>
-                                </Animated.View>
-                            </View>
-                        </Animated.View>
-                    )}
-                </View>
-            </GestureHandlerRootView>
+                                    <Text style={[typography.button, { color: '#FFFFFF', textAlign: 'center' }]}>
+                                        アプリを閉じる
+                                    </Text>
+                                </Pressable>
+                                <Pressable
+                                    style={[
+                                        styles.shieldButton,
+                                        {
+                                            backgroundColor: 'transparent',
+                                            borderColor: colors.border,
+                                            borderWidth: 1,
+                                            borderRadius: borderRadius.lg,
+                                            padding: spacing.md,
+                                            marginTop: spacing.md,
+                                        },
+                                    ]}
+                                >
+                                    <Text style={[typography.button, { color: colors.textSecondary, textAlign: 'center' }]}>
+                                        5分延長する
+                                    </Text>
+                                </Pressable>
+                            </Animated.View>
+                        </View>
+                    </Animated.View>
+                )}
+            </View>
         );
     }
 
