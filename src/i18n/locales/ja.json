@@ -371,6 +371,7 @@
           "water": "水を飲む",
           "custom": "自分で決める..."
         },
+        "customPlaceholder": "代わりにすることを入力...",
         "note": "シールドにこの選択肢を表示します",
         "continueButton": "続ける"
       },

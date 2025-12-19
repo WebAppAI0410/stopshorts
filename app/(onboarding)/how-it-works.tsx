@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
@@ -47,7 +47,11 @@ export default function HowItWorksScreen() {
 
             <Header />
 
-            <View style={[styles.content, { paddingHorizontal: spacing.gutter }]}>
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={[styles.content, { paddingHorizontal: spacing.gutter }]}
+                showsVerticalScrollIndicator={false}
+            >
                 {/* Title */}
                 <Animated.View entering={FadeInUp.duration(600).delay(200)}>
                     <Text style={[
@@ -72,100 +76,71 @@ export default function HowItWorksScreen() {
                                 {
                                     backgroundColor: colors.backgroundCard,
                                     borderRadius: borderRadius.lg,
-                                    padding: spacing.lg,
-                                    marginBottom: spacing.md,
+                                    padding: spacing.md,
+                                    marginBottom: spacing.sm,
                                 }
                             ]}
                         >
-                            <View style={styles.stepHeader}>
+                            <View style={styles.stepRow}>
                                 <View style={[
                                     styles.iconContainer,
                                     { backgroundColor: colors.accentMuted }
                                 ]}>
-                                    <Ionicons name={step.icon} size={28} color={colors.accent} />
+                                    <Ionicons name={step.icon} size={24} color={colors.accent} />
                                 </View>
-                                <View style={styles.stepNumber}>
+                                <View style={styles.stepContent}>
                                     <Text style={[
                                         typography.caption,
-                                        { color: colors.textMuted }
+                                        { color: colors.textMuted, marginBottom: 2 }
                                     ]}>
                                         {t('onboarding.v3.howItWorks.stepLabel', { step: index + 1 })}
                                     </Text>
+                                    <Text style={[
+                                        typography.h3,
+                                        { color: colors.textPrimary, fontSize: 16 }
+                                    ]}>
+                                        {step.title}
+                                    </Text>
+                                    <Text style={[
+                                        typography.bodySmall,
+                                        { color: colors.textSecondary, marginTop: 2 }
+                                    ]}>
+                                        {step.description}
+                                    </Text>
                                 </View>
                             </View>
-                            <Text style={[
-                                typography.h3,
-                                {
-                                    color: colors.textPrimary,
-                                    marginTop: spacing.md,
-                                    marginBottom: spacing.sm,
-                                }
-                            ]}>
-                                {step.title}
-                            </Text>
-                            <Text style={[
-                                typography.body,
-                                { color: colors.textSecondary }
-                            ]}>
-                                {step.description}
-                            </Text>
                         </Animated.View>
                     ))}
                 </View>
 
-                {/* Flow Diagram */}
-                <Animated.View
-                    entering={FadeInUp.duration(600).delay(850)}
-                    style={[
-                        styles.flowDiagram,
-                        {
-                            backgroundColor: colors.backgroundCard,
-                            borderRadius: borderRadius.lg,
-                            padding: spacing.lg,
-                            marginTop: spacing.lg,
-                            marginBottom: spacing.xl,
-                        }
-                    ]}
-                >
-                    <Text style={[
-                        typography.h2,
-                        {
-                            color: colors.textPrimary,
-                            textAlign: 'center',
-                            letterSpacing: 8,
-                        }
-                    ]}>
-                        📱 → ⏱️ → 🛡️ → 💭
-                    </Text>
-                </Animated.View>
-
                 {/* Note Card */}
                 <Animated.View
-                    entering={FadeInUp.duration(600).delay(1000)}
+                    entering={FadeInUp.duration(600).delay(850)}
                     style={[
                         styles.noteCard,
                         {
                             backgroundColor: colors.accentMuted,
                             borderRadius: borderRadius.lg,
-                            padding: spacing.lg,
+                            padding: spacing.md,
+                            marginTop: spacing.md,
                         }
                     ]}
                 >
-                    <View style={styles.noteHeader}>
-                        <Ionicons name="lightbulb-outline" size={24} color={colors.accent} />
+                    <View style={styles.noteRow}>
+                        <Ionicons name="lightbulb-outline" size={20} color={colors.accent} />
+                        <Text style={[
+                            typography.bodySmall,
+                            {
+                                color: colors.textPrimary,
+                                flex: 1,
+                                marginLeft: spacing.sm,
+                            }
+                        ]}>
+                            {t('onboarding.v3.howItWorks.note')}
+                        </Text>
                     </View>
-                    <Text style={[
-                        typography.body,
-                        {
-                            color: colors.textPrimary,
-                            textAlign: 'center',
-                            lineHeight: 24,
-                        }
-                    ]}>
-                        {t('onboarding.v3.howItWorks.note')}
-                    </Text>
                 </Animated.View>
-            </View>
+            </ScrollView>
 
             {/* Footer */}
             <Animated.View
@@ -189,43 +164,40 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    content: {
+    scrollView: {
         flex: 1,
-        paddingTop: 20,
+    },
+    content: {
+        paddingTop: 8,
+        paddingBottom: 24,
     },
     stepsContainer: {
-        marginBottom: 0,
+        gap: 0,
     },
     stepCard: {
-        position: 'relative',
+        // styles applied inline
     },
-    stepHeader: {
+    stepRow: {
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        alignItems: 'flex-start',
     },
     iconContainer: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         alignItems: 'center',
         justifyContent: 'center',
+        marginRight: 12,
     },
-    stepNumber: {
-        position: 'absolute',
-        top: 0,
-        right: 0,
-    },
-    flowDiagram: {
-        alignItems: 'center',
-        justifyContent: 'center',
+    stepContent: {
+        flex: 1,
     },
     noteCard: {
-        position: 'relative',
+        // styles applied inline
     },
-    noteHeader: {
-        alignItems: 'center',
-        marginBottom: 12,
+    noteRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
     },
     footer: {
         paddingTop: 20,
