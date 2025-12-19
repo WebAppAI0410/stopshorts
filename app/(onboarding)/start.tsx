@@ -13,16 +13,16 @@ export default function StartScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
 
-    const motivation = useAppStore((state) => state.motivation);
+    const goal = useAppStore((state) => state.goal);
     const lifetimeImpact = useAppStore((state) => state.lifetimeImpact);
     const alternativeActivity = useAppStore((state) => state.alternativeActivity);
     const customAlternativeActivity = useAppStore((state) => state.customAlternativeActivity);
     const ifThenPlan = useAppStore((state) => state.ifThenPlan);
 
-    // Get motivation display name from translation
-    const getMotivationDisplayName = (motivationType: string | null): string => {
-        if (!motivationType) return '';
-        return t(`onboarding.v3.motivation.options.${motivationType}.title`);
+    // Get goal display name from translation
+    const getGoalDisplayName = (goalType: string | null): string => {
+        if (!goalType) return '';
+        return t(`onboarding.v3.goal.options.${goalType}.title`);
     };
 
     // Get If-Then action display name from translation
@@ -105,7 +105,7 @@ export default function StartScreen() {
                                 fontWeight: '600',
                             }
                         ]}>
-                            {getMotivationDisplayName(motivation)}
+                            {getGoalDisplayName(goal)}
                         </Text>
                     </View>
 

@@ -432,7 +432,7 @@
       },
       "start": {
         "title": "あなたの約束",
-        "motivationLabel": "理由",
+        "motivationLabel": "目標",
         "timeLabel": "取り戻す時間",
         "timeValue": "年間 {{hours}}時間",
         "alternativeLabel": "代わりにやること",
