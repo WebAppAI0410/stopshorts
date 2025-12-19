@@ -406,9 +406,7 @@
       },
       "appSelection": {
         "title": "どのアプリを制限しますか？",
-        "subtitle": "5分で介入するアプリを選んでください",
-        "description": "選択したアプリは、使用時間の分析と5分ブロックの対象になります。",
-        "editableNote": "この設定はダッシュボードからいつでも変更できます。",
+        "note": "ここで選んだアプリが分析・ブロックの対象になります。設定は後から変更できます。",
         "apps": {
           "tiktok": "TikTok",
           "youtubeShorts": "YouTube Shorts",
