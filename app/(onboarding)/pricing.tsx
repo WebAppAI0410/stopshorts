@@ -151,21 +151,40 @@ export default function PricingScreen() {
                     </Text>
                 </Animated.View>
 
-                {/* Toggle to show paid plans */}
+                {/* Toggle to show paid plans - styled as prominent card */}
                 <Animated.View entering={FadeInUp.duration(600).delay(300)}>
                     <TouchableOpacity
-                        style={[styles.toggleButton, { marginTop: spacing.lg }]}
+                        style={[
+                            styles.paidPlanCard,
+                            {
+                                marginTop: spacing.md,
+                                backgroundColor: showPaidPlans ? colors.backgroundCard : colors.backgroundCard,
+                                borderRadius: borderRadius.xl,
+                                borderWidth: 2,
+                                borderColor: showPaidPlans ? colors.accent : colors.border,
+                            }
+                        ]}
                         onPress={() => setShowPaidPlans(!showPaidPlans)}
-                        activeOpacity={0.7}
+                        activeOpacity={0.8}
                     >
-                        <Text style={[typography.body, { color: colors.accent }]}>
-                            {t('onboarding.pricing.skipTrial')}
-                        </Text>
-                        <Ionicons
-                            name={showPaidPlans ? 'chevron-up' : 'chevron-down'}
-                            size={20}
-                            color={colors.accent}
-                        />
+                        <View style={styles.paidPlanContent}>
+                            <View style={[styles.paidPlanIcon, { backgroundColor: colors.accentMuted }]}>
+                                <Ionicons name="rocket-outline" size={24} color={colors.accent} />
+                            </View>
+                            <View style={styles.paidPlanText}>
+                                <Text style={[typography.h3, { color: colors.textPrimary }]}>
+                                    {t('onboarding.pricing.skipTrial')}
+                                </Text>
+                                <Text style={[typography.caption, { color: colors.textSecondary }]}>
+                                    {t('onboarding.pricing.skipTrialDescription')}
+                                </Text>
+                            </View>
+                            <Ionicons
+                                name={showPaidPlans ? 'chevron-up' : 'chevron-down'}
+                                size={24}
+                                color={colors.accent}
+                            />
+                        </View>
                     </TouchableOpacity>
                 </Animated.View>
 
@@ -386,11 +405,23 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'baseline',
     },
-    toggleButton: {
+    paidPlanCard: {
+        padding: 16,
+    },
+    paidPlanContent: {
         flexDirection: 'row',
         alignItems: 'center',
+    },
+    paidPlanIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        alignItems: 'center',
         justifyContent: 'center',
-        gap: 4,
+        marginRight: 12,
+    },
+    paidPlanText: {
+        flex: 1,
     },
     commitmentCard: {
         padding: 16,

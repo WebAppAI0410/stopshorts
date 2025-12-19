@@ -258,7 +258,8 @@
       "privacyNote": "決済はAppleにより安全に処理されます",
       "startTrial": "無料トライアルを始める",
       "selectPlan": "このプランで始める",
-      "skipTrial": "有料プランを選んで今すぐ始める"
+      "skipTrial": "有料プランを選んで今すぐ始める",
+      "skipTrialDescription": "コミットメントで成功率がアップ"
     },
     "v3": {
       "welcome": {
