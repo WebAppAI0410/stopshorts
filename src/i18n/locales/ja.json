@@ -356,7 +356,7 @@
           "custom": "自分で書く..."
         },
         "customPlaceholder": "やりたいことを入力...",
-        "commitment": "私は、ショート動画の代わりに{{activity}}に時間を使います。",
+        "commitment": "ショート動画を見る代わりに、{{activity}}。",
         "confirmButton": "この約束を守る"
       },
       "ifThen": {
