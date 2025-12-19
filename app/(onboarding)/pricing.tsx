@@ -357,7 +357,7 @@ export default function PricingScreen() {
             >
                 <Button
                     title={skipTrial
-                        ? t('onboarding.pricing.startNowButton', { plan: plans.find(p => p.id === selectedPlan)?.name })
+                        ? t('onboarding.pricing.startNowButton', { plan: plans.find(p => p.id === selectedPlan)?.name ?? '' })
                         : t('onboarding.pricing.startTrialButton')
                     }
                     onPress={skipTrial ? handleStartWithoutTrial : handleStartWithTrial}

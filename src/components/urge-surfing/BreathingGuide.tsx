@@ -64,7 +64,7 @@ export function BreathingGuide({
   const ringOpacity = useSharedValue(0);
 
   // Track timeouts for cleanup
-  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const handleCycleComplete = useCallback(
     (cycle: number) => {
