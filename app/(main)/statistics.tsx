@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,15 +6,22 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { StatCard, WeeklyBarChart } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
+import { t } from '../../src/i18n';
+
+// Fixed demo data to prevent re-renders from changing values
+const DEMO_WEEKLY_DATA = [120, 95, 140, 80, 110, 150, 130];
 
 export default function StatisticsScreen() {
-    const { colors, typography, spacing } = useTheme();
+    const { colors, typography, spacing, borderRadius } = useTheme();
     const { stats } = useAppStore();
 
-    // Calculate weekly stats
-    const getWeeklyData = () => {
+    // Check if we have real data
+    const hasRealData = stats.length > 0;
+
+    // Calculate weekly stats with memoization
+    const weeklyData = useMemo(() => {
         const today = new Date();
-        const weekData = [];
+        const result = [];
 
         for (let i = 6; i >= 0; i--) {
             const date = new Date(today);
@@ -22,16 +29,15 @@ export default function StatisticsScreen() {
             const dateString = date.toISOString().split('T')[0];
             const dayStats = stats.find(s => s.date === dateString);
 
-            weekData.push({
+            result.push({
                 day: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][date.getDay()],
-                value: dayStats?.totalBlockedMinutes || Math.floor(Math.random() * 180 + 60),
+                value: dayStats?.totalBlockedMinutes || DEMO_WEEKLY_DATA[6 - i],
             });
         }
 
-        return weekData;
-    };
+        return result;
+    }, [stats]);
 
-    const weeklyData = getWeeklyData();
     const totalWeekMinutes = weeklyData.reduce((sum, day) => sum + day.value, 0);
     const hours = Math.floor(totalWeekMinutes / 60);
     const minutes = totalWeekMinutes % 60;
@@ -39,8 +45,8 @@ export default function StatisticsScreen() {
     // Get current day for highlighting
     const today = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][new Date().getDay()];
 
-    // Streak calculation (placeholder)
-    const streakDays = 28;
+    // Streak and interventions - use demo values if no real data
+    const streakDays = hasRealData ? stats.length : 28;
     const totalInterventions = stats.reduce((sum, s) => sum + s.interventionCount, 0) || 42;
 
     return (
@@ -57,6 +63,34 @@ export default function StatisticsScreen() {
                     </Text>
                 </Animated.View>
 
+                {/* Demo Mode Banner */}
+                {!hasRealData && (
+                    <Animated.View
+                        entering={FadeInDown.duration(600).delay(50)}
+                        style={[
+                            styles.demoBanner,
+                            {
+                                backgroundColor: colors.warning + '20',
+                                borderRadius: borderRadius.lg,
+                                borderWidth: 1,
+                                borderColor: colors.warning + '40',
+                            }
+                        ]}
+                    >
+                        <View style={styles.demoIconContainer}>
+                            <Ionicons name="flask-outline" size={18} color={colors.warning} />
+                        </View>
+                        <View style={styles.demoTextContainer}>
+                            <Text style={[typography.label, { color: colors.warning }]}>
+                                {t('statistics.demoMode')}
+                            </Text>
+                            <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>
+                                {t('statistics.demoModeDescription')}
+                            </Text>
+                        </View>
+                    </Animated.View>
+                )}
+
                 {/* Hero Stat */}
                 <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.heroSection}>
                     <View style={styles.heroRow}>
@@ -68,7 +102,7 @@ export default function StatisticsScreen() {
                         </View>
                     </View>
                     <Text style={[typography.body, { color: colors.textSecondary }]}>
-                        Saved this week
+                        {t('statistics.savedThisWeek')}
                     </Text>
                 </Animated.View>
 
@@ -85,20 +119,20 @@ export default function StatisticsScreen() {
                     <StatCard
                         icon="flame-outline"
                         iconColor={colors.streak}
-                        title="Streak"
+                        title={t('statistics.streak')}
                         value={streakDays}
-                        unit="Days"
-                        subtitle="Keep the momentum!"
+                        unit={t('statistics.days')}
+                        subtitle={t('statistics.keepMomentum')}
                         progressColor="#8B5CF6"
                     />
                     <View style={{ width: spacing.md }} />
                     <StatCard
                         icon="shield-checkmark-outline"
                         iconColor={colors.accent}
-                        title="Interventions"
+                        title={t('statistics.interventions')}
                         value={totalInterventions}
-                        unit="Times"
-                        subtitle="Mindful pauses taken."
+                        unit={t('statistics.times')}
+                        subtitle={t('statistics.mindfulPauses')}
                         progressColor={colors.accent}
                     />
                 </Animated.View>
@@ -117,6 +151,18 @@ const styles = StyleSheet.create({
     header: {
         alignItems: 'center',
         marginBottom: 24,
+    },
+    demoBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        marginBottom: 16,
+    },
+    demoIconContainer: {
+        marginRight: 12,
+    },
+    demoTextContainer: {
+        flex: 1,
     },
     heroSection: {
         alignItems: 'flex-start',

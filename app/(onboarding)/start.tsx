@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
 import Animated, { FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, ProgressIndicator, GlowOrb } from '../../src/components/ui';
+import { Button, ProgressIndicator, GlowOrb, Header } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
@@ -18,7 +18,6 @@ export default function StartScreen() {
     const alternativeActivity = useAppStore((state) => state.alternativeActivity);
     const customAlternativeActivity = useAppStore((state) => state.customAlternativeActivity);
     const ifThenPlan = useAppStore((state) => state.ifThenPlan);
-    const completeOnboarding = useAppStore((state) => state.completeOnboarding);
 
     // Get motivation display name from translation
     const getMotivationDisplayName = (motivationType: string | null): string => {
@@ -34,14 +33,16 @@ export default function StartScreen() {
     };
 
     const handleStart = () => {
-        completeOnboarding();
-        router.replace('/(main)' as Href);
+        // Navigate to pricing screen instead of completing onboarding
+        router.push('/(onboarding)/pricing' as Href);
     };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <GlowOrb position="top-right" size="large" color="accent" intensity={0.12} />
             <GlowOrb position="bottom-left" size="medium" color="primary" intensity={0.08} />
+
+            <Header showBack />
 
             <ScrollView
                 style={styles.scrollView}
@@ -257,7 +258,7 @@ const styles = StyleSheet.create({
     },
     content: {
         flexGrow: 1,
-        paddingTop: 60,
+        paddingTop: 20,
         paddingBottom: 20,
     },
     iconContainer: {

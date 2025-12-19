@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import { t } from '../../src/i18n';
 
 export default function MainLayout() {
     const { colors, typography } = useTheme();
@@ -30,7 +31,7 @@ export default function MainLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Home',
+                    title: t('tabs.home'),
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons
                             name={focused ? 'home' : 'home-outline'}
@@ -43,7 +44,7 @@ export default function MainLayout() {
             <Tabs.Screen
                 name="statistics"
                 options={{
-                    title: 'Stats',
+                    title: t('tabs.stats'),
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons
                             name={focused ? 'stats-chart' : 'stats-chart-outline'}
@@ -56,7 +57,7 @@ export default function MainLayout() {
             <Tabs.Screen
                 name="settings"
                 options={{
-                    title: 'Settings',
+                    title: t('tabs.settings'),
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons
                             name={focused ? 'settings' : 'settings-outline'}
@@ -69,7 +70,7 @@ export default function MainLayout() {
             <Tabs.Screen
                 name="profile"
                 options={{
-                    title: 'Profile',
+                    title: t('tabs.profile'),
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons
                             name={focused ? 'person' : 'person-outline'}

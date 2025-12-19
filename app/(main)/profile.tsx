@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
+import { t } from '../../src/i18n';
 
 export default function ProfileScreen() {
     const { colors, typography, spacing, borderRadius } = useTheme();
@@ -14,11 +15,11 @@ export default function ProfileScreen() {
     const totalMinutesSaved = stats.reduce((sum, s) => sum + s.totalBlockedMinutes, 0);
 
     const purposeLabels: Record<string, string> = {
-        sleep: 'Better Sleep',
-        study: 'Focus on Study',
-        work: 'Work Productivity',
-        creative: 'Creative Time',
-        mental: 'Mental Health',
+        sleep: t('profile.goals.sleep'),
+        study: t('profile.goals.study'),
+        work: t('profile.goals.work'),
+        creative: t('profile.goals.creative'),
+        mental: t('profile.goals.mental'),
     };
 
     return (
@@ -31,7 +32,7 @@ export default function ProfileScreen() {
                 {/* Header */}
                 <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
                     <Text style={[typography.h2, { color: colors.textSecondary }]}>
-                        Profile
+                        {t('profile.title')}
                     </Text>
                 </Animated.View>
 
@@ -41,11 +42,11 @@ export default function ProfileScreen() {
                         <Ionicons name="person" size={48} color={colors.textInverse} />
                     </View>
                     <Text style={[typography.h2, { color: colors.textPrimary, marginTop: spacing.md }]}>
-                        User
+                        {t('profile.user')}
                     </Text>
                     <View style={[styles.badge, { backgroundColor: colors.surface, borderRadius: borderRadius.full }]}>
                         <Text style={[typography.caption, { color: colors.accent }]}>
-                            {subscriptionPlan === 'free' ? 'Free Plan' : 'Premium'}
+                            {subscriptionPlan === 'free' ? t('profile.freePlan') : t('profile.premium')}
                         </Text>
                     </View>
                 </Animated.View>
@@ -68,7 +69,7 @@ export default function ProfileScreen() {
                             {totalInterventions}
                         </Text>
                         <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
-                            Total Interventions
+                            {t('profile.totalInterventions')}
                         </Text>
                     </View>
                     <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -77,7 +78,7 @@ export default function ProfileScreen() {
                             {Math.floor(totalMinutesSaved / 60)}h
                         </Text>
                         <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
-                            Time Saved
+                            {t('profile.timeSaved')}
                         </Text>
                     </View>
                 </Animated.View>
@@ -99,11 +100,11 @@ export default function ProfileScreen() {
                     <View style={styles.goalHeader}>
                         <Ionicons name="flag-outline" size={20} color={colors.accent} />
                         <Text style={[typography.label, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
-                            Your Goal
+                            {t('profile.yourGoal')}
                         </Text>
                     </View>
                     <Text style={[typography.h3, { color: colors.textPrimary, marginTop: spacing.sm }]}>
-                        {purposeLabels[purpose || 'sleep'] || 'Set your goal'}
+                        {purposeLabels[purpose || 'sleep'] || t('profile.setYourGoal')}
                     </Text>
                 </Animated.View>
 
@@ -125,7 +126,7 @@ export default function ProfileScreen() {
                         <View style={styles.titleRow}>
                             <Ionicons name="trophy-outline" size={20} color={colors.warning} />
                             <Text style={[typography.h3, { color: colors.textPrimary, marginLeft: spacing.sm }]}>
-                                Achievements
+                                {t('profile.achievements')}
                             </Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />

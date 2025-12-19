@@ -108,6 +108,9 @@ interface AppState {
   // App Selection Actions
   setSelectedApps: (apps: TargetAppId[]) => void;
   setGoal: (goal: GoalType) => void;
+
+  // Subscription Actions
+  setSubscriptionPlan: (plan: SubscriptionPlan) => void;
 }
 
 const initialState = {
@@ -452,6 +455,25 @@ export const useAppStore = create<AppState>()(
 
       setGoal: (goal) =>
         set({ goal }),
+
+      // Subscription Actions
+      setSubscriptionPlan: (plan) => {
+        const now = new Date().toISOString();
+        if (plan === 'trial') {
+          const expiry = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+          set({
+            subscriptionPlan: plan,
+            subscriptionStatus: 'active',
+            trialStartDate: now,
+            subscriptionExpiry: expiry,
+          });
+        } else {
+          set({
+            subscriptionPlan: plan,
+            subscriptionStatus: 'active',
+          });
+        }
+      },
     }),
     {
       name: 'stopshorts-storage',

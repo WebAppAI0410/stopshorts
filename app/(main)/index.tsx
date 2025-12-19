@@ -16,6 +16,9 @@ export default function DashboardScreen() {
     const { colors, typography, spacing, borderRadius } = useTheme();
     const { stats } = useAppStore();
 
+    // Check if we have real data
+    const hasRealData = stats.length > 0;
+
     // Get today's statistics
     const todayDate = new Date().toISOString().split('T')[0];
     const todayStats = stats.find(s => s.date === todayDate) || {
@@ -41,13 +44,41 @@ export default function DashboardScreen() {
                             {t('home.greeting')}
                         </Text>
                         <Text style={[typography.h1, { color: colors.textPrimary }]}>
-                            User!
+                            {t('home.user')}
                         </Text>
                     </View>
                     <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
                         <Ionicons name="person" size={20} color={colors.textInverse} />
                     </View>
                 </Animated.View>
+
+                {/* Demo Mode Banner */}
+                {!hasRealData && (
+                    <Animated.View
+                        entering={FadeInDown.duration(600).delay(50)}
+                        style={[
+                            styles.demoBanner,
+                            {
+                                backgroundColor: colors.warning + '20',
+                                borderRadius: borderRadius.lg,
+                                borderWidth: 1,
+                                borderColor: colors.warning + '40',
+                            }
+                        ]}
+                    >
+                        <View style={styles.demoIconContainer}>
+                            <Ionicons name="flask-outline" size={18} color={colors.warning} />
+                        </View>
+                        <View style={styles.demoTextContainer}>
+                            <Text style={[typography.label, { color: colors.warning }]}>
+                                {t('home.demoMode')}
+                            </Text>
+                            <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>
+                                {t('home.demoModeDescription')}
+                            </Text>
+                        </View>
+                    </Animated.View>
+                )}
 
                 {/* Main Status Card */}
                 <Animated.View
@@ -70,7 +101,7 @@ export default function DashboardScreen() {
                     <View style={styles.statusRow}>
                         <Ionicons name="checkmark-circle" size={20} color={colors.accent} />
                         <Text style={[typography.h2, { color: colors.textPrimary, marginLeft: spacing.sm }]}>
-                            Protected
+                            {t('home.protected')}
                         </Text>
                     </View>
 
@@ -127,10 +158,10 @@ export default function DashboardScreen() {
                     </View>
                     <View style={styles.tipContent}>
                         <Text style={[typography.h3, { color: colors.textPrimary }]}>
-                            Daily Tip
+                            {t('home.dailyTip')}
                         </Text>
                         <Text style={[typography.bodySmall, { color: colors.textSecondary, marginTop: spacing.xs }]}>
-                            Try setting a dedicated time for focused work without distractions today.
+                            {t('home.dailyTipMessage')}
                         </Text>
                     </View>
                 </Animated.View>
@@ -158,6 +189,18 @@ const styles = StyleSheet.create({
         borderRadius: 22,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    demoBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        marginBottom: 16,
+    },
+    demoIconContainer: {
+        marginRight: 12,
+    },
+    demoTextContainer: {
+        flex: 1,
     },
     statusCard: {
         padding: 24,

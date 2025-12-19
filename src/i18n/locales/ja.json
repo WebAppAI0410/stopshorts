@@ -197,31 +197,50 @@
       "title": "プランを選択",
       "subtitle": "3日間の無料トライアルで効果を実感してください",
       "trialBadge": "おすすめ",
-      "commitmentTitle": "コミットメント効果",
-      "commitmentDescription": "お金を払うことで「元を取ろう」という意識が働き、継続率が3倍になります",
+      "defaultBadge": "デフォルト",
+      "popularBadge": "人気",
+      "bestValueBadge": "最もお得",
+      "freeTrialTitle": "まずは無料で始める",
+      "freeTrialDescription": "3日間、すべての機能を無料でお試しいただけます",
+      "afterTrialTitle": "無料期間終了後",
+      "afterTrialDescription": "続けて使う場合は、以下のプランからお選びください",
+      "commitmentSection": {
+        "title": "💡 なぜ有料プランを選ぶと効果的？",
+        "subtitle": "行動経済学が証明する「コミットメント効果」",
+        "description": "研究によると、目標達成にお金を投資した人は、無料で始めた人に比べて継続率が約3倍高くなります。",
+        "reason1Title": "サンクコスト効果",
+        "reason1Description": "支払ったお金を無駄にしたくないという心理が、継続を後押しします",
+        "reason2Title": "自己効力感の向上",
+        "reason2Description": "「投資した」という意識が、自分への信頼と責任感を高めます",
+        "reason3Title": "目標の明確化",
+        "reason3Description": "お金を払うことで「本気で変わりたい」という決意が固まります"
+      },
       "plans": {
         "trial_3day": {
           "name": "3日間無料トライアル",
           "price": "¥0",
           "description": "まずは効果を実感",
-          "afterTrial": "トライアル後は30日プランに自動移行"
+          "afterTrial": "トライアル終了後は月額プランに自動移行（いつでもキャンセル可）"
         },
         "monthly": {
-          "name": "30日プラン",
+          "name": "月額プラン",
           "price": "¥980",
-          "pricePerDay": "1日約33円"
+          "pricePerDay": "1日約33円",
+          "description": "毎月更新"
         },
         "quarterly": {
           "name": "90日プラン",
           "price": "¥1,980",
           "pricePerDay": "1日約22円",
-          "savings": "33%お得"
+          "savings": "33%お得",
+          "description": "3ヶ月ごとの更新"
         },
         "annual": {
           "name": "年間プラン",
           "price": "¥3,980",
           "pricePerDay": "1日約11円",
-          "savings": "66%お得"
+          "savings": "66%お得",
+          "description": "年間更新で最もお得"
         }
       },
       "features": {
@@ -235,9 +254,11 @@
           "checkIn": "日次チェックイン"
         }
       },
-      "termsNote": "いつでもキャンセル可能",
+      "termsNote": "いつでもキャンセル可能 · 自動更新",
+      "privacyNote": "決済はAppleにより安全に処理されます",
       "startTrial": "無料トライアルを始める",
-      "subscribe": "このプランで始める"
+      "selectPlan": "このプランで始める",
+      "skipTrial": "有料プランを選んで今すぐ始める"
     },
     "v3": {
       "welcome": {
@@ -345,7 +366,7 @@
       },
       "alternative": {
         "title": "取り戻した時間で、\n何をしますか？",
-        "subtitle": "代わりにやりたいことを選んでください",
+        "subtitle": "ショート動画をやめた先にある、あなたの長期目標を選んでください",
         "options": {
           "reading": "読書をする",
           "exercise": "運動する",
@@ -361,7 +382,7 @@
       },
       "ifThen": {
         "title": "ショート動画を\n開きたくなったら...",
-        "subtitle": "代わりに何をしますか？",
+        "subtitle": "アプリを開こうとした時、代わりにする行動を決めておきましょう",
         "options": {
           "breathe": "深呼吸を3回する",
           "read_page": "本を1ページ読む",
@@ -372,7 +393,7 @@
           "custom": "自分で決める..."
         },
         "customPlaceholder": "代わりにすることを入力...",
-        "note": "シールドにこの選択肢を表示します",
+        "note": "アプリを開こうとすると、この行動をリマインドします",
         "continueButton": "続ける"
       },
       "howItWorks": {
@@ -393,7 +414,15 @@
           }
         },
         "note": "強制ではありません。「気づき」を与えるだけ。\n選ぶのは、いつもあなたです。",
-        "understandButton": "理解しました"
+        "understandButton": "理解しました",
+        "demo": {
+          "title": "体験してみましょう",
+          "subtitle": "下のボタンをタップすると、シールド画面が表示されます",
+          "tryButton": "シールドを体験する",
+          "shieldMessage": "5分が経過しました",
+          "quote": "この時間、本当に必要ですか？",
+          "closeButton": "閉じる"
+        }
       },
       "start": {
         "title": "あなたの約束",
@@ -492,7 +521,13 @@
     },
     "interventionMessage": "{{count}} 回の介入が行われました",
     "todaysPledge": "今日の誓い",
-    "weekProgressMessage": "今週は順調なスタートです"
+    "weekProgressMessage": "今週は順調なスタートです",
+    "user": "ユーザーさん",
+    "protected": "保護中",
+    "dailyTip": "今日のヒント",
+    "dailyTipMessage": "今日は気を散らすものなく、集中して作業する時間を設けてみましょう。",
+    "demoMode": "デモモード",
+    "demoModeDescription": "スクリーンタイム権限が有効になると、実際の保護が開始されます"
   },
   "shield": {
     "title": "{{minutes}}分が経過しました",
@@ -601,5 +636,41 @@
     "generic": "エラーが発生しました",
     "network": "ネットワーク接続を確認してください",
     "permission": "必要な権限が付与されていません"
+  },
+  "tabs": {
+    "home": "ホーム",
+    "stats": "統計",
+    "settings": "設定",
+    "profile": "プロフィール"
+  },
+  "statistics": {
+    "title": "統計",
+    "savedThisWeek": "今週の節約時間",
+    "streak": "連続日数",
+    "days": "日",
+    "keepMomentum": "この調子で続けましょう！",
+    "interventions": "介入回数",
+    "times": "回",
+    "mindfulPauses": "意識的な休憩を取りました。",
+    "demoMode": "デモモード",
+    "demoModeDescription": "スクリーンタイム機能が有効になると、実際のデータが表示されます"
+  },
+  "profile": {
+    "title": "プロフィール",
+    "user": "ユーザー",
+    "freePlan": "無料プラン",
+    "premium": "プレミアム",
+    "totalInterventions": "合計介入回数",
+    "timeSaved": "節約時間",
+    "yourGoal": "あなたの目標",
+    "setYourGoal": "目標を設定",
+    "achievements": "実績",
+    "goals": {
+      "sleep": "睡眠改善",
+      "study": "学習に集中",
+      "work": "仕事の生産性向上",
+      "creative": "創作活動",
+      "mental": "メンタルヘルス"
+    }
   }
 }
