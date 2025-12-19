@@ -229,18 +229,18 @@
           "description": "毎月更新"
         },
         "quarterly": {
-          "name": "90日プラン",
-          "price": "¥1,980",
-          "pricePerDay": "1日約22円",
-          "savings": "33%お得",
-          "description": "3ヶ月ごとの更新"
+          "name": "90日マスター",
+          "price": "¥2,350",
+          "pricePerDay": "月額換算 ¥783",
+          "savings": "20%OFF",
+          "description": "習慣形成に最適な期間"
         },
         "annual": {
           "name": "年間プラン",
-          "price": "¥3,980",
-          "pricePerDay": "1日約11円",
-          "savings": "66%お得",
-          "description": "年間更新で最もお得"
+          "price": "¥5,880",
+          "pricePerDay": "月額換算 ¥490",
+          "savings": "50%OFF",
+          "description": "最もお得なプラン"
         }
       },
       "features": {
