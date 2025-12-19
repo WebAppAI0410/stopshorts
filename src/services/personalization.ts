@@ -5,6 +5,9 @@ import {
     SleepProfile,
     AddictionAssessment,
     ImplementationIntentConfig,
+    GoalType,
+    IfThenPlan,
+    goalTypeToPurpose,
 } from '../types';
 import { t } from '../i18n';
 
@@ -156,19 +159,56 @@ function getRandomMessage(messages: string[]): string {
     return messages[Math.floor(Math.random() * messages.length)];
 }
 
-// Main personalization function
+// Extended options for personalization
+interface PersonalizationOptions {
+    purpose?: UserPurpose | null;
+    goal?: GoalType | null;
+    sleepProfile: SleepProfile;
+    addictionAssessment?: AddictionAssessment | null;
+    implementationIntent?: ImplementationIntentConfig | null;
+    ifThenPlan?: IfThenPlan | null;
+}
+
+// Main personalization function (supports both legacy and v3 onboarding types)
 export function getPersonalizedMessage(
-    purpose: UserPurpose | null,
-    sleepProfile: SleepProfile,
-    addictionAssessment: AddictionAssessment | null,
-    implementationIntent: ImplementationIntentConfig | null
+    purposeOrOptions: UserPurpose | null | PersonalizationOptions,
+    sleepProfile?: SleepProfile,
+    addictionAssessment?: AddictionAssessment | null,
+    implementationIntent?: ImplementationIntentConfig | null
 ): { message: string; warningLevel: WarningLevel; implementationIntentText: string | null } {
+    // Support both old signature and new options object
+    let effectivePurpose: UserPurpose;
+    let effectiveSleepProfile: SleepProfile;
+    let effectiveAddictionAssessment: AddictionAssessment | null;
+    let effectiveImplementationIntent: ImplementationIntentConfig | null;
+    let ifThenPlan: IfThenPlan | null = null;
+
+    if (typeof purposeOrOptions === 'object' && purposeOrOptions !== null && 'sleepProfile' in purposeOrOptions) {
+        // New options object format
+        const options = purposeOrOptions as PersonalizationOptions;
+        // Priority: goal (v3) over purpose (legacy)
+        if (options.goal) {
+            effectivePurpose = goalTypeToPurpose(options.goal);
+        } else {
+            effectivePurpose = options.purpose || 'sleep';
+        }
+        effectiveSleepProfile = options.sleepProfile;
+        effectiveAddictionAssessment = options.addictionAssessment || null;
+        effectiveImplementationIntent = options.implementationIntent || null;
+        ifThenPlan = options.ifThenPlan || null;
+    } else {
+        // Legacy signature
+        effectivePurpose = (purposeOrOptions as UserPurpose | null) || 'sleep';
+        effectiveSleepProfile = sleepProfile!;
+        effectiveAddictionAssessment = addictionAssessment || null;
+        effectiveImplementationIntent = implementationIntent || null;
+    }
+
     const now = new Date();
     const hour = now.getHours();
     const timeOfDay = getTimeOfDay(hour);
-    const warningLevel = calculateWarningLevel(now, sleepProfile);
+    const warningLevel = calculateWarningLevel(now, effectiveSleepProfile);
 
-    const effectivePurpose = purpose || 'sleep';
     const purposeKey: MessagePurpose = effectivePurpose === 'other' ? 'sleep' : effectivePurpose as MessagePurpose;
     const messageSet = MESSAGES[purposeKey];
 
@@ -189,17 +229,19 @@ export function getPersonalizedMessage(
     }
 
     // Add purpose reminder for severe addiction levels during critical times
-    if (addictionAssessment?.calculatedLevel === 'severe' && effectivePurpose !== 'sleep' && warningLevel === 'critical') {
+    if (effectiveAddictionAssessment?.calculatedLevel === 'severe' && effectivePurpose !== 'sleep' && warningLevel === 'critical') {
         const purposeReminder = getPurposeReminder(effectivePurpose);
         if (purposeReminder) {
             message = `${message}\n\n${purposeReminder}`;
         }
     }
 
-    // Get implementation intent text
+    // Get implementation intent text (supports both legacy ImplementationIntent and v3 IfThenPlan)
     let implementationIntentText: string | null = null;
-    if (implementationIntent) {
-        implementationIntentText = getImplementationIntentDisplay(implementationIntent);
+    if (ifThenPlan) {
+        implementationIntentText = getIfThenPlanDisplay(ifThenPlan);
+    } else if (effectiveImplementationIntent) {
+        implementationIntentText = getImplementationIntentDisplay(effectiveImplementationIntent);
     }
 
     return {
@@ -236,6 +278,28 @@ function getImplementationIntentDisplay(intent: ImplementationIntentConfig): str
             return 'やることリストを確認する';
         case 'custom':
             return intent.customText || '';
+        default:
+            return '';
+    }
+}
+
+// Display text for v3 If-Then Plan actions
+function getIfThenPlanDisplay(plan: IfThenPlan): string {
+    switch (plan.action) {
+        case 'breathe':
+            return '深呼吸を3回';
+        case 'read_page':
+            return '本を1ページ読む';
+        case 'look_outside':
+            return '外の景色を見る';
+        case 'short_walk':
+            return '5分散歩する';
+        case 'stretch':
+            return 'ストレッチする';
+        case 'water':
+            return '水を飲む';
+        case 'custom':
+            return plan.customAction || '';
         default:
             return '';
     }

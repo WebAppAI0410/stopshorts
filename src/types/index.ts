@@ -163,12 +163,36 @@ export interface IfThenPlan {
 // Onboarding Commitment Summary
 export interface OnboardingCommitment {
   motivation: MotivationType;
+  goal: GoalType;                         // User's selected goal from onboarding
   screenTimeData: ScreenTimeData | null;  // null if permission denied
   manualDailyHours?: number;              // Fallback if no Screen Time access
   alternativeActivity: AlternativeActivity;
   customActivity?: string;
   ifThenPlan: IfThenPlan;
   completedAt: string;                    // ISO date string
+}
+
+// Mapping functions between GoalType and UserPurpose
+export function goalTypeToPurpose(goal: GoalType): UserPurpose {
+  const mapping: Record<GoalType, UserPurpose> = {
+    concentration: 'study',   // Concentration maps to study
+    sleep: 'sleep',           // Direct mapping
+    time: 'work',             // Time management maps to work
+    mental: 'mental',         // Direct mapping
+  };
+  return mapping[goal];
+}
+
+export function purposeToGoalType(purpose: UserPurpose): GoalType {
+  const mapping: Record<UserPurpose, GoalType> = {
+    sleep: 'sleep',
+    study: 'concentration',
+    work: 'time',
+    creative: 'concentration',  // Creative maps to concentration
+    mental: 'mental',
+    other: 'time',              // Default to time
+  };
+  return mapping[purpose];
 }
 
 // Legacy: Usage Assessment (kept for migration)

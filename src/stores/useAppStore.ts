@@ -1,30 +1,32 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type {
-  UserPurpose,
-  ManagedApp,
-  SubscriptionPlan,
-  SubscriptionStatus,
-  SleepProfile,
-  DailyStats,
-  ImplementationIntentConfig,
-  AddictionAssessment,
-  PurposeDetails,
-  UsageAssessment,
-  LifetimeImpact,
-  AlternativeGoal,
-  AlternativeActivity,
-  DailyCheckIn,
-  PricingPlanId,
+import {
+  type UserPurpose,
+  type ManagedApp,
+  type SubscriptionPlan,
+  type SubscriptionStatus,
+  type SleepProfile,
+  type DailyStats,
+  type ImplementationIntentConfig,
+  type AddictionAssessment,
+  type PurposeDetails,
+  type UsageAssessment,
+  type LifetimeImpact,
+  type AlternativeGoal,
+  type AlternativeActivity,
+  type DailyCheckIn,
+  type PricingPlanId,
   // New onboarding types
-  MotivationType,
-  ScreenTimeData,
-  IfThenPlan,
-  OnboardingCommitment,
+  type MotivationType,
+  type ScreenTimeData,
+  type IfThenPlan,
+  type OnboardingCommitment,
   // App selection types
-  GoalType,
-  TargetAppId,
+  type GoalType,
+  type TargetAppId,
+  // Mapping functions
+  goalTypeToPurpose,
 } from '../types';
 
 interface AppState {
@@ -356,11 +358,12 @@ export const useAppStore = create<AppState>()(
         const state = get();
 
         // Validate required onboarding data
-        if (!state.motivation || !state.alternativeActivity || !state.ifThenPlan) {
+        if (!state.motivation || !state.alternativeActivity || !state.ifThenPlan || !state.goal) {
           console.error('[Onboarding] Cannot complete: missing required data', {
             motivation: !!state.motivation,
             alternativeActivity: !!state.alternativeActivity,
             ifThenPlan: !!state.ifThenPlan,
+            goal: !!state.goal,
           });
           return; // Early return if validation fails
         }
@@ -368,9 +371,13 @@ export const useAppStore = create<AppState>()(
         const now = new Date().toISOString();
         const expiry = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
+        // Map GoalType to UserPurpose for personalization
+        const mappedPurpose = goalTypeToPurpose(state.goal);
+
         // Create commitment summary (non-null assertions removed - validated above)
         const commitment: OnboardingCommitment = {
           motivation: state.motivation,
+          goal: state.goal,
           screenTimeData: state.screenTimeData,
           alternativeActivity: state.alternativeActivity,
           customActivity: state.customAlternativeActivity || undefined,
@@ -381,6 +388,7 @@ export const useAppStore = create<AppState>()(
         set({
           hasCompletedOnboarding: true,
           onboardingCommitment: commitment,
+          purpose: mappedPurpose,  // Set purpose from goal for personalization
           subscriptionPlan: 'trial',
           subscriptionStatus: 'active',
           trialStartDate: now,
