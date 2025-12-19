@@ -118,8 +118,13 @@ export function IntensitySlider({
   // Create PanResponder
   const panResponder = useRef(
     PanResponder.create({
+      // Capture touch events to prevent parent ScrollView from scrolling
+      onStartShouldSetPanResponderCapture: () => !disabledRef.current,
+      onMoveShouldSetPanResponderCapture: () => !disabledRef.current,
       onStartShouldSetPanResponder: () => !disabledRef.current,
       onMoveShouldSetPanResponder: () => !disabledRef.current,
+      // Prevent other responders from taking over
+      onPanResponderTerminationRequest: () => false,
 
       onPanResponderGrant: (event: GestureResponderEvent) => {
         if (disabledRef.current) return;
