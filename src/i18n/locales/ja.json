@@ -15,9 +15,23 @@
   },
   "onboarding": {
     "welcome": {
-      "title": "ショート動画の依存から\n解放されませんか？",
-      "subtitle": "StopShortsは、あなたの時間を取り戻すお手伝いをします",
-      "startButton": "始める"
+      "title": "5分で止める、人生を取り戻す",
+      "subtitle": "「気づいたら1時間」を終わりにする\nショート動画から解放されよう",
+      "start": "始める",
+      "startButton": "始める",
+      "existingUser": "アカウントをお持ちの方"
+    },
+    "intent": {
+      "title": "スマホを置いたら何をする？",
+      "subtitle": "代わりの行動を決めておこう",
+      "options": {
+        "breathe": "深呼吸をする",
+        "stretch": "ストレッチをする",
+        "water": "水を飲む",
+        "checklist": "やることリストを確認する",
+        "custom": "自分で決める"
+      },
+      "customPlaceholder": "自分で決める..."
     },
     "purpose": {
       "title": "あなたの目的を\n教えてください",
@@ -47,19 +61,257 @@
         "youtubeShorts": "YouTube Shorts",
         "instagramReels": "Instagram Reels"
       }
+    },
+    "commitment": {
+      "title": "準備完了！",
+      "subtitle": "あなたの時間を取り戻す旅が始まります",
+      "selectPlan": "プランを選択",
+      "planDescription": "お好みのプランを選んで始めましょう",
+      "startButton": "始める",
+      "features": {
+        "continuous": "継続的な介入",
+        "unlimited": "無制限のアプリ管理",
+        "personalization": "パーソナライズ文言",
+        "statistics": "詳細統計"
+      }
+    },
+    "assessment": {
+      "title": "あなたの現状を教えてください",
+      "subtitle": "最適なサポートを提供するために、現在の使用状況を教えてください",
+      "question1Label": "質問 1/3",
+      "question1": "1日の平均視聴時間は？",
+      "question2Label": "質問 2/3",
+      "question2": "1日に何回アプリを開きますか？",
+      "question3Label": "質問 3/3",
+      "question3": "視聴をやめるのはどれくらい難しいですか？",
+      "resultLabel": "あなたの状況",
+      "levels": {
+        "light": "軽度 - 比較的コントロールできています",
+        "moderate": "中程度 - 少し注意が必要です",
+        "heavy": "重度 - しっかりサポートします",
+        "severe": "深刻 - 一緒に取り組みましょう"
+      }
+    },
+    "usageAssessment": {
+      "title": "今の使用状況を\n教えてください",
+      "subtitle": "あなたに最適なサポートを提供するために",
+      "dailyUsageQuestion": "1日の平均視聴時間は？",
+      "dailyUsageOptions": {
+        "30min": "30分未満",
+        "1hour": "30分〜1時間",
+        "2hours": "1〜2時間",
+        "3hours": "2〜3時間",
+        "4hours": "3〜4時間",
+        "5hours": "4時間以上"
+      },
+      "openCountQuestion": "1日に何回アプリを開きますか？",
+      "openCountOptions": {
+        "few": "10回未満",
+        "moderate": "10〜20回",
+        "often": "20〜30回",
+        "veryOften": "30回以上"
+      },
+      "quitAttemptsQuestion": "やめようとしたことは？",
+      "quitAttemptsOptions": {
+        "never": "ない",
+        "once": "1回ある",
+        "few": "何度かある",
+        "many": "何度もある"
+      },
+      "peakTimeQuestion": "特によく見る時間帯は？",
+      "peakTimeOptions": {
+        "morning": "朝（6-12時）",
+        "afternoon": "午後（12-18時）",
+        "evening": "夜（18-22時）",
+        "night": "深夜（22-6時）",
+        "random": "決まっていない"
+      },
+      "durationQuestion": "ショート動画を見始めてどれくらい？",
+      "durationOptions": {
+        "1month": "1ヶ月未満",
+        "6months": "1〜6ヶ月",
+        "1year": "6ヶ月〜1年",
+        "2years": "1〜2年",
+        "3years+": "2年以上"
+      }
+    },
+    "impact": {
+      "title": "このまま続けると...",
+      "subtitle": "あなたの貴重な時間が失われていきます",
+      "yearlyLoss": "年間 {{hours}} 時間",
+      "yearlyLossLabel": "毎年失われる時間",
+      "lifetimeLoss": "人生で約 {{years}} 年分",
+      "lifetimeLossLabel": "一生で失う時間",
+      "equivalentsTitle": "この時間があれば...",
+      "equivalents": {
+        "books": "{{count}} 冊の本を読める",
+        "movies": "{{count}} 本の映画を観れる",
+        "travels": "{{count}} 回の旅行ができる",
+        "skills": "習得できるスキル"
+      },
+      "callToAction": "今日から取り戻しましょう"
+    },
+    "goalSetting": {
+      "title": "空いた時間で\n何をしたい？",
+      "subtitle": "具体的な目標を持つと継続しやすくなります",
+      "activities": {
+        "reading": "読書",
+        "exercise": "運動・筋トレ",
+        "meditation": "瞑想・マインドフルネス",
+        "learning": "勉強・資格取得",
+        "hobby": "趣味の時間",
+        "social": "家族・友人との時間",
+        "sleep": "睡眠",
+        "work": "仕事・副業",
+        "custom": "その他"
+      },
+      "weeklyTargetLabel": "週に何時間使いたい？",
+      "specificGoalLabel": "具体的な目標（任意）",
+      "specificGoalPlaceholder": "例：月に3冊本を読む"
+    },
+    "tutorial": {
+      "title": "使い方を体験",
+      "subtitle": "実際の動作を試してみましょう",
+      "step1": {
+        "title": "ショート動画を開く",
+        "description": "いつものようにアプリを開いてみましょう"
+      },
+      "step2": {
+        "title": "5分経過すると...",
+        "description": "Shieldが表示されます"
+      },
+      "step3": {
+        "title": "意識的に選択",
+        "description": "続けるか、やめるかを選びます"
+      },
+      "tryButton": "体験する",
+      "skipButton": "スキップ",
+      "mockApp": {
+        "swipeHint": "スワイプして次の動画へ",
+        "likeCount": "{{count}}",
+        "commentCount": "{{count}}",
+        "shareCount": "シェア"
+      }
+    },
+    "pricing": {
+      "title": "プランを選択",
+      "subtitle": "3日間の無料トライアルで効果を実感してください",
+      "trialBadge": "おすすめ",
+      "commitmentTitle": "コミットメント効果",
+      "commitmentDescription": "お金を払うことで「元を取ろう」という意識が働き、継続率が3倍になります",
+      "plans": {
+        "trial_3day": {
+          "name": "3日間無料トライアル",
+          "price": "¥0",
+          "description": "まずは効果を実感",
+          "afterTrial": "トライアル後は30日プランに自動移行"
+        },
+        "monthly": {
+          "name": "30日プラン",
+          "price": "¥980",
+          "pricePerDay": "1日約33円"
+        },
+        "quarterly": {
+          "name": "90日プラン",
+          "price": "¥1,980",
+          "pricePerDay": "1日約22円",
+          "savings": "33%お得"
+        },
+        "annual": {
+          "name": "年間プラン",
+          "price": "¥3,980",
+          "pricePerDay": "1日約11円",
+          "savings": "66%お得"
+        }
+      },
+      "features": {
+        "title": "すべてのプランに含まれる機能",
+        "list": {
+          "intervention": "5分で介入",
+          "unlimited": "無制限のアプリ管理",
+          "personalized": "パーソナライズ文言",
+          "statistics": "詳細統計",
+          "coaching": "コーチングコンテンツ",
+          "checkIn": "日次チェックイン"
+        }
+      },
+      "termsNote": "いつでもキャンセル可能",
+      "startTrial": "無料トライアルを始める",
+      "subscribe": "このプランで始める"
+    },
+    "purposeDetail": {
+      "subtitle": "より効果的なサポートのために、詳しく教えてください",
+      "timeOfDay": {
+        "morning": "朝",
+        "afternoon": "午後",
+        "evening": "夕方",
+        "night": "夜",
+        "random": "不規則"
+      },
+      "sleep": {
+        "title": "睡眠改善について",
+        "bedtimeQuestion": "普段の就寝時間は？",
+        "wakeTimeQuestion": "普段の起床時間は？",
+        "tip": "就寝前の時間帯は特に注意深くサポートします。ブルーライトは睡眠ホルモンの分泌を妨げます。"
+      },
+      "study": {
+        "title": "学習について",
+        "goalQuestion": "今の目標は？",
+        "scheduleQuestion": "主に勉強する時間帯は？",
+        "goals": {
+          "exam": "試験勉強",
+          "certification": "資格取得",
+          "self_study": "自己学習",
+          "language": "語学学習"
+        }
+      },
+      "work": {
+        "title": "仕事について",
+        "styleQuestion": "働き方は？",
+        "styles": {
+          "office": "オフィス勤務",
+          "remote": "リモートワーク",
+          "hybrid": "ハイブリッド",
+          "freelance": "フリーランス"
+        }
+      },
+      "creative": {
+        "title": "創作活動について",
+        "fieldQuestion": "どんな創作をしていますか？",
+        "fields": {
+          "writing": "執筆",
+          "art": "アート・デザイン",
+          "music": "音楽",
+          "video": "動画制作",
+          "coding": "プログラミング",
+          "other": "その他"
+        }
+      },
+      "mental": {
+        "title": "メンタルヘルスについて",
+        "concernTimesQuestion": "特に気になる時間帯は？",
+        "tip": "あなたのペースで大丈夫です。自分を責めず、少しずつ改善していきましょう。"
+      }
     }
   },
   "home": {
-    "greeting": {
+    "greeting": "おかえりなさい",
+    "greetings": {
       "morning": "おはようございます",
       "afternoon": "こんにちは",
       "evening": "こんばんは"
     },
+    "dashboard": "ダッシュボード",
+    "todaySaved": "今日の節約時間",
+    "weekProgress": "今週の進捗",
     "stats": {
       "todayInterventions": "今日の介入回数",
       "timeSaved": "節約した時間",
       "streak": "継続日数"
-    }
+    },
+    "interventionMessage": "{{count}} 回の介入が行われました",
+    "todaysPledge": "今日の誓い",
+    "weekProgressMessage": "今週は順調なスタートです"
   },
   "shield": {
     "title": "{{minutes}}分が経過しました",
@@ -98,6 +350,23 @@
       "time": "時間設定",
       "subscription": "サブスクリプション",
       "about": "このアプリについて"
+    },
+    "theme": {
+      "title": "テーマ",
+      "light": "ライト",
+      "dark": "ダーク",
+      "system": "システム"
+    },
+    "data": {
+      "title": "データ",
+      "reset": "データをリセット",
+      "resetConfirmMessage": "すべてのデータが消去されます。この操作は取り消せません。",
+      "resetButton": "リセットする"
+    },
+    "limits": {
+      "title": "制限設定",
+      "interventionTime": "介入時間",
+      "minutesValue": "{{minutes}}分"
     },
     "sleepProfile": {
       "title": "睡眠プロファイル",
