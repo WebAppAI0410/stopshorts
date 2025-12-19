@@ -271,8 +271,22 @@ export default function PricingScreen() {
                                                 </Text>
                                             </View>
                                         )}
-                                        <View style={styles.planHeader}>
-                                            <View>
+                                        <View style={styles.planRow}>
+                                            {/* Radio Button */}
+                                            <View style={[
+                                                styles.radio,
+                                                {
+                                                    borderColor: selectedPlan === plan.id ? colors.accent : colors.border,
+                                                    backgroundColor: selectedPlan === plan.id ? colors.accent : 'transparent',
+                                                    marginRight: 12,
+                                                }
+                                            ]}>
+                                                {selectedPlan === plan.id && (
+                                                    <Ionicons name="checkmark" size={14} color={colors.textInverse} />
+                                                )}
+                                            </View>
+                                            {/* Plan Info */}
+                                            <View style={styles.planInfo}>
                                                 <Text style={[typography.h3, { color: colors.textPrimary }]}>
                                                     {plan.name}
                                                 </Text>
@@ -281,7 +295,15 @@ export default function PricingScreen() {
                                                         {plan.description}
                                                     </Text>
                                                 )}
+                                                {plan.savings && (
+                                                    <View style={[styles.savingsBadge, { backgroundColor: colors.success + '20' }]}>
+                                                        <Text style={[typography.caption, { color: colors.success, fontWeight: '600' }]}>
+                                                            {plan.savings}
+                                                        </Text>
+                                                    </View>
+                                                )}
                                             </View>
+                                            {/* Price */}
                                             <View style={styles.priceContainer}>
                                                 <Text style={[typography.h2, { color: colors.accent }]}>
                                                     {plan.price}
@@ -290,26 +312,6 @@ export default function PricingScreen() {
                                                     <Text style={[typography.caption, { color: colors.textMuted }]}>
                                                         {plan.pricePerDay}
                                                     </Text>
-                                                )}
-                                            </View>
-                                        </View>
-                                        {plan.savings && (
-                                            <View style={[styles.savingsBadge, { backgroundColor: colors.success + '20' }]}>
-                                                <Text style={[typography.caption, { color: colors.success, fontWeight: '600' }]}>
-                                                    {plan.savings}
-                                                </Text>
-                                            </View>
-                                        )}
-                                        <View style={styles.radioContainer}>
-                                            <View style={[
-                                                styles.radio,
-                                                {
-                                                    borderColor: selectedPlan === plan.id ? colors.accent : colors.border,
-                                                    backgroundColor: selectedPlan === plan.id ? colors.accent : 'transparent',
-                                                }
-                                            ]}>
-                                                {selectedPlan === plan.id && (
-                                                    <Ionicons name="checkmark" size={14} color={colors.textInverse} />
                                                 )}
                                             </View>
                                         </View>
@@ -456,10 +458,12 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         borderRadius: 12,
     },
-    planHeader: {
+    planRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
+    },
+    planInfo: {
+        flex: 1,
     },
     priceContainer: {
         alignItems: 'flex-end',
@@ -469,17 +473,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 8,
-        marginTop: 8,
-    },
-    radioContainer: {
-        position: 'absolute',
-        left: 16,
-        top: 20,
+        marginTop: 4,
     },
     radio: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
+        width: 22,
+        height: 22,
+        borderRadius: 11,
         borderWidth: 2,
         alignItems: 'center',
         justifyContent: 'center',
