@@ -1,17 +1,11 @@
 /**
  * IntensitySlider Component
  * Slider to measure urge intensity (1-10)
+ * Uses PanResponder for compatibility with Expo Go
  */
 
-import React, { useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  runOnJS,
-  withSpring,
-} from 'react-native-reanimated';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, PanResponder, Animated } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface IntensitySliderProps {
@@ -36,67 +30,62 @@ export function IntensitySlider({
 }: IntensitySliderProps) {
   const { colors, typography, spacing } = useTheme();
 
-  const sliderWidth = useSharedValue(0);
-  const thumbPosition = useSharedValue((value - 1) / 9);
-  const isPressed = useSharedValue(false);
+  const sliderWidth = useRef(0);
+  const thumbPosition = useRef(new Animated.Value((value - 1) / 9)).current;
+  const isPressedAnim = useRef(new Animated.Value(1)).current;
 
   // Sync thumbPosition when value changes externally
   useEffect(() => {
-    thumbPosition.value = withSpring((value - 1) / 9, {
-      damping: 15,
-      stiffness: 150,
-    });
+    Animated.spring(thumbPosition, {
+      toValue: (value - 1) / 9,
+      useNativeDriver: false,
+      friction: 8,
+      tension: 100,
+    }).start();
   }, [value, thumbPosition]);
 
   const updateValue = useCallback(
-    (newValue: number) => {
-      onChange(newValue);
+    (position: number) => {
+      const newPosition = Math.max(0, Math.min(1, position / sliderWidth.current));
+      const intensity = Math.round(newPosition * 9) + 1;
+      onChange(intensity);
     },
     [onChange]
   );
 
-  const panGesture = Gesture.Pan()
-    .enabled(!disabled)
-    .onBegin(() => {
-      isPressed.value = true;
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => !disabled,
+      onMoveShouldSetPanResponder: () => !disabled,
+      onPanResponderGrant: (_, gestureState) => {
+        Animated.spring(isPressedAnim, {
+          toValue: 1.2,
+          useNativeDriver: false,
+          friction: 8,
+        }).start();
+        updateValue(gestureState.x0);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        const newPosition = Math.max(0, Math.min(1, gestureState.moveX / sliderWidth.current));
+        thumbPosition.setValue(newPosition);
+        updateValue(gestureState.moveX);
+      },
+      onPanResponderRelease: () => {
+        Animated.spring(isPressedAnim, {
+          toValue: 1,
+          useNativeDriver: false,
+          friction: 8,
+        }).start();
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(isPressedAnim, {
+          toValue: 1,
+          useNativeDriver: false,
+          friction: 8,
+        }).start();
+      },
     })
-    .onUpdate((event) => {
-      const newPosition = Math.max(0, Math.min(1, event.x / sliderWidth.value));
-      thumbPosition.value = newPosition;
-      const intensity = Math.round(newPosition * 9) + 1;
-      runOnJS(updateValue)(intensity);
-    })
-    .onFinalize(() => {
-      isPressed.value = false;
-    });
-
-  const tapGesture = Gesture.Tap()
-    .enabled(!disabled)
-    .onEnd((event) => {
-      const newPosition = Math.max(0, Math.min(1, event.x / sliderWidth.value));
-      thumbPosition.value = withSpring(newPosition, {
-        damping: 15,
-        stiffness: 150,
-      });
-      const intensity = Math.round(newPosition * 9) + 1;
-      runOnJS(updateValue)(intensity);
-    });
-
-  const composedGestures = Gesture.Exclusive(panGesture, tapGesture);
-
-  const thumbStyle = useAnimatedStyle(() => {
-    const scale = isPressed.value ? 1.2 : 1;
-    return {
-      transform: [
-        { translateX: thumbPosition.value * sliderWidth.value - THUMB_SIZE / 2 },
-        { scale: withSpring(scale, { damping: 15, stiffness: 150 }) },
-      ],
-    };
-  });
-
-  const progressStyle = useAnimatedStyle(() => ({
-    width: `${thumbPosition.value * 100}%`,
-  }));
+  ).current;
 
   // Get color based on intensity value
   const getIntensityColor = (val: number): string => {
@@ -114,6 +103,16 @@ export function IntensitySlider({
 
   const currentColor = getIntensityColor(value);
 
+  const thumbTranslateX = thumbPosition.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, sliderWidth.current - THUMB_SIZE],
+  });
+
+  const progressWidth = thumbPosition.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
+
   return (
     <View style={[styles.container, disabled && styles.disabled]}>
       {label && (
@@ -129,54 +128,58 @@ export function IntensitySlider({
       </View>
 
       {/* Slider track */}
-      <GestureDetector gesture={composedGestures}>
-        <View
-          style={[styles.track, { backgroundColor: colors.borderSubtle }]}
-          onLayout={(e) => {
-            sliderWidth.value = e.nativeEvent.layout.width;
-          }}
-        >
-          {/* Progress fill */}
-          <Animated.View
-            style={[
-              styles.progress,
-              progressStyle,
-              { backgroundColor: currentColor },
-            ]}
-          />
+      <View
+        style={[styles.track, { backgroundColor: colors.borderSubtle }]}
+        onLayout={(e) => {
+          sliderWidth.current = e.nativeEvent.layout.width;
+        }}
+        {...panResponder.panHandlers}
+      >
+        {/* Progress fill */}
+        <Animated.View
+          style={[
+            styles.progress,
+            {
+              backgroundColor: currentColor,
+              width: progressWidth,
+            },
+          ]}
+        />
 
-          {/* Tick marks */}
-          <View style={styles.tickContainer}>
-            {Array.from({ length: 10 }).map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.tick,
-                  {
-                    backgroundColor:
-                      i < value ? currentColor : colors.borderSubtle,
-                    opacity: i < value ? 0.8 : 0.4,
-                  },
-                ]}
-              />
-            ))}
-          </View>
-
-          {/* Thumb */}
-          <Animated.View
-            style={[
-              styles.thumb,
-              thumbStyle,
-              {
-                backgroundColor: currentColor,
-                shadowColor: currentColor,
-              },
-            ]}
-          >
-            <Text style={styles.thumbText}>{value}</Text>
-          </Animated.View>
+        {/* Tick marks */}
+        <View style={styles.tickContainer}>
+          {Array.from({ length: 10 }).map((_, i) => (
+            <View
+              key={i}
+              style={[
+                styles.tick,
+                {
+                  backgroundColor:
+                    i < value ? currentColor : colors.borderSubtle,
+                  opacity: i < value ? 0.8 : 0.4,
+                },
+              ]}
+            />
+          ))}
         </View>
-      </GestureDetector>
+
+        {/* Thumb */}
+        <Animated.View
+          style={[
+            styles.thumb,
+            {
+              backgroundColor: currentColor,
+              shadowColor: currentColor,
+              transform: [
+                { translateX: thumbTranslateX },
+                { scale: isPressedAnim },
+              ],
+            },
+          ]}
+        >
+          <Text style={styles.thumbText}>{value}</Text>
+        </Animated.View>
+      </View>
 
       {/* Current value display */}
       <View style={[styles.valueDisplay, { marginTop: spacing.md }]}>

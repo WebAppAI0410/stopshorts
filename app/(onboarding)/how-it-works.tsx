@@ -128,7 +128,7 @@ export default function HowItWorksScreen() {
                     ]}
                 >
                     <View style={styles.noteRow}>
-                        <Ionicons name="lightbulb-outline" size={20} color={colors.accent} />
+                        <Ionicons name="bulb-outline" size={20} color={colors.accent} />
                         <Text style={[
                             typography.bodySmall,
                             {
