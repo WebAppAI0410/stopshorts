@@ -31,24 +31,31 @@ function withScreenTime(config) {
         const project = config.modResults;
 
         // Get the main target
-        const mainTargetId = project.getFirstTarget()?.uuid;
-        if (mainTargetId) {
-            const buildConfigurations = project.pbxXCBuildConfigurationSection();
-
-            Object.keys(buildConfigurations).forEach((key) => {
-                const buildConfig = buildConfigurations[key];
-                if (
-                    buildConfig.buildSettings &&
-                    typeof buildConfig.buildSettings === 'object'
-                ) {
-                    // Ensure iOS deployment target is at least 15.0
-                    const currentTarget = buildConfig.buildSettings.IPHONEOS_DEPLOYMENT_TARGET;
-                    if (!currentTarget || parseFloat(currentTarget) < 15.0) {
-                        buildConfig.buildSettings.IPHONEOS_DEPLOYMENT_TARGET = '15.0';
-                    }
-                }
-            });
+        const mainTarget = project.getFirstTarget();
+        if (!mainTarget?.uuid) {
+            console.warn('[withScreenTime] Could not find main target in Xcode project. Skipping iOS deployment target update.');
+            return config;
         }
+
+        const buildConfigurations = project.pbxXCBuildConfigurationSection();
+        if (!buildConfigurations) {
+            console.warn('[withScreenTime] Could not find build configurations. Skipping iOS deployment target update.');
+            return config;
+        }
+
+        Object.keys(buildConfigurations).forEach((key) => {
+            const buildConfig = buildConfigurations[key];
+            if (
+                buildConfig.buildSettings &&
+                typeof buildConfig.buildSettings === 'object'
+            ) {
+                // Ensure iOS deployment target is at least 15.0
+                const currentTarget = buildConfig.buildSettings.IPHONEOS_DEPLOYMENT_TARGET;
+                if (!currentTarget || parseFloat(currentTarget) < 15.0) {
+                    buildConfig.buildSettings.IPHONEOS_DEPLOYMENT_TARGET = '15.0';
+                }
+            }
+        });
 
         return config;
     });

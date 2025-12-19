@@ -34,24 +34,15 @@ public class ScreenTimeModule: Module {
                 }
             } else if #available(iOS 15.0, *) {
                 // iOS 15 doesn't have authorizationStatus property
-                // We need to try requesting and handle the result
-                return "notDetermined"
+                // Status cannot be determined without attempting authorization
+                return "unknown"
             }
             return "unavailable"
         }
 
         // Request Family Controls authorization
         AsyncFunction("requestAuthorization") { (promise: Promise) in
-            if #available(iOS 16.0, *) {
-                Task {
-                    do {
-                        try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
-                        promise.resolve(["success": true, "status": "approved"])
-                    } catch {
-                        promise.resolve(["success": false, "status": "denied", "error": error.localizedDescription])
-                    }
-                }
-            } else if #available(iOS 15.0, *) {
+            if #available(iOS 15.0, *) {
                 Task {
                     do {
                         try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
@@ -66,10 +57,11 @@ public class ScreenTimeModule: Module {
         }
 
         // Get list of short-video app bundle identifiers to monitor
+        // Note: Bundle IDs verified as of Dec 2024. May change with app updates.
         Function("getShortVideoAppIdentifiers") { () -> [String] in
             return [
-                "com.zhiliaoapp.musically",     // TikTok
-                "com.ss.iphone.ugc.Aweme",      // TikTok (China)
+                "com.zhiliaoapp.musically",     // TikTok (International)
+                "com.ss.iphone.ugc.Aweme",      // TikTok (China/Douyin)
                 "com.google.ios.youtube",       // YouTube (includes Shorts)
                 "com.burbn.instagram"           // Instagram (includes Reels)
             ]

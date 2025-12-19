@@ -10,8 +10,9 @@ import ScreenTime, {
     AuthorizationStatus,
     AuthorizationResult,
 } from '../../modules/screen-time';
+import type { ScreenTimeData } from '../types';
 
-export type { AuthorizationStatus, AuthorizationResult };
+export type { AuthorizationStatus, AuthorizationResult, ScreenTimeData };
 
 /**
  * Check if Screen Time API is available on this device
@@ -47,7 +48,7 @@ export function isScreenTimeAuthorized(): boolean {
  * Get mock screen time data for development/testing
  * TODO: Replace with real data from DeviceActivityReport extension
  */
-export function getMockScreenTimeData() {
+export function getMockScreenTimeData(): ScreenTimeData {
     // Simulate realistic usage patterns
     const tiktokMinutes = Math.floor(Math.random() * 60) + 60; // 60-120 min daily
     const youtubeMinutes = Math.floor(Math.random() * 45) + 30; // 30-75 min daily

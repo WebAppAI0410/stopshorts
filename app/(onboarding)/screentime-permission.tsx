@@ -46,7 +46,8 @@ export default function ScreenTimePermissionScreen() {
                 setScreenTimePermission(false);
             }
             router.push('/(onboarding)/reality-check' as Href);
-        } catch {
+        } catch (error) {
+            console.error('Screen Time authorization failed:', error);
             setScreenTimePermission(false);
             router.push('/(onboarding)/reality-check' as Href);
         } finally {
@@ -65,10 +66,6 @@ export default function ScreenTimePermissionScreen() {
             <GlowOrb position="bottom-left" size="medium" color="primary" intensity={0.08} />
 
             <Header showBack />
-
-            <View style={[styles.progressContainer, { paddingHorizontal: spacing.gutter }]}>
-                <ProgressIndicator totalSteps={8} currentStep={3} />
-            </View>
 
             <View style={[styles.content, { paddingHorizontal: spacing.gutter }]}>
                 <Animated.View
@@ -154,9 +151,6 @@ export default function ScreenTimePermissionScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-    },
-    progressContainer: {
-        paddingTop: 16,
     },
     content: {
         flex: 1,
