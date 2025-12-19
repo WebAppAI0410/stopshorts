@@ -48,8 +48,13 @@ export function UrgeSurfingScreen({
   const [intensityAfter, setIntensityAfter] = useState(3);
   const [surfingProgress, setSurfingProgress] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [isSliderActive, setIsSliderActive] = useState(false);
 
   const { recordUrgeSurfing, recordIntervention } = useStatisticsStore();
+
+  // Slider interaction callbacks
+  const handleSlidingStart = useCallback(() => setIsSliderActive(true), []);
+  const handleSlidingEnd = useCallback(() => setIsSliderActive(false), []);
 
   // Update surfing progress
   useEffect(() => {
@@ -120,6 +125,7 @@ export function UrgeSurfingScreen({
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={!isSliderActive}
       >
         {/* Initial Phase - Ask intensity and offer surfing */}
         {phase === 'initial' && (
@@ -164,6 +170,8 @@ export function UrgeSurfingScreen({
                 <IntensitySlider
                   value={intensityBefore}
                   onChange={setIntensityBefore}
+                  onSlidingStart={handleSlidingStart}
+                  onSlidingEnd={handleSlidingEnd}
                 />
               </View>
             </View>
@@ -301,6 +309,8 @@ export function UrgeSurfingScreen({
                 <IntensitySlider
                   value={intensityAfter}
                   onChange={setIntensityAfter}
+                  onSlidingStart={handleSlidingStart}
+                  onSlidingEnd={handleSlidingEnd}
                 />
               </View>
             </View>

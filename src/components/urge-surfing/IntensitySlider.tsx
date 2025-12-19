@@ -13,7 +13,6 @@ import {
   Animated,
   LayoutChangeEvent,
   GestureResponderEvent,
-  PanResponderGestureState,
 } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -26,6 +25,10 @@ interface IntensitySliderProps {
   disabled?: boolean;
   /** Label shown above the slider */
   label?: string;
+  /** Called when user starts sliding */
+  onSlidingStart?: () => void;
+  /** Called when user stops sliding */
+  onSlidingEnd?: () => void;
 }
 
 const SLIDER_HEIGHT = 8;
@@ -38,6 +41,8 @@ export function IntensitySlider({
   onChange,
   disabled = false,
   label,
+  onSlidingStart,
+  onSlidingEnd,
 }: IntensitySliderProps) {
   const { colors, typography, spacing } = useTheme();
 
@@ -108,12 +113,16 @@ export function IntensitySlider({
   const getPositionFromXRef = useRef(getPositionFromX);
   const updateFromPositionRef = useRef(updateFromPosition);
   const disabledRef = useRef(disabled);
+  const onSlidingStartRef = useRef(onSlidingStart);
+  const onSlidingEndRef = useRef(onSlidingEnd);
 
   useEffect(() => {
     getPositionFromXRef.current = getPositionFromX;
     updateFromPositionRef.current = updateFromPosition;
     disabledRef.current = disabled;
-  }, [getPositionFromX, updateFromPosition, disabled]);
+    onSlidingStartRef.current = onSlidingStart;
+    onSlidingEndRef.current = onSlidingEnd;
+  }, [getPositionFromX, updateFromPosition, disabled, onSlidingStart, onSlidingEnd]);
 
   // Create PanResponder
   const panResponder = useRef(
@@ -128,6 +137,9 @@ export function IntensitySlider({
 
       onPanResponderGrant: (event: GestureResponderEvent) => {
         if (disabledRef.current) return;
+
+        // Notify parent that sliding started
+        onSlidingStartRef.current?.();
 
         // Scale up thumb
         Animated.spring(isPressedAnim, {
@@ -151,6 +163,9 @@ export function IntensitySlider({
       },
 
       onPanResponderRelease: () => {
+        // Notify parent that sliding ended
+        onSlidingEndRef.current?.();
+
         Animated.spring(isPressedAnim, {
           toValue: 1,
           useNativeDriver: false,
@@ -159,6 +174,9 @@ export function IntensitySlider({
       },
 
       onPanResponderTerminate: () => {
+        // Notify parent that sliding ended
+        onSlidingEndRef.current?.();
+
         Animated.spring(isPressedAnim, {
           toValue: 1,
           useNativeDriver: false,
