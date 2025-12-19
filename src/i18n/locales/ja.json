@@ -254,12 +254,17 @@
           "checkIn": "日次チェックイン"
         }
       },
-      "termsNote": "いつでもキャンセル可能 · 自動更新",
+      "trialBannerTitle": "すべてのプランに3日間無料トライアル付き",
+      "trialBannerDescription": "まずは無料で効果を実感。3日以内のキャンセルで課金なし",
+      "selectPlanTitle": "トライアル後のプランを選択",
+      "selectPlanDescription": "トライアル終了後、選択したプランで自動更新されます",
+      "skipTrialToggle": "トライアルをスキップして今すぐ始める",
+      "skipTrialToggleDescription": "すぐに有料プランを開始して本気で取り組む",
+      "termsNoteTrial": "3日間無料 → 選択プランで自動更新 · いつでもキャンセル可",
+      "termsNoteImmediate": "今すぐ課金開始 · いつでもキャンセル可 · 自動更新",
       "privacyNote": "決済はAppleにより安全に処理されます",
-      "startTrial": "無料トライアルを始める",
-      "selectPlan": "このプランで始める",
-      "skipTrial": "有料プランを選んで今すぐ始める",
-      "skipTrialDescription": "コミットメントで成功率がアップ"
+      "startTrialButton": "3日間無料で始める",
+      "startNowButton": "{{plan}}で今すぐ始める"
     },
     "v3": {
       "welcome": {
