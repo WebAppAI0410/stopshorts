@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
 import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
@@ -8,15 +8,50 @@ import { Button, ProgressIndicator, Header, GlowOrb } from '../../src/components
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
+import screenTimeService from '../../src/services/screenTime';
 
 export default function ScreenTimePermissionScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
     const { setScreenTimePermission } = useAppStore();
+    const [isRequesting, setIsRequesting] = useState(false);
 
-    const handleAllow = () => {
-        setScreenTimePermission(true);
-        router.push('/(onboarding)/reality-check' as Href);
+    const handleAllow = async () => {
+        if (Platform.OS !== 'ios') {
+            // Android doesn't have Screen Time API
+            setScreenTimePermission(false);
+            router.push('/(onboarding)/reality-check' as Href);
+            return;
+        }
+
+        if (!screenTimeService.isAvailable()) {
+            Alert.alert(
+                'スクリーンタイム機能が利用できません',
+                'iOS 15以上が必要です。手動入力モードで続行します。',
+                [{ text: 'OK', onPress: () => {
+                    setScreenTimePermission(false);
+                    router.push('/(onboarding)/reality-check' as Href);
+                }}]
+            );
+            return;
+        }
+
+        setIsRequesting(true);
+        try {
+            const result = await screenTimeService.requestAuthorization();
+
+            if (result.success) {
+                setScreenTimePermission(true);
+            } else {
+                setScreenTimePermission(false);
+            }
+            router.push('/(onboarding)/reality-check' as Href);
+        } catch {
+            setScreenTimePermission(false);
+            router.push('/(onboarding)/reality-check' as Href);
+        } finally {
+            setIsRequesting(false);
+        }
     };
 
     const handleSkip = () => {
@@ -98,8 +133,9 @@ export default function ScreenTimePermissionScreen() {
                 style={[styles.footer, { paddingHorizontal: spacing.gutter }]}
             >
                 <Button
-                    title={t('onboarding.v3.screenTimePermission.allowButton')}
+                    title={isRequesting ? '確認中...' : t('onboarding.v3.screenTimePermission.allowButton')}
                     onPress={handleAllow}
+                    disabled={isRequesting}
                     size="lg"
                 />
                 <Pressable onPress={handleSkip} style={{ marginTop: spacing.md }}>

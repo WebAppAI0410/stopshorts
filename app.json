@@ -36,7 +36,8 @@
     "plugins": [
       "expo-router",
       "expo-localization",
-      "expo-dev-client"
+      "expo-dev-client",
+      "./modules/screen-time/plugin/withScreenTime"
     ],
     "experiments": {
       "typedRoutes": true

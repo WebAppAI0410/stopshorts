@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
@@ -8,19 +8,7 @@ import { Button, ProgressIndicator, Header, GlowOrb, SelectionCard } from '../..
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
-
-// Mock screen time data for demonstration (will be replaced with real Screen Time API data)
-const MOCK_SCREEN_TIME_DATA = {
-    weeklyTotal: 1260, // 21 hours
-    dailyAverage: 180, // 3 hours
-    appBreakdown: [
-        { app: 'tiktok' as const, weeklyMinutes: 630, dailyAverage: 90, openCount: 42 },
-        { app: 'youtubeShorts' as const, weeklyMinutes: 420, dailyAverage: 60, openCount: 28 },
-        { app: 'instagramReels' as const, weeklyMinutes: 210, dailyAverage: 30, openCount: 21 },
-    ],
-    peakHours: ['21:00', '22:00', '23:00'],
-    lastUpdated: new Date().toISOString(),
-};
+import screenTimeService from '../../src/services/screenTime';
 
 export default function RealityCheckScreen() {
     const router = useRouter();
@@ -28,9 +16,12 @@ export default function RealityCheckScreen() {
     const { hasScreenTimePermission, calculateImpactFromScreenTime, calculateImpactFromManualInput } = useAppStore();
     const [manualHours, setManualHours] = useState<number | null>(null);
 
+    // Get screen time data (currently mock, will be replaced with real data)
+    const screenTimeData = useMemo(() => screenTimeService.getMockData(), []);
+
     const handleContinue = () => {
         if (hasScreenTimePermission) {
-            calculateImpactFromScreenTime(MOCK_SCREEN_TIME_DATA);
+            calculateImpactFromScreenTime(screenTimeData);
         } else if (manualHours !== null) {
             calculateImpactFromManualInput(manualHours);
         }
@@ -44,11 +35,11 @@ export default function RealityCheckScreen() {
     };
 
     const renderScreenTimeData = () => {
-        const { hours, mins } = formatTime(MOCK_SCREEN_TIME_DATA.weeklyTotal);
-        const yearlyHours = Math.round((MOCK_SCREEN_TIME_DATA.dailyAverage / 60) * 365);
+        const { hours, mins } = formatTime(screenTimeData.weeklyTotal);
+        const yearlyHours = Math.round((screenTimeData.dailyAverage / 60) * 365);
         const books = Math.round(yearlyHours / 6);
-        const peakHoursDisplay = MOCK_SCREEN_TIME_DATA.peakHours.length > 0
-            ? `${MOCK_SCREEN_TIME_DATA.peakHours[0]} - ${MOCK_SCREEN_TIME_DATA.peakHours[MOCK_SCREEN_TIME_DATA.peakHours.length - 1]}`
+        const peakHoursDisplay = screenTimeData.peakHours.length > 0
+            ? `${screenTimeData.peakHours[0]} - ${screenTimeData.peakHours[screenTimeData.peakHours.length - 1]}`
             : '夜';
 
         return (
@@ -70,13 +61,13 @@ export default function RealityCheckScreen() {
                 </Animated.View>
 
                 <Animated.View entering={FadeInUp.duration(600).delay(300)} style={styles.breakdownContainer}>
-                    {MOCK_SCREEN_TIME_DATA.appBreakdown.map((app) => {
+                    {screenTimeData.appBreakdown.map((app) => {
                         const appName = {
                             tiktok: 'TikTok',
                             youtubeShorts: 'YouTube Shorts',
                             instagramReels: 'Instagram Reels',
                         }[app.app];
-                        const percentage = (app.weeklyMinutes / MOCK_SCREEN_TIME_DATA.weeklyTotal) * 100;
+                        const percentage = (app.weeklyMinutes / screenTimeData.weeklyTotal) * 100;
                         const { hours: appHours, mins: appMins } = formatTime(app.weeklyMinutes);
 
                         return (
