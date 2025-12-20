@@ -5,7 +5,18 @@
 StopShortsアプリをAndroidプラットフォームに対応させるための実装計画書です。
 iOSのScreen Time API（Family Controls）とは異なり、Androidでは**UsageStatsManager + オーバーレイ**方式を採用します。
 
-### 1.1 基本方針
+### 1.1 動作要件
+
+| 項目 | 要件 |
+|------|------|
+| **対応Androidバージョン** | Android 8.0+ (API 26+) |
+| **ビルド環境** | **Expo Dev Client / EAS Build 必須**（Expo Goでは動作不可） |
+| **理由** | カスタムネイティブモジュールを使用するため |
+
+> **注意**: Expo Goはカスタムネイティブモジュールをサポートしていません。
+> 開発時は`npx expo run:android`または EAS Build でビルドしたDev Clientを使用してください。
+
+### 1.2 基本方針
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -139,7 +150,7 @@ modules/
 
 <!-- フォアグラウンドサービス -->
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+<!-- Note: foregroundServiceType は AndroidManifest の <service> タグで指定 -->
 
 <!-- 通知 -->
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -225,12 +236,12 @@ class ScreenTimeAndroidModule : Module() {
             return@AsyncFunction getPermissionStatus()
         }
 
-        // 権限リクエスト（設定画面を開く）
-        AsyncFunction("requestUsageStatsPermission") {
+        // 権限設定画面を開く（runtime requestではなく設定画面遷移が必須）
+        AsyncFunction("openUsageStatsSettings") {
             openUsageAccessSettings()
         }
 
-        AsyncFunction("requestOverlayPermission") {
+        AsyncFunction("openOverlaySettings") {
             openOverlaySettings()
         }
 
@@ -308,6 +319,7 @@ class UsageStatsTracker(private val context: Context) {
     }
 
     // 現在フォアグラウンドのアプリを取得
+    // Note: 端末によってイベント種別の挙動が異なるため、複数種別をチェック
     fun getCurrentForegroundApp(): String? {
         val endTime = System.currentTimeMillis()
         val startTime = endTime - 10000 // 直近10秒
@@ -318,8 +330,18 @@ class UsageStatsTracker(private val context: Context) {
         val event = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
-            if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                lastForegroundPackage = event.packageName
+            // MOVE_TO_FOREGROUND に加え、ACTIVITY_RESUMED も検知（端末差対策）
+            when (event.eventType) {
+                UsageEvents.Event.MOVE_TO_FOREGROUND,
+                UsageEvents.Event.ACTIVITY_RESUMED -> {
+                    lastForegroundPackage = event.packageName
+                }
+                UsageEvents.Event.MOVE_TO_BACKGROUND,
+                UsageEvents.Event.ACTIVITY_PAUSED -> {
+                    if (event.packageName == lastForegroundPackage) {
+                        lastForegroundPackage = null
+                    }
+                }
             }
         }
 
@@ -522,6 +544,7 @@ class CheckinForegroundService : Service() {
     private var intervalMinutes: Int = 5
     private var continuousUsageMs: Long = 0
     private var lastCheckedApp: String? = null
+    private var lastTriggeredMinute: Int = -1  // 多重発火防止用
 
     private val handler = Handler(Looper.getMainLooper())
     private val checkRunnable = object : Runnable {
@@ -556,16 +579,22 @@ class CheckinForegroundService : Service() {
             } else {
                 continuousUsageMs = 0
                 lastCheckedApp = currentApp
+                lastTriggeredMinute = -1  // アプリ切り替え時にリセット
             }
 
             val usageMinutes = (continuousUsageMs / 60000).toInt()
-            if (usageMinutes > 0 && usageMinutes % intervalMinutes == 0) {
+            // 多重発火防止: 同じ分では1回のみ発火
+            if (usageMinutes > 0
+                && usageMinutes % intervalMinutes == 0
+                && usageMinutes != lastTriggeredMinute) {
+                lastTriggeredMinute = usageMinutes
                 val appName = TargetApps.DISPLAY_NAMES[currentApp] ?: currentApp
                 showCheckinOverlay(appName, usageMinutes)
             }
         } else {
             continuousUsageMs = 0
             lastCheckedApp = null
+            lastTriggeredMinute = -1
         }
     }
 
@@ -574,7 +603,7 @@ class CheckinForegroundService : Service() {
             appName = appName,
             usageMinutes = usageMinutes,
             onContinue = { /* 続行 */ },
-            onStop = { /* アプリを閉じる誘導 */ }
+            onStop = { /* 自アプリに戻す or ホーム画面誘導（他アプリ強制終了は不可） */ }
         )
     }
 
@@ -637,7 +666,10 @@ export interface UsageData {
 export interface ScreenTimeAPI {
   // 権限関連
   getPermissionStatus(): Promise<PermissionStatus>;
-  requestPermissions(): Promise<PermissionStatus>;
+
+  // 設定画面を開く（Android用 - runtime requestではなく設定画面遷移が必須）
+  openUsageStatsSettings(): Promise<void>;
+  openOverlaySettings(): Promise<void>;
 
   // 使用時間
   getUsageStats(startTime: number, endTime: number): Promise<UsageData[]>;
@@ -680,13 +712,14 @@ const ScreenTimeModuleAndroid: ScreenTimeAPI = {
     };
   },
 
-  async requestPermissions(): Promise<PermissionStatus> {
-    // 使用状況アクセス設定を開く
-    await ScreenTimeAndroid.requestUsageStatsPermission();
-    // オーバーレイ設定を開く
-    await ScreenTimeAndroid.requestOverlayPermission();
+  async openUsageStatsSettings(): Promise<void> {
+    // 使用状況アクセス設定画面を開く（ユーザーが手動で許可）
+    await ScreenTimeAndroid.openUsageStatsSettings();
+  },
 
-    return this.getPermissionStatus();
+  async openOverlaySettings(): Promise<void> {
+    // オーバーレイ設定画面を開く（ユーザーが手動で許可）
+    await ScreenTimeAndroid.openOverlaySettings();
   },
 
   async getUsageStats(startTime: number, endTime: number): Promise<UsageData[]> {
@@ -708,7 +741,7 @@ const ScreenTimeModuleAndroid: ScreenTimeAPI = {
   },
 
   isAvailable(): boolean {
-    return true; // Android 5.1+ で利用可能
+    return true; // Android 8.0+ (API 26+) で全機能利用可能
   },
 };
 
@@ -732,14 +765,15 @@ export default function ScreenTimePermissionScreen() {
 
   const handleRequestPermission = async () => {
     if (Platform.OS === 'ios') {
-      // iOS: Family Controls 認可リクエスト
-      await ScreenTime.requestPermissions();
+      // iOS: Family Controls 認可リクエスト（OSダイアログ表示）
+      // 別途iOS用のrequestAuthorization()を呼び出し
     } else if (Platform.OS === 'android') {
-      // Android: 段階的に権限をリクエスト
-      // Step 1: 使用状況アクセス
-      await ScreenTime.requestUsageStatsPermission();
-      // Step 2: オーバーレイ
-      await ScreenTime.requestOverlayPermission();
+      // Android: 段階的に設定画面を開く（runtime requestは不可）
+      // Step 1: 使用状況アクセス設定画面
+      await ScreenTime.openUsageStatsSettings();
+      // ユーザーが戻ってきたら権限確認
+      // Step 2: オーバーレイ設定画面
+      await ScreenTime.openOverlaySettings();
     }
 
     const status = await ScreenTime.getPermissionStatus();
@@ -864,5 +898,6 @@ Phase 3-4: オーバーレイ + 監視機能
 
 ---
 
-*作成日: 2024年12月*
+*作成日: 2025年12月*
+*最終更新: 2025年12月（Codexレビュー反映）*
 *StopShorts Android対応プロジェクト*
