@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Header, SelectionCard } from '../../src/components/ui';
@@ -9,6 +8,7 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
 import type { IfThenAction, IfThenPlan } from '../../src/types';
+import { useSettingsBack } from '../../src/hooks/useSettingsBack';
 
 type ActionOption = {
   id: IfThenAction;
@@ -26,11 +26,11 @@ const actionOptions: ActionOption[] = [
 ];
 
 export default function IfThenSettingsScreen() {
-  const router = useRouter();
   const { colors, typography, spacing, borderRadius } = useTheme();
   const { ifThenPlan, setIfThenPlan } = useAppStore();
   const [selectedAction, setSelectedAction] = useState<IfThenAction | null>(ifThenPlan?.action || null);
   const [customAction, setCustomAction] = useState(ifThenPlan?.customAction || '');
+  const handleBack = useSettingsBack();
 
   const canSave = selectedAction && (selectedAction !== 'custom' || customAction.trim().length > 0);
 
@@ -41,12 +41,12 @@ export default function IfThenSettingsScreen() {
       customAction: selectedAction === 'custom' ? customAction : undefined,
     };
     setIfThenPlan(plan);
-    router.back();
+    handleBack();
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title={t('settings.yourSettings.ifThen')} showBack />
+      <Header title={t('settings.yourSettings.ifThen')} showBack onBack={handleBack} />
 
       <ScrollView
         style={styles.scrollView}

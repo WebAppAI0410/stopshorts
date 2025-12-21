@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, Platform, TouchableOpacity, Image, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, SelectionCard, Header } from '../../src/components/ui';
@@ -13,6 +12,7 @@ import { screenTimeService } from '../../src/native/ScreenTimeModule';
 import { getAppIcon } from '../../src/constants/appIcons';
 import type { TargetAppId } from '../../src/types';
 import type { InstalledApp } from '../../src/native/ScreenTimeModule';
+import { useSettingsBack } from '../../src/hooks/useSettingsBack';
 
 type AppOption = {
   id: TargetAppId;
@@ -30,7 +30,6 @@ const appOptions: AppOption[] = [
 ];
 
 export default function TargetAppsScreen() {
-  const router = useRouter();
   const { colors, typography, spacing, borderRadius } = useTheme();
   const {
     selectedApps: storedSelectedApps,
@@ -47,6 +46,7 @@ export default function TargetAppsScreen() {
   const [showAppModal, setShowAppModal] = useState(false);
   const [customAppIcons, setCustomAppIcons] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const handleBack = useSettingsBack();
 
   // Fetch icons for custom apps (Android only - default apps use bundled assets)
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function TargetAppsScreen() {
         }
       }
 
-      router.back();
+      handleBack();
     } catch (error) {
       console.error('[TargetApps] Failed to save:', error);
       Alert.alert('保存エラー', '設定の保存に失敗しました。もう一度お試しください。');
@@ -140,7 +140,7 @@ export default function TargetAppsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title={t('settings.yourSettings.targetApps')} showBack />
+      <Header title={t('settings.yourSettings.targetApps')} showBack onBack={handleBack} />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.gutter, paddingBottom: 120 }]}

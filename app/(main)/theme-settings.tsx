@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Header, SelectionCard } from '../../src/components/ui';
 import { useTheme, ThemeMode } from '../../src/contexts/ThemeContext';
 import { t } from '../../src/i18n';
+import { useSettingsBack } from '../../src/hooks/useSettingsBack';
 
 type ThemeOption = {
   id: ThemeMode;
@@ -20,18 +20,18 @@ const themeOptions: ThemeOption[] = [
 ];
 
 export default function ThemeSettingsScreen() {
-  const router = useRouter();
   const { colors, typography, spacing, themeMode, setThemeMode } = useTheme();
   const [selectedMode, setSelectedMode] = useState<ThemeMode>(themeMode);
+  const handleBack = useSettingsBack();
 
   const handleSave = () => {
     setThemeMode(selectedMode);
-    router.back();
+    handleBack();
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title={t('settings.theme.title')} showBack />
+      <Header title={t('settings.theme.title')} showBack onBack={handleBack} />
 
       <ScrollView
         style={styles.scrollView}

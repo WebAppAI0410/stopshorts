@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, Switch, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../../src/contexts/ThemeContext';
@@ -9,15 +8,16 @@ import { useAppStore } from '../../src/stores/useAppStore';
 import { Button, SelectionCard } from '../../src/components/ui';
 import { screenTimeService } from '../../src/native/ScreenTimeModule';
 import type { InterventionTiming, InterventionDelayMinutes } from '../../src/types';
+import { useSettingsBack } from '../../src/hooks/useSettingsBack';
 
 export default function InterventionSettingsScreen() {
-    const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
     const { interventionSettings, setInterventionSettings } = useAppStore();
 
     const [timing, setTiming] = useState<InterventionTiming>(interventionSettings.timing);
     const [delayMinutes, setDelayMinutes] = useState<InterventionDelayMinutes>(interventionSettings.delayMinutes);
     const [isSaving, setIsSaving] = useState(false);
+    const handleBack = useSettingsBack();
 
     const isAndroid = Platform.OS === 'android';
 
@@ -32,7 +32,7 @@ export default function InterventionSettingsScreen() {
                 await screenTimeService.setInterventionSettings(timing, delayMinutes);
             }
 
-            router.back();
+            handleBack();
         } catch (error) {
             console.error('[InterventionSettings] Failed to save:', error);
             Alert.alert(
@@ -61,7 +61,7 @@ export default function InterventionSettingsScreen() {
                 {/* Header */}
                 <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
                     <View style={styles.headerRow}>
-                        <Pressable onPress={() => router.back()} style={styles.backButton}>
+                        <Pressable onPress={handleBack} style={styles.backButton}>
                             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                         </Pressable>
                         <Text style={[typography.h2, { color: colors.textPrimary }]}>

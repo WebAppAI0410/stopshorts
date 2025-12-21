@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Header, SelectionCard } from '../../src/components/ui';
@@ -9,6 +8,7 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
 import type { AlternativeActivity } from '../../src/types';
+import { useSettingsBack } from '../../src/hooks/useSettingsBack';
 
 type ActivityOption = {
   id: AlternativeActivity;
@@ -26,11 +26,11 @@ const activityOptions: ActivityOption[] = [
 ];
 
 export default function AlternativeSettingsScreen() {
-  const router = useRouter();
   const { colors, typography, spacing, borderRadius } = useTheme();
   const { alternativeActivity, customAlternativeActivity, setAlternativeActivity } = useAppStore();
   const [selectedActivity, setSelectedActivity] = useState<AlternativeActivity | null>(alternativeActivity);
   const [customActivity, setCustomActivity] = useState(customAlternativeActivity || '');
+  const handleBack = useSettingsBack();
 
   const isValid =
     selectedActivity && (selectedActivity !== 'custom' || customActivity.trim().length > 0);
@@ -38,12 +38,12 @@ export default function AlternativeSettingsScreen() {
   const handleSave = () => {
     if (!selectedActivity) return;
     setAlternativeActivity(selectedActivity, customActivity || undefined);
-    router.back();
+    handleBack();
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title={t('settings.yourSettings.alternative')} showBack />
+      <Header title={t('settings.yourSettings.alternative')} showBack onBack={handleBack} />
 
       <ScrollView
         style={styles.scrollView}

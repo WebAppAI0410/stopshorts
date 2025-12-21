@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Header, SelectionCard } from '../../src/components/ui';
@@ -10,6 +9,7 @@ import { t } from '../../src/i18n';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { goalTypeToPurpose } from '../../src/types';
 import type { GoalType } from '../../src/types';
+import { useSettingsBack } from '../../src/hooks/useSettingsBack';
 
 type GoalOption = {
   id: GoalType;
@@ -24,21 +24,21 @@ const goalOptions: GoalOption[] = [
 ];
 
 export default function GoalSettingsScreen() {
-  const router = useRouter();
   const { colors, typography, spacing } = useTheme();
   const { goal, setGoal, setPurpose } = useAppStore();
   const [selectedGoal, setSelectedGoal] = useState<GoalType | null>(goal);
+  const handleBack = useSettingsBack();
 
   const handleSave = () => {
     if (!selectedGoal) return;
     setGoal(selectedGoal);
     setPurpose(goalTypeToPurpose(selectedGoal));
-    router.back();
+    handleBack();
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title={t('settings.yourSettings.goal')} showBack />
+      <Header title={t('settings.yourSettings.goal')} showBack onBack={handleBack} />
 
       <ScrollView
         style={styles.scrollView}

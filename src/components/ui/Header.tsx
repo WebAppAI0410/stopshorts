@@ -7,6 +7,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 type HeaderProps = {
     title?: string;
     showBack?: boolean;
+    onBack?: () => void;
     rightElement?: React.ReactNode;
     variant?: 'default' | 'ghost';
 };
@@ -14,6 +15,7 @@ type HeaderProps = {
 export const Header: React.FC<HeaderProps> = ({
     title,
     showBack = true,
+    onBack,
     rightElement,
     variant = 'default',
 }) => {
@@ -34,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
             <View style={styles.left}>
                 {showBack && (
                     <TouchableOpacity
-                        onPress={() => router.back()}
+                        onPress={() => (onBack ? onBack() : router.back())}
                         style={[
                             styles.backButton,
                             {
