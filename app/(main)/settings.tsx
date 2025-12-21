@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Header, GlowOrb } from '../../src/components/ui';
@@ -54,8 +55,10 @@ function SettingRow({
 }
 
 export default function SettingsScreen() {
+    const router = useRouter();
     const { colors, typography, spacing, borderRadius, themeMode, setThemeMode } = useTheme();
-    const { reset, interventionDurationMinutes, setInterventionDuration, goal, alternativeActivity, ifThenPlan, selectedApps } = useAppStore();
+    const { reset, interventionDurationMinutes, setInterventionDuration, goal, alternativeActivity, ifThenPlan, selectedApps, customApps } = useAppStore();
+    const selectedCustomCount = customApps.filter((app) => app.isSelected !== false).length;
 
     const handleReset = () => {
         Alert.alert(
@@ -138,9 +141,9 @@ export default function SettingsScreen() {
                         <SettingRow
                             {...settingRowCommonProps}
                             label={t('settings.yourSettings.targetApps')}
-                            value={t('settings.yourSettings.appsCount', { count: selectedApps.length })}
+                            value={t('settings.yourSettings.appsCount', { count: selectedApps.length + selectedCustomCount })}
                             icon="apps-outline"
-                            onPress={() => Alert.alert(t('settings.comingSoon.title'), t('settings.comingSoon.message'))}
+                            onPress={() => router.push('/(main)/target-apps')}
                         />
                     </View>
                 </Animated.View>

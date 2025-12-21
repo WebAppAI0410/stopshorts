@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAppStore } from '../../stores/useAppStore';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
+import { getSelectedPackages } from '../../native/ScreenTimeModule';
 
 interface ProgressCardProps {
   onPress?: () => void;
@@ -35,14 +36,23 @@ export function ProgressCard({ onPress }: ProgressCardProps) {
 
   const baselineMonthlyMinutes = useAppStore((state) => state.baselineMonthlyMinutes);
   const dailyGoalMinutes = useAppStore((state) => state.dailyGoalMinutes);
+  const selectedApps = useAppStore((state) => state.selectedApps);
+  const customApps = useAppStore((state) => state.customApps);
 
   const getReductionRate = useStatisticsStore((state) => state.getReductionRate);
   const getMonthlyAchievementStats = useStatisticsStore((state) => state.getMonthlyAchievementStats);
   const getHabitScore = useStatisticsStore((state) => state.getHabitScore);
 
   // Get metrics
-  const reductionRate = getReductionRate(baselineMonthlyMinutes);
-  const achievementStats = getMonthlyAchievementStats(dailyGoalMinutes);
+  const selectedPackages = [
+    ...new Set([
+      ...getSelectedPackages(selectedApps),
+      ...customApps.filter((app) => app.isSelected !== false).map((app) => app.packageName),
+    ]),
+  ];
+
+  const reductionRate = getReductionRate(baselineMonthlyMinutes, selectedPackages);
+  const achievementStats = getMonthlyAchievementStats(dailyGoalMinutes, selectedPackages);
   const habitScore = getHabitScore();
 
   const achievementBadge = getAchievementBadge(achievementStats.achievementRate);

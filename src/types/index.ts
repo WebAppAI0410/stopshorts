@@ -19,6 +19,7 @@ export interface CustomApp {
   appName: string;
   category: string;
   addedAt: string; // ISO date string
+  isSelected?: boolean; // Defaults to true for tracking
 }
 
 // Implementation Intent Types

@@ -128,6 +128,7 @@ interface AppState {
   // Custom Apps Actions (Android only - iOS pending Family Controls Entitlement)
   addCustomApp: (app: Omit<CustomApp, 'addedAt'>) => void;
   removeCustomApp: (packageName: string) => void;
+  setCustomAppSelected: (packageName: string, isSelected: boolean) => void;
   getCustomAppPackages: () => string[];
 
   // Subscription Actions
@@ -510,6 +511,7 @@ export const useAppStore = create<AppState>()(
         const newApp: CustomApp = {
           ...app,
           addedAt: new Date().toISOString(),
+          isSelected: true,
         };
         set({ customApps: [...customApps, newApp] });
       },
@@ -521,9 +523,22 @@ export const useAppStore = create<AppState>()(
         });
       },
 
+      setCustomAppSelected: (packageName, isSelected) => {
+        const { customApps } = get();
+        set({
+          customApps: customApps.map((app) =>
+            app.packageName === packageName
+              ? { ...app, isSelected }
+              : app
+          ),
+        });
+      },
+
       getCustomAppPackages: () => {
         const { customApps } = get();
-        return customApps.map((a) => a.packageName);
+        return customApps
+          .filter((a) => a.isSelected !== false)
+          .map((a) => a.packageName);
       },
 
       // Subscription Actions
