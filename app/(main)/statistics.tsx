@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -7,9 +7,10 @@ import { StatCard, WeeklyBarChart } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
+import { useScreenTimeData } from '../../src/hooks/useScreenTimeData';
 import { t } from '../../src/i18n';
 
-// Fixed demo data to prevent re-renders from changing values
+// Fixed demo data to prevent re-renders from changing values (iOS fallback)
 const DEMO_WEEKLY_DATA = [120, 95, 140, 80, 110, 150, 130];
 
 export default function StatisticsScreen() {
@@ -22,15 +23,22 @@ export default function StatisticsScreen() {
         getEarnedBadges,
     } = useStatisticsStore();
 
-    // Get data from new statistics store
+    // Get real screen time data from Android native module
+    const { weeklyData: nativeWeeklyData, loading: screenTimeLoading, isMockData } = useScreenTimeData();
+
+    // Get data from intervention statistics store
     const weeklyStats = getWeeklyStats();
     const currentStreak = getStreak();
     const earnedBadges = getEarnedBadges();
 
-    // Check if we have real data
-    const hasRealData = stats.length > 0 || lifetime.totalUrgeSurfingCompleted > 0;
+    // Check if we have real data from Android
+    // isMockData=false means real data from Android, even if weeklyTotal is 0
+    const hasRealScreenTimeData = !isMockData && nativeWeeklyData !== null;
+    const hasRealData = hasRealScreenTimeData || lifetime.totalUrgeSurfingCompleted > 0;
 
     // Calculate weekly stats with memoization
+    // Android: Use real data from native module
+    // iOS: Fall back to demo data
     const weeklyData = useMemo(() => {
         const today = new Date();
         const result = [];
@@ -39,18 +47,30 @@ export default function StatisticsScreen() {
             const date = new Date(today);
             date.setDate(date.getDate() - i);
             const dateString = date.toISOString().split('T')[0];
-            const dayStats = stats.find(s => s.date === dateString);
+
+            // Try to get data from Android native module first
+            let dayMinutes = 0;
+            if (hasRealScreenTimeData && nativeWeeklyData?.dailyBreakdown) {
+                const nativeDay = nativeWeeklyData.dailyBreakdown.find(d => d.date === dateString);
+                dayMinutes = nativeDay?.minutes || 0;
+            } else {
+                // Fall back to old stats or demo data
+                const dayStats = stats.find(s => s.date === dateString);
+                dayMinutes = dayStats?.totalBlockedMinutes || DEMO_WEEKLY_DATA[6 - i];
+            }
 
             result.push({
                 day: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][date.getDay()],
-                value: dayStats?.totalBlockedMinutes || DEMO_WEEKLY_DATA[6 - i],
+                value: dayMinutes,
             });
         }
 
         return result;
-    }, [stats]);
+    }, [stats, hasRealScreenTimeData, nativeWeeklyData]);
 
-    const totalWeekMinutes = weeklyData.reduce((sum, day) => sum + day.value, 0);
+    const totalWeekMinutes = hasRealScreenTimeData
+        ? (nativeWeeklyData?.weeklyTotal || 0)
+        : weeklyData.reduce((sum, day) => sum + day.value, 0);
     const hours = Math.floor(totalWeekMinutes / 60);
     const minutes = totalWeekMinutes % 60;
 
@@ -108,15 +128,19 @@ export default function StatisticsScreen() {
                 {/* Hero Stat */}
                 <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.heroSection}>
                     <View style={styles.heroRow}>
-                        <Text style={[typography.hero, { color: colors.textPrimary }]}>
-                            {hours}h {minutes}m
-                        </Text>
+                        {screenTimeLoading ? (
+                            <ActivityIndicator size="large" color={colors.accent} />
+                        ) : (
+                            <Text style={[typography.hero, { color: colors.textPrimary }]}>
+                                {hours}h {minutes}m
+                            </Text>
+                        )}
                         <View style={[styles.clockIcon, { borderColor: colors.accent }]}>
-                            <Ionicons name="checkmark" size={24} color={colors.accent} />
+                            <Ionicons name="phone-portrait" size={24} color={colors.accent} />
                         </View>
                     </View>
                     <Text style={[typography.body, { color: colors.textSecondary }]}>
-                        {t('statistics.savedThisWeek')}
+                        {hasRealScreenTimeData ? '今週の使用時間' : t('statistics.savedThisWeek')}
                     </Text>
                 </Animated.View>
 

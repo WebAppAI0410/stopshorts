@@ -533,7 +533,9 @@
     "dailyTip": "今日のヒント",
     "dailyTipMessage": "今日は気を散らすものなく、集中して作業する時間を設けてみましょう。",
     "demoMode": "デモモード",
-    "demoModeDescription": "スクリーンタイム権限が有効になると、実際の保護が開始されます"
+    "demoModeDescription": "スクリーンタイム権限が有効になると、実際の保護が開始されます",
+    "mockDataMode": "サンプルデータ表示中",
+    "mockDataDescription": "iOSでは実際のスクリーンタイムデータは取得できません。表示されているのはサンプルデータです。"
   },
   "shield": {
     "title": "{{minutes}}分が経過しました",

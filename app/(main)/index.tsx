@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,7 @@ import {
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
+import { useScreenTimeData } from '../../src/hooks/useScreenTimeData';
 import { t } from '../../src/i18n';
 
 export default function DashboardScreen() {
@@ -21,25 +22,32 @@ export default function DashboardScreen() {
     const { stats } = useAppStore();
     const { getTodayStats, getStreak, lifetime, getNewBadges } = useStatisticsStore();
 
-    // Get statistics from new store
+    // Get real screen time data from Android native module
+    const { todayData, loading: screenTimeLoading, isMockData } = useScreenTimeData();
+
+    // Get statistics from intervention store
     const todayStatsNew = getTodayStats();
     const currentStreak = getStreak();
     const newBadges = getNewBadges();
 
-    // Check if we have real data
-    const hasRealData = stats.length > 0 || todayStatsNew.urgeSurfing.completed > 0;
+    // Check if we have real data (Android: from native module when data is fetched)
+    // isMockData=false means real data from Android, even if totalMinutes is 0
+    const hasRealScreenTimeData = !isMockData && todayData !== null;
+    const hasRealData = hasRealScreenTimeData || todayStatsNew.urgeSurfing.completed > 0;
 
-    // Get today's statistics (merge old and new)
-    const todayDate = new Date().toISOString().split('T')[0];
-    const todayStatsOld = stats.find(s => s.date === todayDate) || {
-        interventionCount: 0,
-        totalBlockedMinutes: 0
-    };
+    // Get today's statistics
+    // For Android: Use real usage data from native module (even if 0)
+    // For iOS: Fall back to store data
+    const todayUsageMinutes = hasRealScreenTimeData
+        ? (todayData?.totalMinutes ?? 0)
+        : (stats.find(s => s.date === new Date().toISOString().split('T')[0])?.totalBlockedMinutes || 0);
 
-    // Use new store data if available, otherwise fall back to old
     const todayStats = {
-        interventionCount: todayStatsNew.interventions.triggered || todayStatsOld.interventionCount,
-        totalBlockedMinutes: Math.round(lifetime.totalSavedHours * 60) || todayStatsOld.totalBlockedMinutes,
+        interventionCount: todayStatsNew.interventions.triggered,
+        // Show actual usage time from Android, not "saved" time
+        totalUsageMinutes: todayUsageMinutes,
+        // Total saved time from urge surfing
+        totalSavedMinutes: Math.round(lifetime.totalSavedHours * 60),
         urgeSurfingCompleted: todayStatsNew.urgeSurfing.completed,
     };
 
@@ -81,8 +89,8 @@ export default function DashboardScreen() {
                     </View>
                 </Animated.View>
 
-                {/* Demo Mode Banner */}
-                {!hasRealData && (
+                {/* Demo/Mock Mode Banner */}
+                {(isMockData || !hasRealData) && (
                     <Animated.View
                         entering={FadeInDown.duration(600).delay(50)}
                         style={[
@@ -100,10 +108,10 @@ export default function DashboardScreen() {
                         </View>
                         <View style={styles.demoTextContainer}>
                             <Text style={[typography.label, { color: colors.warning }]}>
-                                {t('home.demoMode')}
+                                {isMockData ? t('home.mockDataMode') : t('home.demoMode')}
                             </Text>
                             <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>
-                                {t('home.demoModeDescription')}
+                                {isMockData ? t('home.mockDataDescription') : t('home.demoModeDescription')}
                             </Text>
                         </View>
                     </Animated.View>
@@ -134,33 +142,33 @@ export default function DashboardScreen() {
                         </Text>
                     </View>
 
-                    {/* Today's Interventions */}
+                    {/* Today's Usage (Android: real data) */}
                     <View style={styles.statRow}>
+                        <View style={styles.statLabel}>
+                            <Ionicons name="phone-portrait-outline" size={18} color={colors.accent} />
+                            <Text style={[typography.body, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
+                                今日の使用時間
+                            </Text>
+                        </View>
+                        <Text style={[typography.body, { color: colors.textPrimary, fontWeight: '600' }]}>
+                            {screenTimeLoading ? '...' : `${todayStats.totalUsageMinutes} 分`}
+                        </Text>
+                    </View>
+                    <ProgressBar progress={Math.min(todayStats.totalUsageMinutes, 100)} variant="primary" />
+
+                    {/* Today's Interventions */}
+                    <View style={[styles.statRow, { marginTop: spacing.md }]}>
                         <View style={styles.statLabel}>
                             <Ionicons name="hand-left-outline" size={18} color={colors.accent} />
                             <Text style={[typography.body, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
-                                {t('home.stats.todayInterventions')}: {todayStats.interventionCount}
+                                介入回数
                             </Text>
                         </View>
                         <Text style={[typography.body, { color: colors.textPrimary, fontWeight: '600' }]}>
-                            {todayStats.interventionCount}
+                            {todayStats.interventionCount} 回
                         </Text>
                     </View>
-                    <ProgressBar progress={Math.min(todayStats.interventionCount * 20, 100)} variant="primary" />
-
-                    {/* Time Recovered */}
-                    <View style={[styles.statRow, { marginTop: spacing.md }]}>
-                        <View style={styles.statLabel}>
-                            <Ionicons name="time-outline" size={18} color={colors.accent} />
-                            <Text style={[typography.body, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
-                                {t('home.stats.timeSaved')}: {todayStats.totalBlockedMinutes} min
-                            </Text>
-                        </View>
-                        <Text style={[typography.body, { color: colors.textPrimary, fontWeight: '600' }]}>
-                            {todayStats.totalBlockedMinutes} min
-                        </Text>
-                    </View>
-                    <ProgressBar progress={Math.min(todayStats.totalBlockedMinutes * 2, 100)} variant="secondary" />
+                    <ProgressBar progress={Math.min(todayStats.interventionCount * 20, 100)} variant="secondary" />
                 </Animated.View>
 
                 {/* Streak Indicator */}

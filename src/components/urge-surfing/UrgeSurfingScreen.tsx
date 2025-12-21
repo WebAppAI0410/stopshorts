@@ -93,7 +93,7 @@ export function UrgeSurfingScreen({
       durationSeconds: SURFING_DURATION_MS / 1000,
       completed: true,
     });
-    recordIntervention(false); // Dismissed = didn't proceed to app
+    recordIntervention({ proceeded: false }); // Dismissed = didn't proceed to app
     onDismiss();
   }, [intensityBefore, intensityAfter, recordUrgeSurfing, recordIntervention, onDismiss]);
 
@@ -105,13 +105,13 @@ export function UrgeSurfingScreen({
       durationSeconds: 0,
       completed: false,
     });
-    recordIntervention(true); // Proceeded to app
+    recordIntervention({ proceeded: true }); // Proceeded to app
     onProceed();
   }, [intensityBefore, recordUrgeSurfing, recordIntervention, onProceed]);
 
   const handleProceedAfterComplete = useCallback(() => {
     // User completed surfing but still wants to open app
-    recordIntervention(true);
+    recordIntervention({ proceeded: true });
     onProceed();
   }, [recordIntervention, onProceed]);
 

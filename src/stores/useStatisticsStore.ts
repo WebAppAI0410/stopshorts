@@ -23,14 +23,30 @@ interface UrgeSurfingRecordInput {
   completed: boolean;
 }
 
+// Input for recording an intervention event
+interface InterventionInput {
+  proceeded: boolean;
+  appPackage?: string;  // Package name of the app that triggered intervention
+  timestamp?: number;   // When the intervention occurred
+}
+
+// Individual intervention record for analytics
+export interface InterventionRecord {
+  proceeded: boolean;
+  appPackage: string;
+  timestamp: number;
+  timeOfDay: 'morning' | 'daytime' | 'evening' | 'night';
+}
+
 interface StatisticsState {
   // Data
   dailyStats: Record<string, DailyStatistics>; // key: YYYY-MM-DD
   lifetime: LifetimeStatistics;
+  interventionHistory: InterventionRecord[]; // Detailed intervention records
 
   // Actions
   recordUrgeSurfing: (record: UrgeSurfingRecordInput) => void;
-  recordIntervention: (proceeded: boolean) => void;
+  recordIntervention: (input: InterventionInput) => void;
   recordUsageTime: (appId: string, minutes: number) => void;
   recordTrainingSession: (minutes: number) => void;
   updateStreak: () => void;
@@ -107,6 +123,7 @@ export const useStatisticsStore = create<StatisticsState>()(
     (set, get) => ({
       dailyStats: {},
       lifetime: createEmptyLifetime(),
+      interventionHistory: [],
 
       recordUrgeSurfing: (record) => {
         const dateKey = getDateKey();
@@ -163,10 +180,23 @@ export const useStatisticsStore = create<StatisticsState>()(
         });
       },
 
-      recordIntervention: (proceeded) => {
+      recordIntervention: (input) => {
+        const { proceeded, appPackage = '', timestamp = Date.now() } = input;
         const dateKey = getDateKey();
         const state = get();
         const todayStats = state.dailyStats[dateKey] || createEmptyDailyStats(dateKey);
+
+        // Get time of day for analytics
+        const hour = new Date(timestamp).getHours();
+        const timeOfDay = getTimeOfDay(hour);
+
+        // Create intervention record for history
+        const interventionRecord: InterventionRecord = {
+          proceeded,
+          appPackage,
+          timestamp,
+          timeOfDay,
+        };
 
         const newInterventions = { ...todayStats.interventions };
         newInterventions.triggered += 1;
@@ -176,6 +206,9 @@ export const useStatisticsStore = create<StatisticsState>()(
         } else {
           newInterventions.dismissed += 1;
         }
+
+        // Keep last 100 intervention records to limit storage
+        const newHistory = [...state.interventionHistory, interventionRecord].slice(-100);
 
         set({
           dailyStats: {
@@ -189,6 +222,7 @@ export const useStatisticsStore = create<StatisticsState>()(
             ...state.lifetime,
             totalInterventions: state.lifetime.totalInterventions + 1,
           },
+          interventionHistory: newHistory,
         });
       },
 
