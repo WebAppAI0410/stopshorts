@@ -415,7 +415,6 @@ export const useAppStore = create<AppState>()(
       calculateImpactFromScreenTime: (data) => {
         const dailyHours = data.dailyAverage / 60;
         // Use 360 days (12 months × 30 days) to match reality-check display calculation
-        // (yearlyHours = totalMonthlyMinutes * 12 / 60 = dailyAverage * 30 * 12 / 60 = dailyAverage * 6)
         const yearlyLostHours = dailyHours * 360;
         const remainingYears = 50;
         const lifetimeLostYears = (yearlyLostHours * remainingYears) / (24 * 365);

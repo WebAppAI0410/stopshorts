@@ -217,25 +217,34 @@ export default function RealityCheckScreen() {
     }, []);
 
     const handleContinue = () => {
-        if (screenTimeData && monthlyData) {
-            // Include custom app usage in the impact calculation
-            const customMonthlyTotal = customAppUsage.reduce((sum, app) => sum + app.monthlyMinutes, 0);
+        // Calculate yearlyLostHours the same way as displayed on this screen
+        // and store it directly to ensure consistency
+        const customMonthlyTotal = customAppUsage.reduce((sum, app) => sum + app.monthlyMinutes, 0);
+        const totalMonthlyMinutes = (monthlyData?.monthlyTotal || 0) + customMonthlyTotal;
 
-            // Calculate total monthly minutes (same as displayed on this screen)
-            const totalMonthlyMinutes = monthlyData.monthlyTotal + customMonthlyTotal;
+        // Same calculation as displayed: totalMonthlyMinutes * 12 / 60
+        const yearlyHours = Math.round(totalMonthlyMinutes * 12 / 60);
 
-            // Convert monthly total to daily average: monthly ÷ 30 days
-            // This ensures consistency with the yearlyHours displayed on this screen
-            // (yearlyHours = totalMonthlyMinutes * 12 / 60 = dailyAverage * 30 * 12 / 60 = dailyAverage * 6)
-            const totalDailyAverage = Math.round(totalMonthlyMinutes / 30);
-
-            const updatedScreenTimeData = {
-                ...screenTimeData,
-                // Use calculated daily average from total monthly minutes
-                dailyAverage: totalDailyAverage,
+        // Create impact with the exact same yearlyHours shown on screen
+        if (yearlyHours > 0) {
+            const lifetimeLostYears = (yearlyHours * 50) / (24 * 365);
+            const impact = {
+                yearlyLostHours: yearlyHours,
+                lifetimeLostYears: Math.round(lifetimeLostYears * 10) / 10,
+                equivalents: {
+                    books: Math.round(yearlyHours / 6),
+                    movies: Math.round(yearlyHours / 2),
+                    skills: yearlyHours >= 500 ? ['資格取得'] :
+                            yearlyHours >= 300 ? ['プログラミング入門'] :
+                            yearlyHours >= 200 ? ['楽器の初級レベル'] :
+                            yearlyHours >= 100 ? ['新しい言語の基礎'] : ['新しいスキルの習得'],
+                    travels: Math.round(yearlyHours / 40),
+                },
             };
-            calculateImpactFromScreenTime(updatedScreenTimeData);
+            // Directly set lifetimeImpact in store
+            useAppStore.getState().setLifetimeImpact(impact);
         }
+
         router.push('/(onboarding)/alternative' as Href);
     };
 
