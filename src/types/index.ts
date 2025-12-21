@@ -1,6 +1,19 @@
 // User Purpose Types
 export type UserPurpose = 'sleep' | 'study' | 'work' | 'creative' | 'mental' | 'other';
 
+// Profile Avatar Types
+export type AvatarIcon =
+  | 'person'
+  | 'happy'
+  | 'heart'
+  | 'star'
+  | 'rocket'
+  | 'leaf'
+  | 'flame'
+  | 'diamond'
+  | 'shield'
+  | 'sparkles';
+
 // Goal Types (Simplified purpose for onboarding v2)
 export type GoalType = 'concentration' | 'sleep' | 'time' | 'mental';
 

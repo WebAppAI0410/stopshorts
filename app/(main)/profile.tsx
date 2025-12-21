@@ -1,16 +1,33 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter, Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
 import { t } from '../../src/i18n';
+import type { AvatarIcon } from '../../src/types';
+
+// Map avatar icon types to Ionicons names
+const avatarIconMap: Record<AvatarIcon, keyof typeof Ionicons.glyphMap> = {
+    person: 'person',
+    happy: 'happy',
+    heart: 'heart',
+    star: 'star',
+    rocket: 'rocket',
+    leaf: 'leaf',
+    flame: 'flame',
+    diamond: 'diamond',
+    shield: 'shield',
+    sparkles: 'sparkles',
+};
 
 export default function ProfileScreen() {
+    const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
-    const { purpose, subscriptionPlan } = useAppStore();
+    const { purpose, subscriptionPlan, userName, userAvatar } = useAppStore();
     const { lifetime } = useStatisticsStore();
 
     // Use consolidated statistics from useStatisticsStore
@@ -41,11 +58,24 @@ export default function ProfileScreen() {
 
                 {/* Avatar Section */}
                 <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.avatarSection}>
-                    <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
-                        <Ionicons name="person" size={48} color={colors.textInverse} />
-                    </View>
+                    <TouchableOpacity
+                        style={styles.avatarContainer}
+                        onPress={() => router.push('/(main)/profile-settings' as Href)}
+                        activeOpacity={0.8}
+                    >
+                        <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
+                            <Ionicons
+                                name={avatarIconMap[userAvatar]}
+                                size={48}
+                                color={colors.textInverse}
+                            />
+                        </View>
+                        <View style={[styles.editBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                            <Ionicons name="pencil" size={12} color={colors.textSecondary} />
+                        </View>
+                    </TouchableOpacity>
                     <Text style={[typography.h2, { color: colors.textPrimary, marginTop: spacing.md }]}>
-                        {t('profile.user')}
+                        {userName || t('profile.user')}
                     </Text>
                     <View style={[styles.badge, { backgroundColor: colors.surface, borderRadius: borderRadius.full }]}>
                         <Text style={[typography.caption, { color: colors.accent }]}>
@@ -176,12 +206,26 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 32,
     },
+    avatarContainer: {
+        position: 'relative',
+    },
     avatar: {
         width: 100,
         height: 100,
         borderRadius: 50,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    editBadge: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
     },
     badge: {
         paddingHorizontal: 16,

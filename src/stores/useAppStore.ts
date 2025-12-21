@@ -28,6 +28,8 @@ import {
   type CustomApp,
   // Intervention settings
   type InterventionSettings,
+  // Profile types
+  type AvatarIcon,
   // Mapping functions
   goalTypeToPurpose,
 } from '../types';
@@ -35,6 +37,7 @@ import {
 interface AppState {
   // User State
   userName: string | null;
+  userAvatar: AvatarIcon;
   hasCompletedOnboarding: boolean;
   purpose: UserPurpose | null;
   addictionAssessment: AddictionAssessment | null;
@@ -84,6 +87,7 @@ interface AppState {
 
   // Actions
   setUserName: (name: string) => void;
+  setUserAvatar: (avatar: AvatarIcon) => void;
   setOnboardingComplete: () => void;
   setPurpose: (purpose: UserPurpose) => void;
   setAddictionAssessment: (assessment: AddictionAssessment) => void;
@@ -144,6 +148,7 @@ interface AppState {
 
 const initialState = {
   userName: null,
+  userAvatar: 'person' as AvatarIcon,
   hasCompletedOnboarding: false,
   purpose: null,
   addictionAssessment: null,
@@ -197,6 +202,9 @@ export const useAppStore = create<AppState>()(
 
       setUserName: (name) =>
         set({ userName: name }),
+
+      setUserAvatar: (avatar) =>
+        set({ userAvatar: avatar }),
 
       setOnboardingComplete: () =>
         set({ hasCompletedOnboarding: true }),
