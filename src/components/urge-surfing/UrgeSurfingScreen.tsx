@@ -6,6 +6,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -51,6 +52,19 @@ export function UrgeSurfingScreen({
   const [isSliderActive, setIsSliderActive] = useState(false);
 
   const { recordUrgeSurfing, recordIntervention } = useStatisticsStore();
+
+  // Reset state when screen comes into focus (allows repeated practice)
+  useFocusEffect(
+    useCallback(() => {
+      // Reset all state to initial values when screen is focused
+      setPhase('initial');
+      setIntensityBefore(5);
+      setIntensityAfter(3);
+      setSurfingProgress(0);
+      setStartTime(null);
+      setIsSliderActive(false);
+    }, [])
+  );
 
   // Slider interaction callbacks
   const handleSlidingStart = useCallback(() => setIsSliderActive(true), []);
