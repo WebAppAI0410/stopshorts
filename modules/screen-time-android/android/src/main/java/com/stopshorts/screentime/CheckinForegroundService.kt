@@ -293,8 +293,11 @@ class CheckinForegroundService : Service() {
      * Start monitoring foreground apps
      */
     private fun startMonitoring(packageNames: List<String>) {
+        Log.i(TAG, "startMonitoring called with packages: $packageNames")
+
         if (isMonitoring) {
             // Already monitoring, just update targets
+            Log.i(TAG, "Already monitoring, updating targets")
             updateTargetApps(packageNames)
             return
         }
@@ -302,6 +305,9 @@ class CheckinForegroundService : Service() {
         targetPackages.clear()
         targetPackages.addAll(packageNames)
         isMonitoring = true
+
+        Log.i(TAG, "Monitoring started with ${targetPackages.size} target packages: $targetPackages")
+        Log.i(TAG, "Intervention settings: timing=$interventionTiming, delay=$interventionDelayMinutes min")
 
         // Start foreground service with notification
         val notification = createNotification()
@@ -342,16 +348,25 @@ class CheckinForegroundService : Service() {
             val currentApp = usageStatsTracker.getCurrentForegroundApp()
             val now = System.currentTimeMillis()
 
+            // Enhanced debug logging
+            logDebug("checkForegroundApp: currentApp=$currentApp, targetPackages=$targetPackages, timing=$interventionTiming")
+
             // Check if current app is in target list
             if (currentApp != null && currentApp in targetPackages) {
+                logDebug("Target app detected: $currentApp")
                 if (interventionTiming == "immediate") {
                     // Immediate mode: launch urge surfing directly if possible, fallback to overlay
-                    if (shouldShowOverlay(currentApp)) {
+                    val shouldShow = shouldShowOverlay(currentApp)
+                    logDebug("Immediate mode - shouldShowOverlay=$shouldShow")
+                    if (shouldShow) {
                         currentDetectedApp = currentApp
+                        logDebug("Attempting to launch urge surfing for $currentApp")
                         val opened = launchUrgeSurfing(currentApp)
+                        logDebug("launchUrgeSurfing result: $opened")
                         if (opened) {
                             sendInterventionEvent(proceeded = false, appPackage = currentApp)
                         } else {
+                            logDebug("Falling back to overlay for $currentApp")
                             triggerCheckinOverlay(currentApp)
                         }
                         lastCheckinTimestamps[currentApp] = now
@@ -371,7 +386,7 @@ class CheckinForegroundService : Service() {
             }
         } catch (e: Exception) {
             // Log error but don't crash the service
-            e.printStackTrace()
+            Log.e(TAG, "Error in checkForegroundApp", e)
         }
     }
 

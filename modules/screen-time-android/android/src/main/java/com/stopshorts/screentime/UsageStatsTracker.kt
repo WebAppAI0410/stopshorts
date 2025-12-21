@@ -98,29 +98,38 @@ class UsageStatsTracker(private val context: Context) {
         val startTime = endTime - 10000 // Last 10 seconds
 
         val events = usageStatsManager.queryEvents(startTime, endTime)
-            ?: return null
+
+        if (events == null) {
+            logWarning("getCurrentForegroundApp: queryEvents returned null")
+            return null
+        }
 
         var lastForegroundPackage: String? = null
         val event = UsageEvents.Event()
+        var eventCount = 0
 
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
+            eventCount++
 
             // Check multiple event types for better device compatibility
             when (event.eventType) {
                 UsageEvents.Event.MOVE_TO_FOREGROUND,
                 UsageEvents.Event.ACTIVITY_RESUMED -> {
                     lastForegroundPackage = event.packageName
+                    logDebug("getCurrentForegroundApp: FOREGROUND event for ${event.packageName}")
                 }
                 UsageEvents.Event.MOVE_TO_BACKGROUND,
                 UsageEvents.Event.ACTIVITY_PAUSED -> {
                     if (event.packageName == lastForegroundPackage) {
                         lastForegroundPackage = null
+                        logDebug("getCurrentForegroundApp: BACKGROUND event for ${event.packageName}")
                     }
                 }
             }
         }
 
+        logDebug("getCurrentForegroundApp: processed $eventCount events, result=$lastForegroundPackage")
         return lastForegroundPackage
     }
 

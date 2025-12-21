@@ -72,6 +72,8 @@ export function useMonitoringService() {
 
   /**
    * Start monitoring service with current target apps
+   * Note: Only usageStats permission is required for deep-link based intervention.
+   * Overlay permission is optional (used as fallback when deep-link fails).
    */
   const startMonitoring = useCallback(async () => {
     if (Platform.OS !== 'android') return;
@@ -79,13 +81,21 @@ export function useMonitoringService() {
     try {
       // Check permissions first
       const permissionStatus = await screenTimeService.getPermissionStatus();
+      console.log('[MonitoringService] Permission status:', permissionStatus);
 
-      if (!permissionStatus.usageStats || !permissionStatus.overlay) {
-        console.log('[MonitoringService] Missing permissions - not starting');
+      // Only usageStats is required - overlay is optional for deep-link intervention
+      if (!permissionStatus.usageStats) {
+        console.log('[MonitoringService] Missing usageStats permission - not starting');
         return;
       }
 
+      if (!permissionStatus.overlay) {
+        console.log('[MonitoringService] Overlay permission missing - will use deep-link only');
+      }
+
       const packages = getPackageNamesForSelectedApps(selectedApps, customAppPackages);
+      console.log('[MonitoringService] Selected apps:', selectedApps);
+      console.log('[MonitoringService] Custom app packages:', customAppPackages);
 
       if (packages.length === 0) {
         console.log('[MonitoringService] No apps selected - not starting');
