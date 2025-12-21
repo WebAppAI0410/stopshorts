@@ -52,9 +52,10 @@ interface StatisticsState {
   recordUrgeSurfing: (record: UrgeSurfingRecordInput) => void;
   recordIntervention: (input: InterventionInput) => void;
   recordUsageTime: (appId: string, minutes: number) => void;
+  setDailyUsageBreakdown: (dateKey: string, breakdown: Record<string, number>) => void; // For historical data sync
   recordTrainingSession: (minutes: number) => void;
   updateStreak: () => void;
-  updateHabitScore: (dailyGoalMinutes: number) => void;
+  updateHabitScore: (dailyGoalMinutes: number, selectedPackages?: string[]) => void;
 
   // Getters
   getTodayStats: () => DailyStatistics;
@@ -64,13 +65,13 @@ interface StatisticsState {
   getEarnedBadges: () => Badge[];
   getTotalSavedMinutes: () => number;
   getHabitScore: () => number;
-  getMonthlyAchievementStats: (dailyGoalMinutes: number) => {
+  getMonthlyAchievementStats: (dailyGoalMinutes: number, selectedPackages?: string[]) => {
     achievedDays: number;
     totalDaysWithData: number;
     achievementRate: number;
   };
-  getReductionRate: (baselineMonthlyMinutes: number | null) => number | null;
-  getWeeklyTrend: () => number[]; // Last 4 weeks usage in minutes
+  getReductionRate: (baselineMonthlyMinutes: number | null, selectedPackages?: string[]) => number | null;
+  getWeeklyTrend: (selectedPackages?: string[]) => number[]; // Last 4 weeks usage in minutes
 
   // Utilities
   resetDailyStats: () => void;
@@ -81,12 +82,9 @@ interface StatisticsState {
 function createEmptyDailyStats(date: string): DailyStatistics {
   return {
     date,
+    hasData: false, // No data recorded yet
     totalUsageMinutes: 0,
-    appBreakdown: {
-      tiktok: 0,
-      youtubeShorts: 0,
-      instagramReels: 0,
-    },
+    appBreakdown: {},
     urgeSurfing: {
       completed: 0,
       skipped: 0,
@@ -110,6 +108,20 @@ function createEmptyDailyStats(date: string): DailyStatistics {
       night: 0,
     },
   };
+}
+
+function sumBreakdown(
+  breakdown: Record<string, number>,
+  selectedPackages?: string[]
+): number {
+  if (!selectedPackages || selectedPackages.length === 0) {
+    return Object.values(breakdown).reduce((sum, v) => sum + v, 0);
+  }
+  let total = 0;
+  for (const pkg of selectedPackages) {
+    total += breakdown[pkg] || 0;
+  }
+  return total;
 }
 
 // Create empty lifetime stats
@@ -271,10 +283,7 @@ export const useStatisticsStore = create<StatisticsState>()(
         const todayStats = state.dailyStats[dateKey] || createEmptyDailyStats(dateKey);
 
         const newBreakdown = { ...todayStats.appBreakdown };
-        const appKey = appId as keyof typeof newBreakdown;
-        if (appKey in newBreakdown) {
-          newBreakdown[appKey] += minutes;
-        }
+        newBreakdown[appId] = (newBreakdown[appId] || 0) + minutes;
 
         // Determine time of day
         const hour = new Date().getHours();
@@ -287,12 +296,37 @@ export const useStatisticsStore = create<StatisticsState>()(
             ...state.dailyStats,
             [dateKey]: {
               ...todayStats,
+              hasData: true, // Mark that we have data for this day
               totalUsageMinutes: todayStats.totalUsageMinutes + minutes,
               appBreakdown: newBreakdown,
               timeOfDayBreakdown: newTimeBreakdown,
             },
           },
         });
+      },
+
+      setDailyUsageBreakdown: (dateKey, breakdown) => {
+        const state = get();
+        const existingStats = state.dailyStats[dateKey] || createEmptyDailyStats(dateKey);
+
+        const mergedBreakdown: Record<string, number> = {
+          ...existingStats.appBreakdown,
+          ...breakdown,
+        };
+        const totalMinutes = sumBreakdown(mergedBreakdown);
+
+        set({
+          dailyStats: {
+            ...state.dailyStats,
+            [dateKey]: {
+              ...existingStats,
+              hasData: true,
+              totalUsageMinutes: totalMinutes,
+              appBreakdown: mergedBreakdown,
+            },
+          },
+        });
+        console.log(`[StatisticsStore] Recorded ${totalMinutes} minutes for ${dateKey}`);
       },
 
       recordTrainingSession: (minutes) => {
@@ -335,7 +369,7 @@ export const useStatisticsStore = create<StatisticsState>()(
         });
       },
 
-      updateHabitScore: (dailyGoalMinutes) => {
+      updateHabitScore: (dailyGoalMinutes, selectedPackages) => {
         const state = get();
         const today = getDateKey();
 
@@ -347,14 +381,21 @@ export const useStatisticsStore = create<StatisticsState>()(
         const yesterdayKey = getYesterdayKey();
         const yesterdayStats = state.dailyStats[yesterdayKey];
 
-        // If no data for yesterday, don't update
-        if (!yesterdayStats || yesterdayStats.totalUsageMinutes === 0) {
+        // If no data recorded for yesterday, don't update score
+        // (Use hasData flag to distinguish "no data" from "0 minutes used")
+        if (!yesterdayStats || !yesterdayStats.hasData) {
           // Still mark as evaluated to prevent re-checking
           set({ habitScoreLastUpdatedDate: today });
           return;
         }
 
-        const achieved = yesterdayStats.totalUsageMinutes <= dailyGoalMinutes;
+        const yesterdayTotal = sumBreakdown(
+          yesterdayStats.appBreakdown,
+          selectedPackages
+        );
+
+        // 0 minutes is a success (perfect day - no usage)
+        const achieved = yesterdayTotal <= dailyGoalMinutes;
         let newScore = state.habitScore;
 
         if (achieved) {
@@ -478,20 +519,23 @@ export const useStatisticsStore = create<StatisticsState>()(
         return get().habitScore;
       },
 
-      getMonthlyAchievementStats: (dailyGoalMinutes) => {
+      getMonthlyAchievementStats: (dailyGoalMinutes, selectedPackages) => {
         const state = get();
+        // Use hasData flag to include days with 0 minutes (which is a perfect achievement!)
         const daysWithData = Object.entries(state.dailyStats)
           .filter(([dateKey, stats]) =>
-            isCurrentMonth(dateKey) && stats.totalUsageMinutes > 0
+            isCurrentMonth(dateKey) && stats.hasData
           );
 
         if (daysWithData.length === 0) {
           return { achievedDays: 0, totalDaysWithData: 0, achievementRate: 0 };
         }
 
-        const achievedDays = daysWithData.filter(
-          ([_, stats]) => stats.totalUsageMinutes <= dailyGoalMinutes
-        ).length;
+        // 0 minutes is a perfect achievement!
+        const achievedDays = daysWithData.filter(([_, stats]) => {
+          const total = sumBreakdown(stats.appBreakdown, selectedPackages);
+          return total <= dailyGoalMinutes;
+        }).length;
 
         return {
           achievedDays,
@@ -500,7 +544,7 @@ export const useStatisticsStore = create<StatisticsState>()(
         };
       },
 
-      getReductionRate: (baselineMonthlyMinutes) => {
+      getReductionRate: (baselineMonthlyMinutes, selectedPackages) => {
         if (!baselineMonthlyMinutes || baselineMonthlyMinutes <= 0) {
           return null;
         }
@@ -508,15 +552,17 @@ export const useStatisticsStore = create<StatisticsState>()(
         const state = get();
         // Calculate current month's total usage
         const currentMonthUsage = Object.entries(state.dailyStats)
-          .filter(([dateKey]) => isCurrentMonth(dateKey))
-          .reduce((sum, [_, stats]) => sum + stats.totalUsageMinutes, 0);
+          .filter(([dateKey, stats]) => isCurrentMonth(dateKey) && stats.hasData)
+          .reduce((sum, [_, stats]) => {
+            return sum + sumBreakdown(stats.appBreakdown, selectedPackages);
+          }, 0);
 
         const reductionRate =
           ((baselineMonthlyMinutes - currentMonthUsage) / baselineMonthlyMinutes) * 100;
         return Math.round(reductionRate * 10) / 10; // Round to 1 decimal
       },
 
-      getWeeklyTrend: () => {
+      getWeeklyTrend: (selectedPackages) => {
         const state = get();
         const weeklyTotals: number[] = [];
 
@@ -531,8 +577,8 @@ export const useStatisticsStore = create<StatisticsState>()(
             date.setDate(date.getDate() + dayOffset);
             const dateKey = getDateKey(date);
             const stats = state.dailyStats[dateKey];
-            if (stats) {
-              weekTotal += stats.totalUsageMinutes;
+            if (stats && stats.hasData) {
+              weekTotal += sumBreakdown(stats.appBreakdown, selectedPackages);
             }
           }
           weeklyTotals.push(weekTotal);

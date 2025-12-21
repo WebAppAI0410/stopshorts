@@ -11,7 +11,7 @@
 
 import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
-import { screenTimeService } from '../native/ScreenTimeModule';
+import { screenTimeService, getSelectedPackages } from '../native/ScreenTimeModule';
 import { useAppStore } from '../stores/useAppStore';
 import { useStatisticsStore } from '../stores/useStatisticsStore';
 
@@ -35,6 +35,7 @@ export function useDailyUsageSync() {
   const dailyGoalMinutes = useAppStore((state) => state.dailyGoalMinutes);
 
   const updateHabitScore = useStatisticsStore((state) => state.updateHabitScore);
+  const setDailyUsageBreakdown = useStatisticsStore((state) => state.setDailyUsageBreakdown);
   const dailyStatsRef = useRef(useStatisticsStore.getState().dailyStats);
 
   const lastSyncDateRef = useRef<string | null>(null);
@@ -42,9 +43,14 @@ export function useDailyUsageSync() {
 
   // Memoize custom app packages to prevent infinite loops
   const customAppPackages = useMemo(
-    () => customApps.map((app) => app.packageName),
+    () => customApps.filter((app) => app.isSelected !== false).map((app) => app.packageName),
     [customApps]
   );
+
+  const selectedPackages = useMemo(() => {
+    const base = getSelectedPackages(selectedApps);
+    return [...new Set([...base, ...customAppPackages])];
+  }, [selectedApps, customAppPackages]);
 
   // Keep dailyStats ref updated
   useEffect(() => {
@@ -71,12 +77,12 @@ export function useDailyUsageSync() {
       return;
     }
 
-    // Skip if we already have data for yesterday
+    // Skip if we already have data for yesterday (use hasData flag)
     const dailyStats = dailyStatsRef.current;
-    if (dailyStats[yesterdayKey] && dailyStats[yesterdayKey].totalUsageMinutes > 0) {
+    if (dailyStats[yesterdayKey]?.hasData) {
       console.log('[DailyUsageSync] Already have data for yesterday, updating habit score only');
       lastSyncDateRef.current = today;
-      updateHabitScore(dailyGoalMinutes);
+      updateHabitScore(dailyGoalMinutes, selectedPackages);
       return;
     }
 
@@ -93,27 +99,31 @@ export function useDailyUsageSync() {
         return;
       }
 
-      // Get usage data for yesterday
-      const weeklyUsage = await screenTimeService.getWeeklyUsage(selectedApps, customAppPackages);
+      const startOfDay = new Date(yesterday);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(yesterday);
+      endOfDay.setHours(23, 59, 59, 999);
 
-      // Find yesterday's data in the breakdown
-      const yesterdayData = weeklyUsage.dailyBreakdown.find(
-        (d) => d.date === yesterdayKey
+      // Get per-app usage stats for yesterday
+      const stats = await screenTimeService.getUsageStatsForRange(
+        startOfDay,
+        endOfDay,
+        selectedApps,
+        customAppPackages
       );
 
-      if (yesterdayData && yesterdayData.minutes > 0) {
-        // For now, record as total - individual app breakdown requires more complex fetching
-        // The recordUsageTime adds to existing data, so we need to set it directly
-        // For simplicity, we'll record the total under a generic key
-        console.log(`[DailyUsageSync] Yesterday (${yesterdayKey}) total: ${yesterdayData.minutes} minutes`);
-
-        // Note: This records to today's stats. For historical accuracy,
-        // we'd need to modify recordUsageTime to accept a date parameter.
-        // For now, the data is captured via the intervention flow.
+      const breakdown: Record<string, number> = {};
+      for (const stat of stats) {
+        const minutes = Math.round((stat.totalTimeMs || 0) / 60000);
+        if (minutes > 0) {
+          breakdown[stat.packageName] = minutes;
+        }
       }
 
+      setDailyUsageBreakdown(yesterdayKey, breakdown);
+
       // Update habit score (evaluates yesterday's performance)
-      updateHabitScore(dailyGoalMinutes);
+      updateHabitScore(dailyGoalMinutes, selectedPackages);
 
       lastSyncDateRef.current = today;
       console.log('[DailyUsageSync] Sync completed');
@@ -122,7 +132,7 @@ export function useDailyUsageSync() {
     } finally {
       isSyncingRef.current = false;
     }
-  }, [selectedApps, customAppPackages, dailyGoalMinutes, updateHabitScore]);
+  }, [selectedApps, customAppPackages, dailyGoalMinutes, updateHabitScore, setDailyUsageBreakdown, selectedPackages]);
 
   // Sync on app coming to foreground
   useEffect(() => {

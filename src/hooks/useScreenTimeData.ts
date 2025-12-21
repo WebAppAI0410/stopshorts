@@ -50,7 +50,7 @@ export function useScreenTimeData(): UseScreenTimeDataReturn {
   );
 
   const customPackages = useMemo(
-    () => customApps.map((app) => app.packageName),
+    () => customApps.filter((app) => app.isSelected !== false).map((app) => app.packageName),
     [customApps]
   );
 

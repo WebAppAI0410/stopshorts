@@ -32,6 +32,12 @@ export interface UsageData {
   lastUpdated: string;
 }
 
+export interface UsageStat {
+  packageName: string;
+  appName?: string;
+  totalTimeMs: number;
+}
+
 /**
  * Installed app information (Android only)
  * Note: iOS implementation pending - requires Family Controls Entitlement approval
@@ -489,6 +495,51 @@ class AndroidScreenTimeService {
   }
 
   /**
+   * Get usage stats for a specific date range with per-app breakdown
+   * @param startDate - Start of the date range
+   * @param endDate - End of the date range
+   * @param selectedApps - Array of TargetAppId that user has selected
+   * @param customPackages - Additional package names to include (e.g., user-added apps)
+   */
+  async getUsageStatsForRange(
+    startDate: Date,
+    endDate: Date,
+    selectedApps: TargetAppId[] = [],
+    customPackages: string[] = []
+  ): Promise<Array<{ packageName: string; appName: string; totalTimeMs: number }>> {
+    const native = await this.getNativeModule();
+    if (!native) {
+      console.error('[ScreenTime] getUsageStatsForRange - native module not available');
+      return [];
+    }
+
+    try {
+      const selectedPackages = selectedApps.length > 0
+        ? getSelectedPackages(selectedApps)
+        : getTargetPackages();
+      const packages = [...new Set([...selectedPackages, ...customPackages])];
+      console.log('[ScreenTime] getUsageStatsForRange - target packages:', packages);
+
+      const stats = await native.getUsageStats(
+        startDate.getTime(),
+        endDate.getTime(),
+        packages
+      );
+
+      console.log('[ScreenTime] getUsageStatsForRange - raw stats:', JSON.stringify(stats));
+
+      return (stats || []).map((stat: any) => ({
+        packageName: stat.packageName,
+        appName: stat.appName || stat.packageName,
+        totalTimeMs: stat.totalTimeMs || 0,
+      }));
+    } catch (error) {
+      console.error('[ScreenTime] Failed to get usage stats for range:', error);
+      return [];
+    }
+  }
+
+  /**
    * Get weekly usage statistics from native UsageStatsManager
    * @param selectedApps - Array of TargetAppId that user has selected
    * @param customPackages - Additional package names to include (e.g., user-added apps)
@@ -740,6 +791,7 @@ class AndroidScreenTimeService {
       };
     }
   }
+
 }
 
 /**
@@ -855,6 +907,10 @@ class MockScreenTimeService {
         minutes: app.minutes * monthlyMultiplier,
       })),
     };
+  }
+
+  async getUsageStatsForRange(): Promise<Array<{ packageName: string; appName: string; totalTimeMs: number }>> {
+    return [];
   }
 }
 
@@ -1179,6 +1235,30 @@ class ScreenTimeService {
       return this.androidService.getMonthlyUsageWithApps(selectedApps, customPackages);
     }
     return this.mockService.getMonthlyUsageWithApps();
+  }
+
+  /**
+   * Get raw usage stats for a date range (per app)
+   * @param startDate - Start of the date range
+   * @param endDate - End of the date range
+   * @param selectedApps - Array of TargetAppId that user has selected
+   * @param customPackages - Additional package names to include (e.g., user-added apps)
+   */
+  async getUsageStatsForRange(
+    startDate: Date,
+    endDate: Date,
+    selectedApps: TargetAppId[] = [],
+    customPackages: string[] = []
+  ): Promise<Array<{ packageName: string; appName: string; totalTimeMs: number }>> {
+    if (this.androidService) {
+      return this.androidService.getUsageStatsForRange(
+        startDate,
+        endDate,
+        selectedApps,
+        customPackages
+      );
+    }
+    return this.mockService.getUsageStatsForRange();
   }
 }
 

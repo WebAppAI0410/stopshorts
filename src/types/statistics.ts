@@ -8,12 +8,9 @@ import type { ManagedApp } from './index';
 // Daily Statistics
 export interface DailyStatistics {
   date: string; // ISO date (YYYY-MM-DD)
+  hasData: boolean; // true if usage data was recorded (distinguishes "no data" from "0 minutes")
   totalUsageMinutes: number;
-  appBreakdown: {
-    tiktok: number;
-    youtubeShorts: number;
-    instagramReels: number;
-  };
+  appBreakdown: Record<string, number>; // packageName -> minutes
   urgeSurfing: {
     completed: number;
     skipped: number;

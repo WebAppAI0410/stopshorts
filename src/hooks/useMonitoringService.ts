@@ -66,7 +66,7 @@ export function useMonitoringService() {
 
   // Memoize custom app package names to prevent infinite loops
   const customAppPackages = useMemo(
-    () => customApps.map((app) => app.packageName),
+    () => customApps.filter((app) => app.isSelected !== false).map((app) => app.packageName),
     [customApps]
   );
 
