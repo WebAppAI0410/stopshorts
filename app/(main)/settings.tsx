@@ -57,11 +57,28 @@ function SettingRow({
 export default function SettingsScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius, themeMode } = useTheme();
-    const { reset, restartOnboarding, interventionDurationMinutes, goal, alternativeActivity, ifThenPlan, selectedApps, customApps, interventionSettings } = useAppStore();
+    const { reset, restartOnboarding, interventionDurationMinutes, goal, alternativeActivity, customAlternativeActivity, ifThenPlan, selectedApps, customApps, interventionSettings } = useAppStore();
     const selectedCustomCount = customApps.filter((app) => app.isSelected !== false).length;
     const interventionLabel = interventionSettings.timing === 'immediate'
         ? '即時'
         : `遅延 ${interventionSettings.delayMinutes}分`;
+
+    // Display custom text if available, otherwise show the translated option
+    const getAlternativeLabel = () => {
+        if (!alternativeActivity) return '-';
+        if (alternativeActivity === 'custom' && customAlternativeActivity) {
+            return customAlternativeActivity;
+        }
+        return t(`onboarding.v3.alternative.options.${alternativeActivity}`);
+    };
+
+    const getIfThenLabel = () => {
+        if (!ifThenPlan) return '-';
+        if (ifThenPlan.action === 'custom' && ifThenPlan.customAction) {
+            return ifThenPlan.customAction;
+        }
+        return t(`onboarding.v3.ifThen.options.${ifThenPlan.action}`);
+    };
 
     const handleReset = () => {
         Alert.alert(
@@ -143,14 +160,14 @@ export default function SettingsScreen() {
         <SettingRow
             {...settingRowCommonProps}
             label={t('settings.yourSettings.alternative')}
-            value={alternativeActivity ? t(`onboarding.v3.alternative.options.${alternativeActivity}`) : '-'}
+            value={getAlternativeLabel()}
             icon="swap-horizontal-outline"
             onPress={() => router.push('/(main)/alternative-settings')}
         />
         <SettingRow
             {...settingRowCommonProps}
             label={t('settings.yourSettings.ifThen')}
-            value={ifThenPlan ? t(`onboarding.v3.ifThen.options.${ifThenPlan.action}`) : '-'}
+            value={getIfThenLabel()}
             icon="git-branch-outline"
             onPress={() => router.push('/(main)/if-then-settings')}
         />
