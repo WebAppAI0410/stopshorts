@@ -23,6 +23,7 @@ type ButtonProps = {
     loading?: boolean;
     fullWidth?: boolean;
     style?: ViewStyle;
+    testID?: string;
 };
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
@@ -36,6 +37,7 @@ export const Button: React.FC<ButtonProps> = ({
     loading = false,
     fullWidth = true,
     style,
+    testID,
 }) => {
     const { colors, typography, spacing, borderRadius } = useTheme();
     const scale = useSharedValue(1);
@@ -116,6 +118,7 @@ export const Button: React.FC<ButtonProps> = ({
 
     return (
         <AnimatedTouchableOpacity
+            testID={testID}
             onPress={onPress}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}

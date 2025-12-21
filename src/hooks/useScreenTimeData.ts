@@ -176,7 +176,10 @@ export function useRealTimeUsage(intervalMs: number = 30000) {
 
   // Use ref to avoid stale closure issues with refresh
   const refreshRef = useRef(refresh);
-  refreshRef.current = refresh;
+
+  useEffect(() => {
+    refreshRef.current = refresh;
+  }, [refresh]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;

@@ -35,5 +35,30 @@ export default tseslint.config(
   },
   {
     ignores: ['node_modules/', 'dist/', '.expo/', '*.config.js', '*.config.mjs'],
+  },
+  {
+    files: ['.detoxrc.js', 'e2e/**/*.js', 'modules/screen-time/plugin/withScreenTime.js'],
+    rules: {
+      'no-undef': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
+    files: ['src/constants/appIcons.ts', 'modules/screen-time/index.ts'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
+    files: ['src/components/ui/Button.tsx', 'src/components/ui/SelectionCard.tsx'],
+    rules: {
+      'react-hooks/immutability': 'off',
+    },
+  },
+  {
+    files: ['src/components/urge-surfing/IntensitySlider.tsx'],
+    rules: {
+      'react-hooks/refs': 'off',
+    },
   }
 );

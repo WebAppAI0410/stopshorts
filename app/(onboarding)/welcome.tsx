@@ -17,7 +17,10 @@ export default function WelcomeScreen() {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView
+            testID="onboarding-welcome-screen"
+            style={[styles.container, { backgroundColor: colors.background }]}
+        >
             <GlowOrb position="top-right" size="xl" color="accent" intensity={0.15} />
             <GlowOrb position="bottom-left" size="large" color="primary" intensity={0.1} />
 
@@ -105,6 +108,7 @@ export default function WelcomeScreen() {
                 style={[styles.footer, { paddingHorizontal: spacing.gutter }]}
             >
                 <Button
+                    testID="onboarding-start-button"
                     title={t('onboarding.v3.welcome.startButton')}
                     onPress={handleStart}
                     size="lg"
