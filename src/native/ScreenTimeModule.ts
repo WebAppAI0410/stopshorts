@@ -641,6 +641,105 @@ class AndroidScreenTimeService {
       };
     }
   }
+
+  /**
+   * Get monthly usage with per-app breakdown from native UsageStatsManager
+   * @param selectedApps - Array of TargetAppId that user has selected
+   * @param customPackages - Additional package names to include (e.g., user-added apps)
+   */
+  async getMonthlyUsageWithApps(selectedApps: TargetAppId[] = [], customPackages: string[] = []): Promise<{
+    monthlyTotal: number;
+    dailyAverage: number;
+    weeklyAverage: number;
+    apps: AppUsage[];
+  }> {
+    const native = await this.getNativeModule();
+    if (!native) {
+      console.error('[ScreenTime] getMonthlyUsageWithApps - native module not available');
+      return {
+        monthlyTotal: 0,
+        dailyAverage: 0,
+        weeklyAverage: 0,
+        apps: [],
+      };
+    }
+
+    try {
+      // Get packages for selected apps only (respects user's onboarding selection)
+      const selectedPackages = selectedApps.length > 0
+        ? getSelectedPackages(selectedApps)
+        : getTargetPackages(); // Fallback to all if none selected
+      const packages = [...selectedPackages, ...customPackages];
+      console.log('[ScreenTime] getMonthlyUsageWithApps - target packages:', packages);
+
+      // Accumulate per-app usage over 30 days
+      const appUsageMap: Record<string, { appName: string; totalMs: number }> = {};
+      let monthlyTotal = 0;
+
+      // Get usage for each day of the past 30 days
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        try {
+          const stats = await native.getUsageStats(
+            startOfDay.getTime(),
+            endOfDay.getTime(),
+            packages
+          );
+
+          for (const stat of (stats || [])) {
+            const packageName = stat.packageName;
+            const timeMs = stat.totalTimeMs || 0;
+
+            if (!appUsageMap[packageName]) {
+              appUsageMap[packageName] = {
+                appName: stat.appName || packageName,
+                totalMs: 0,
+              };
+            }
+            appUsageMap[packageName].totalMs += timeMs;
+            monthlyTotal += Math.round(timeMs / 60000);
+          }
+        } catch (dayError) {
+          // Skip failed days
+        }
+      }
+
+      // Convert to AppUsage array
+      const apps: AppUsage[] = Object.entries(appUsageMap)
+        .filter(([_, data]) => data.totalMs > 0)
+        .map(([bundleId, data]) => ({
+          bundleId,
+          appName: data.appName,
+          minutes: Math.round(data.totalMs / 60000),
+          openCount: 0, // Not tracked for monthly aggregate
+        }))
+        .sort((a, b) => b.minutes - a.minutes); // Sort by usage descending
+
+      console.log('[ScreenTime] getMonthlyUsageWithApps - monthlyTotal:', monthlyTotal, 'apps:', apps.length);
+
+      return {
+        monthlyTotal,
+        dailyAverage: Math.round(monthlyTotal / 30),
+        weeklyAverage: Math.round(monthlyTotal / 4.3),
+        apps,
+      };
+    } catch (error) {
+      console.error('[ScreenTime] Failed to get monthly usage with apps:', error);
+      return {
+        monthlyTotal: 0,
+        dailyAverage: 0,
+        weeklyAverage: 0,
+        apps: [],
+      };
+    }
+  }
 }
 
 /**
@@ -735,6 +834,27 @@ class MockScreenTimeService {
   async getInterventionSettings(): Promise<{ timing: string; delayMinutes: number } | null> {
     console.log('[ScreenTime] getInterventionSettings is Android-only');
     return null;
+  }
+
+  async getMonthlyUsageWithApps(): Promise<{
+    monthlyTotal: number;
+    dailyAverage: number;
+    weeklyAverage: number;
+    apps: AppUsage[];
+  }> {
+    // iOS: Use mock data (pending Family Controls)
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const mockData = generateMockUsageData();
+    const monthlyMultiplier = 30;
+    return {
+      monthlyTotal: mockData.totalMinutes * monthlyMultiplier,
+      dailyAverage: mockData.totalMinutes,
+      weeklyAverage: mockData.totalMinutes * 7,
+      apps: mockData.apps.map(app => ({
+        ...app,
+        minutes: app.minutes * monthlyMultiplier,
+      })),
+    };
   }
 }
 
@@ -1040,6 +1160,25 @@ class ScreenTimeService {
       return this.androidService.getInterventionSettings();
     }
     return this.mockService.getInterventionSettings();
+  }
+
+  /**
+   * Get monthly usage with per-app breakdown
+   * Android: Uses real data from UsageStatsManager
+   * iOS: Uses mock data (pending Family Controls)
+   * @param selectedApps - Array of TargetAppId that user has selected
+   * @param customPackages - Additional package names to include (e.g., user-added apps)
+   */
+  async getMonthlyUsageWithApps(selectedApps: TargetAppId[] = [], customPackages: string[] = []): Promise<{
+    monthlyTotal: number;
+    dailyAverage: number;
+    weeklyAverage: number;
+    apps: AppUsage[];
+  }> {
+    if (this.androidService) {
+      return this.androidService.getMonthlyUsageWithApps(selectedApps, customPackages);
+    }
+    return this.mockService.getMonthlyUsageWithApps();
   }
 }
 

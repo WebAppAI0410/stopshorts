@@ -58,62 +58,58 @@ export default function RealityCheckScreen() {
                 console.log('[RealityCheck] Selected apps:', selectedApps);
                 console.log('[RealityCheck] Custom app packages:', customPackages);
 
-                // Fetch REAL monthly usage data from native (including custom apps)
-                // Pass selectedApps (TargetAppId[]) first, then customPackages (string[])
-                console.log('[RealityCheck] Fetching monthly usage...');
-                const monthlyUsageData = await nativeScreenTime.getMonthlyUsage(selectedApps, customPackages);
+                // Fetch REAL monthly usage data with per-app breakdown from native
+                console.log('[RealityCheck] Fetching monthly usage with apps...');
+                const monthlyUsageData = await nativeScreenTime.getMonthlyUsageWithApps(selectedApps, customPackages);
                 console.log('[RealityCheck] Monthly data:', JSON.stringify(monthlyUsageData));
-                setMonthlyData(monthlyUsageData);
+                setMonthlyData({
+                    monthlyTotal: monthlyUsageData.monthlyTotal,
+                    dailyAverage: monthlyUsageData.dailyAverage,
+                    weeklyAverage: monthlyUsageData.weeklyAverage,
+                });
 
-                console.log('[RealityCheck] Fetching today usage...');
-                const todayUsage = await nativeScreenTime.getTodayUsage(selectedApps, customPackages);
-                console.log('[RealityCheck] Today usage:', JSON.stringify(todayUsage));
-
-                // Classify apps by packageName (NOT appName)
+                // Classify apps by packageName using MONTHLY data (NOT today's data)
                 const appBreakdown: ScreenTimeData['appBreakdown'] = [];
-                const appTotals: Record<'tiktok' | 'youtubeShorts' | 'instagramReels', { weekly: number; daily: number; count: number }> = {
-                    tiktok: { weekly: 0, daily: 0, count: 0 },
-                    youtubeShorts: { weekly: 0, daily: 0, count: 0 },
-                    instagramReels: { weekly: 0, daily: 0, count: 0 },
+                const appTotals: Record<'tiktok' | 'youtubeShorts' | 'instagramReels', { monthly: number; count: number }> = {
+                    tiktok: { monthly: 0, count: 0 },
+                    youtubeShorts: { monthly: 0, count: 0 },
+                    instagramReels: { monthly: 0, count: 0 },
                 };
 
                 // Track custom apps separately
-                const customAppTotals: Record<string, { name: string; daily: number; count: number }> = {};
+                const customAppTotals: Record<string, { name: string; monthly: number; count: number }> = {};
 
-                // Aggregate by app ID using packageName
-                console.log('[RealityCheck] Processing apps:', todayUsage.apps.length, 'apps found');
+                // Aggregate by app ID using packageName from MONTHLY data
+                console.log('[RealityCheck] Processing monthly apps:', monthlyUsageData.apps.length, 'apps found');
                 console.log('[RealityCheck] Custom packages to match:', customPackages);
-                for (const app of todayUsage.apps) {
-                    console.log('[RealityCheck] App:', app.bundleId, 'minutes:', app.minutes);
+                for (const app of monthlyUsageData.apps) {
+                    console.log('[RealityCheck] App:', app.bundleId, 'monthly minutes:', app.minutes);
                     const appId = PACKAGE_TO_APP_ID[app.bundleId];
                     if (appId) {
                         console.log('[RealityCheck] Matched to default app:', appId);
-                        // Known target app - use real data
-                        appTotals[appId].daily += app.minutes;
+                        // Known target app - use monthly data
+                        appTotals[appId].monthly += app.minutes;
                         appTotals[appId].count += app.openCount;
                     } else if (customPackages.includes(app.bundleId)) {
                         console.log('[RealityCheck] Matched to custom app:', app.bundleId, 'name:', app.appName);
                         // Custom app - track separately
                         if (!customAppTotals[app.bundleId]) {
-                            customAppTotals[app.bundleId] = { name: app.appName, daily: 0, count: 0 };
+                            customAppTotals[app.bundleId] = { name: app.appName, monthly: 0, count: 0 };
                         }
-                        customAppTotals[app.bundleId].daily += app.minutes;
+                        customAppTotals[app.bundleId].monthly += app.minutes;
                         customAppTotals[app.bundleId].count += app.openCount;
                     } else {
                         console.log('[RealityCheck] No match for bundleId:', app.bundleId);
                     }
                 }
 
-                // Build app breakdown from aggregated data (using monthly estimates)
+                // Build app breakdown from aggregated MONTHLY data
                 for (const [appId, totals] of Object.entries(appTotals) as [keyof typeof appTotals, typeof appTotals[keyof typeof appTotals]][]) {
-                    if (totals.daily > 0) {
+                    if (totals.monthly > 0) {
                         appBreakdown.push({
                             app: appId,
-                            // Use monthly data for estimates
-                            weeklyMinutes: monthlyUsageData.monthlyTotal > 0
-                                ? Math.round((totals.daily / (todayUsage.totalMinutes || 1)) * monthlyUsageData.monthlyTotal)
-                                : totals.daily * 30,
-                            dailyAverage: totals.daily,
+                            weeklyMinutes: totals.monthly, // Actually monthly minutes
+                            dailyAverage: Math.round(totals.monthly / 30),
                             openCount: totals.count,
                         });
                     }
@@ -122,7 +118,7 @@ export default function RealityCheckScreen() {
                 // Build custom app usage breakdown with proper names from store
                 const customUsage: typeof customAppUsage = [];
                 for (const [packageName, totals] of Object.entries(customAppTotals)) {
-                    if (totals.daily > 0) {
+                    if (totals.monthly > 0) {
                         // Get the proper app name from the store (saved when user added the app)
                         const storedApp = customApps.find(a => a.packageName === packageName);
                         const appName = storedApp?.appName || totals.name;
@@ -130,10 +126,8 @@ export default function RealityCheckScreen() {
                         customUsage.push({
                             packageName,
                             name: appName,
-                            monthlyMinutes: monthlyUsageData.monthlyTotal > 0
-                                ? Math.round((totals.daily / (todayUsage.totalMinutes || 1)) * monthlyUsageData.monthlyTotal)
-                                : totals.daily * 30,
-                            dailyMinutes: totals.daily,
+                            monthlyMinutes: totals.monthly,
+                            dailyMinutes: Math.round(totals.monthly / 30),
                             openCount: totals.count,
                         });
                     }
@@ -153,7 +147,7 @@ export default function RealityCheckScreen() {
                 );
                 console.log('[RealityCheck] Custom app usage with icons:', customUsageWithIcons.length);
 
-                // Use real monthly data, NOT estimate
+                // Use real monthly data
                 const data: ScreenTimeData = {
                     weeklyTotal: monthlyUsageData.monthlyTotal, // Now stores monthly total
                     dailyAverage: monthlyUsageData.dailyAverage,
