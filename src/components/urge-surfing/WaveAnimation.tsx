@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -14,7 +14,7 @@ import Animated, {
   interpolate,
   useDerivedValue,
 } from 'react-native-reanimated';
-import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Path, Defs, LinearGradient, Stop, G, Circle, Ellipse } from 'react-native-svg';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface WaveAnimationProps {
@@ -30,6 +30,52 @@ interface WaveAnimationProps {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const WAVE_WIDTH = SCREEN_WIDTH * 2;
+
+const AnimatedG = Animated.createAnimatedComponent(G);
+
+/**
+ * Meditating person SVG component
+ * A peaceful silhouette sitting in lotus position
+ */
+interface MeditatingPersonProps {
+  color: string;
+  size?: number;
+}
+
+function MeditatingPersonSvg({ color, size = 60 }: MeditatingPersonProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 100 100">
+      {/* Head */}
+      <Circle cx="50" cy="22" r="12" fill={color} />
+
+      {/* Body - torso */}
+      <Path
+        d="M50 34 Q50 50 50 55 Q45 60 35 65 L35 70 Q50 68 50 68 Q50 68 65 70 L65 65 Q55 60 50 55"
+        fill={color}
+      />
+
+      {/* Arms in meditation pose */}
+      <Path
+        d="M35 50 Q25 55 22 60 Q20 65 25 68 Q30 70 35 65 Q40 60 42 55"
+        fill={color}
+      />
+      <Path
+        d="M65 50 Q75 55 78 60 Q80 65 75 68 Q70 70 65 65 Q60 60 58 55"
+        fill={color}
+      />
+
+      {/* Hands resting on knees */}
+      <Circle cx="28" cy="68" r="5" fill={color} />
+      <Circle cx="72" cy="68" r="5" fill={color} />
+
+      {/* Crossed legs in lotus */}
+      <Ellipse cx="50" cy="82" rx="25" ry="10" fill={color} />
+
+      {/* Subtle glow/aura behind */}
+      <Circle cx="50" cy="50" r="45" fill={color} opacity={0.1} />
+    </Svg>
+  );
+}
 
 /**
  * Generate SVG path for a wave
@@ -87,67 +133,63 @@ export function WaveAnimation({
     transform: [{ translateX: waveOffset.value * -SCREEN_WIDTH }],
   }));
 
-  // Surfer position - follows the wave movement realistically
-  const surferX = useDerivedValue(() => {
-    // Surfer position centers on screen with wave-riding sway
-    const baseX = SCREEN_WIDTH / 2 - 20;
-    // Forward/backward movement as if riding down the wave face
-    const waveSway = Math.sin(wavePhase.value * 1.5) * 15;
-    return baseX + waveSway;
+  // Meditator position - gentle floating on the wave
+  const meditatorX = useDerivedValue(() => {
+    // Center horizontally with very subtle sway
+    const baseX = SCREEN_WIDTH / 2 - 30; // Center the 60px wide icon
+    const gentleSway = Math.sin(wavePhase.value * 0.5) * 5;
+    return baseX + gentleSway;
   });
 
-  const surferY = useDerivedValue(() => {
-    // Calculate wave height at surfer's position
+  const meditatorY = useDerivedValue(() => {
+    // Calculate wave height at meditator's position
     const waveFrequency = 0.015;
-    const surferPosInWave = surferX.value + (waveOffset.value * SCREEN_WIDTH);
+    const posInWave = meditatorX.value + 30 + (waveOffset.value * SCREEN_WIDTH);
 
-    // Base wave position that moves with progress
+    // Base wave position
     const baseWaveY = 0.35 + (1 - progress) * 0.1;
     const waveAmplitude = 25 - progress * 15;
 
-    // Calculate actual wave Y at surfer position
+    // Calculate actual wave Y at position
     const waveY = baseWaveY * height +
-      Math.sin(surferPosInWave * waveFrequency + wavePhase.value) * waveAmplitude;
+      Math.sin(posInWave * waveFrequency + wavePhase.value) * waveAmplitude;
 
-    // Offset to place surfer on top of wave
-    return waveY - 35;
+    // Offset to float above the wave
+    return waveY - 55;
   });
 
-  // Calculate wave slope for realistic tilt
-  const surferRotation = useDerivedValue(() => {
-    const waveFrequency = 0.015;
-    const surferPosInWave = surferX.value + (waveOffset.value * SCREEN_WIDTH);
-    const waveAmplitude = 25 - progress * 15;
-
-    // Calculate derivative (slope) of wave at surfer position
-    const slope = Math.cos(surferPosInWave * waveFrequency + wavePhase.value) *
-      waveAmplitude * waveFrequency;
-
-    // Convert slope to rotation angle (atan gives radians, convert to degrees)
-    // Scale down for more natural look
-    const rotationDeg = Math.atan(slope) * (180 / Math.PI) * 2;
-
-    // Clamp rotation to reasonable range
-    return Math.max(-20, Math.min(20, rotationDeg));
+  // Breathing scale - gentle expansion/contraction synced with breath
+  const breathScale = useDerivedValue(() => {
+    // Slower breathing rhythm (4 seconds per cycle)
+    const breathCycle = Math.sin(wavePhase.value * 0.5);
+    // Very subtle scale change (0.95 to 1.05)
+    return 1 + breathCycle * 0.05;
   });
 
-  // Scale effect - slightly larger when on wave peak
-  const surferScale = useDerivedValue(() => {
-    const waveFrequency = 0.015;
-    const surferPosInWave = surferX.value + (waveOffset.value * SCREEN_WIDTH);
-    const sineValue = Math.sin(surferPosInWave * waveFrequency + wavePhase.value);
-
-    // Scale up slightly at peaks, down at troughs
-    return 1 + sineValue * 0.1;
+  // Subtle vertical float independent of wave
+  const breathFloat = useDerivedValue(() => {
+    const breathCycle = Math.sin(wavePhase.value * 0.5);
+    return breathCycle * 3;
   });
 
-  const animatedSurferStyle = useAnimatedStyle(() => ({
+  // Aura glow opacity - pulses with breathing
+  const auraOpacity = useDerivedValue(() => {
+    const breathCycle = Math.sin(wavePhase.value * 0.5);
+    return 0.3 + breathCycle * 0.2;
+  });
+
+  const animatedMeditatorStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateX: surferX.value },
-      { translateY: surferY.value },
-      { rotate: `${surferRotation.value}deg` },
-      { scale: surferScale.value },
+      { translateX: meditatorX.value },
+      { translateY: meditatorY.value + breathFloat.value },
+      { scale: breathScale.value },
     ],
+    opacity: interpolate(progress, [0, 0.1, 0.9, 1], [0.8, 1, 1, 0.8]),
+  }));
+
+  const animatedAuraStyle = useAnimatedStyle(() => ({
+    opacity: auraOpacity.value,
+    transform: [{ scale: 1 + Math.sin(wavePhase.value * 0.5) * 0.1 }],
   }));
 
   // Generate wave paths with different phases for layered effect
@@ -218,11 +260,19 @@ export function WaveAnimation({
         </Svg>
       </Animated.View>
 
-      {/* Surfer emoji */}
+      {/* Meditating person */}
       {showSurfer && (
-        <Animated.View style={[styles.surfer, animatedSurferStyle]}>
-          <Text style={styles.surferEmoji}>🏄</Text>
-        </Animated.View>
+        <>
+          {/* Aura glow behind meditator */}
+          <Animated.View style={[styles.aura, animatedMeditatorStyle, animatedAuraStyle]}>
+            <View style={[styles.auraInner, { backgroundColor: finalWaveColor }]} />
+          </Animated.View>
+
+          {/* Meditator */}
+          <Animated.View style={[styles.meditator, animatedMeditatorStyle]}>
+            <MeditatingPersonSvg color={finalWaveColor} size={60} />
+          </Animated.View>
+        </>
       )}
 
       {/* Progress indicator */}
@@ -258,11 +308,18 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
   },
-  surfer: {
+  meditator: {
     position: 'absolute',
   },
-  surferEmoji: {
-    fontSize: 40,
+  aura: {
+    position: 'absolute',
+  },
+  auraInner: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginLeft: -10,
+    marginTop: -10,
   },
   progressContainer: {
     position: 'absolute',
