@@ -14,18 +14,26 @@ interface WeeklyBarChartProps {
     highlightDay?: string;
 }
 
-const DAYS_SHORT = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+const DAYS_SHORT = ['月', '火', '水', '木', '金', '土', '日'];
 
 export function WeeklyBarChart({ data, maxValue, highlightDay }: WeeklyBarChartProps) {
     const { colors, typography, spacing } = useTheme();
 
-    const chartHeight = 200;
-    const chartWidth = Dimensions.get('window').width - 40;
-    const barWidth = 32;
-    const barGap = (chartWidth - barWidth * 7) / 8;
+    const chartHeight = 180;
+    // Account for screen padding (gutter * 2 = ~48px) plus some margin
+    const screenWidth = Dimensions.get('window').width;
+    const chartWidth = screenWidth - 48; // gutter on both sides
+    const yAxisWidth = 35; // Space for Y-axis labels
+    const availableWidth = chartWidth - yAxisWidth;
+
+    // Calculate bar dimensions to fit 7 bars with gaps
+    const totalBars = 7;
+    const minGap = 6;
+    const barWidth = Math.min(28, Math.floor((availableWidth - minGap * (totalBars + 1)) / totalBars));
+    const barGap = Math.floor((availableWidth - barWidth * totalBars) / (totalBars + 1));
 
     const calculatedMax = maxValue || Math.max(...data.map(d => d.value), 60);
-    const yAxisLabels = [0, Math.round(calculatedMax / 3), Math.round(calculatedMax * 2 / 3), calculatedMax];
+    const yAxisLabels = [0, Math.round(calculatedMax / 2), calculatedMax];
 
     // Convert minutes to display format
     const formatTime = (minutes: number) => {
@@ -58,7 +66,7 @@ export function WeeklyBarChart({ data, maxValue, highlightDay }: WeeklyBarChartP
                     return (
                         <React.Fragment key={index}>
                             <Line
-                                x1={30}
+                                x1={yAxisWidth}
                                 y1={y}
                                 x2={chartWidth}
                                 y2={y}
@@ -81,7 +89,7 @@ export function WeeklyBarChart({ data, maxValue, highlightDay }: WeeklyBarChartP
                 {/* Bars */}
                 {data.map((item, index) => {
                     const barHeight = (item.value / calculatedMax) * (chartHeight - 20);
-                    const x = 30 + barGap + index * (barWidth + barGap);
+                    const x = yAxisWidth + barGap + index * (barWidth + barGap);
                     const y = chartHeight - barHeight;
                     const isHighlighted = highlightDay === item.day || DAYS_SHORT[index] === highlightDay;
                     const cornerRadius = barWidth / 2;

@@ -180,7 +180,7 @@ export default function TheProblemScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={10} currentStep={2} />
+                    <ProgressIndicator totalSteps={10} currentStep={3} />
                 </View>
             </Animated.View>
         </SafeAreaView>

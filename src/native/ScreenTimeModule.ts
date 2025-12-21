@@ -453,6 +453,42 @@ class AndroidScreenTimeService {
   }
 
   /**
+   * Set intervention settings (timing mode and delay)
+   * @param timing "immediate" or "delayed"
+   * @param delayMinutes 5, 10, or 15
+   */
+  async setInterventionSettings(timing: 'immediate' | 'delayed', delayMinutes: 5 | 10 | 15): Promise<boolean> {
+    const native = await this.getNativeModule();
+    if (!native) {
+      return false;
+    }
+
+    try {
+      return await native.setInterventionSettings(timing, delayMinutes);
+    } catch (error) {
+      console.error('[ScreenTime] Failed to set intervention settings:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get current intervention settings
+   */
+  async getInterventionSettings(): Promise<{ timing: string; delayMinutes: number } | null> {
+    const native = await this.getNativeModule();
+    if (!native) {
+      return null;
+    }
+
+    try {
+      return await native.getInterventionSettings();
+    } catch (error) {
+      console.error('[ScreenTime] Failed to get intervention settings:', error);
+      return null;
+    }
+  }
+
+  /**
    * Get weekly usage statistics from native UsageStatsManager
    * @param selectedApps - Array of TargetAppId that user has selected
    * @param customPackages - Additional package names to include (e.g., user-added apps)
@@ -689,6 +725,16 @@ class MockScreenTimeService {
   async isMonitoringActive(): Promise<boolean> {
     console.log('[ScreenTime] isMonitoringActive is Android-only');
     return false;
+  }
+
+  async setInterventionSettings(_timing: string, _delayMinutes: number): Promise<boolean> {
+    console.log('[ScreenTime] setInterventionSettings is Android-only');
+    return false;
+  }
+
+  async getInterventionSettings(): Promise<{ timing: string; delayMinutes: number } | null> {
+    console.log('[ScreenTime] getInterventionSettings is Android-only');
+    return null;
   }
 }
 
@@ -970,6 +1016,30 @@ class ScreenTimeService {
       return this.androidService.isMonitoringActive();
     }
     return this.mockService.isMonitoringActive();
+  }
+
+  /**
+   * Set intervention settings (timing mode and delay)
+   * Android only
+   * @param timing "immediate" or "delayed"
+   * @param delayMinutes 5, 10, or 15
+   */
+  async setInterventionSettings(timing: 'immediate' | 'delayed', delayMinutes: 5 | 10 | 15): Promise<boolean> {
+    if (this.androidService) {
+      return this.androidService.setInterventionSettings(timing, delayMinutes);
+    }
+    return this.mockService.setInterventionSettings(timing, delayMinutes);
+  }
+
+  /**
+   * Get current intervention settings
+   * Android only
+   */
+  async getInterventionSettings(): Promise<{ timing: string; delayMinutes: number } | null> {
+    if (this.androidService) {
+      return this.androidService.getInterventionSettings();
+    }
+    return this.mockService.getInterventionSettings();
   }
 }
 

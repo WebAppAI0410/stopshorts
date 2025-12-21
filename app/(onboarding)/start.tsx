@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
@@ -15,6 +15,8 @@ export default function StartScreen() {
 
     const goal = useAppStore((state) => state.goal);
     const lifetimeImpact = useAppStore((state) => state.lifetimeImpact);
+    const screenTimeData = useAppStore((state) => state.screenTimeData);
+    const calculateImpactFromScreenTime = useAppStore((state) => state.calculateImpactFromScreenTime);
     const alternativeActivity = useAppStore((state) => state.alternativeActivity);
     const customAlternativeActivity = useAppStore((state) => state.customAlternativeActivity);
     const ifThenPlan = useAppStore((state) => state.ifThenPlan);
@@ -36,6 +38,12 @@ export default function StartScreen() {
         // Navigate to pricing screen instead of completing onboarding
         router.push('/(onboarding)/pricing' as Href);
     };
+
+    useEffect(() => {
+        if (!lifetimeImpact && screenTimeData) {
+            calculateImpactFromScreenTime(screenTimeData);
+        }
+    }, [lifetimeImpact, screenTimeData, calculateImpactFromScreenTime]);
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>

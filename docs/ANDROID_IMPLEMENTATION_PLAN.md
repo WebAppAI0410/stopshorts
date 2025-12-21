@@ -898,6 +898,492 @@ Phase 3-4: オーバーレイ + 監視機能
 
 ---
 
+## 11. インストール済みアプリ選択機能（Android専用）
+
+### 11.1 概要
+
+iOSではFamily Controls Entitlementの申請・承認が必要なため時間がかかりますが、Androidでは**PackageManager**を使用してインストール済みアプリのリストを取得できます。これにより、ハードコードされた6つのアプリ以外にも、ユーザーが任意のアプリを制限対象に追加できるようになります。
+
+### 11.2 iOS vs Android 比較
+
+| 項目 | iOS | Android |
+|------|-----|---------|
+| **アプリ一覧取得** | FamilyActivityPicker（Entitlement必須） | PackageManager（権限不要） |
+| **申請** | Family Controls Entitlement 必要 | 不要 |
+| **実装可能時期** | 承認待ち | 今すぐ可能 |
+
+### 11.3 必要な権限
+
+```kotlin
+// PackageManagerでインストール済みアプリを取得するのに追加権限は不要
+// ただし、Android 11+ では QUERY_ALL_PACKAGES が必要な場合あり
+```
+
+```xml
+<!-- AndroidManifest.xml（Android 11+対策） -->
+<uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+    tools:ignore="QueryAllPackagesPermission" />
+
+<!-- または queries タグで対象を限定 -->
+<queries>
+    <intent>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+    </intent>
+</queries>
+```
+
+### 11.4 実装アーキテクチャ
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  React Native Layer                                         │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  app/(onboarding)/app-selection.tsx                  │   │
+│  │  - プラットフォーム別UI表示                           │   │
+│  │  - Android: カスタムアプリ選択モーダル                │   │
+│  │  - iOS: 「Coming Soon」表示（Entitlement待ち）        │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                          │                                  │
+│                          ▼                                  │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  src/native/ScreenTimeModule.ts                      │   │
+│  │  + getInstalledApps(): Promise<InstalledApp[]>       │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Android Native Layer (Kotlin)                              │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  InstalledAppsHelper.kt                              │   │
+│  │  - getInstalledLauncherApps()                        │   │
+│  │  - getAppInfo(packageName)                           │   │
+│  │  - getAppIcon(packageName): Base64                   │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 11.5 データ構造
+
+```typescript
+// src/types/index.ts に追加
+
+export interface InstalledApp {
+  packageName: string;       // com.instagram.android
+  appName: string;           // Instagram
+  icon: string | null;       // Base64エンコードされたアイコン画像（オプション）
+  isSystemApp: boolean;      // システムアプリかどうか
+  category?: string;         // アプリカテゴリ（SOCIAL, VIDEO, GAMEなど）
+}
+```
+
+### 11.6 ネイティブモジュール実装
+
+#### 11.6.1 InstalledAppsHelper.kt
+
+```kotlin
+// modules/screen-time-android/android/src/main/.../InstalledAppsHelper.kt
+
+package com.stopshorts.screentime
+
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import android.util.Base64
+import java.io.ByteArrayOutputStream
+
+class InstalledAppsHelper(private val context: Context) {
+
+    private val packageManager = context.packageManager
+
+    /**
+     * ランチャーに表示されるアプリ一覧を取得
+     * システムアプリを除外し、ユーザーがインストールしたアプリのみ返す
+     */
+    fun getInstalledLauncherApps(): List<Map<String, Any?>> {
+        val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+
+        val resolveInfoList = packageManager.queryIntentActivities(mainIntent, 0)
+
+        return resolveInfoList
+            .filter { !isSystemApp(it.activityInfo.applicationInfo) }
+            .distinctBy { it.activityInfo.packageName }
+            .map { resolveInfo ->
+                val appInfo = resolveInfo.activityInfo.applicationInfo
+                mapOf(
+                    "packageName" to appInfo.packageName,
+                    "appName" to packageManager.getApplicationLabel(appInfo).toString(),
+                    "isSystemApp" to isSystemApp(appInfo),
+                    "category" to getCategoryName(appInfo.category)
+                )
+            }
+            .sortedBy { it["appName"] as String }
+    }
+
+    /**
+     * 特定アプリのアイコンをBase64で取得
+     */
+    fun getAppIcon(packageName: String): String? {
+        return try {
+            val drawable = packageManager.getApplicationIcon(packageName)
+            drawableToBase64(drawable)
+        } catch (e: PackageManager.NameNotFoundException) {
+            null
+        }
+    }
+
+    private fun isSystemApp(appInfo: ApplicationInfo): Boolean {
+        return (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+    }
+
+    private fun getCategoryName(category: Int): String {
+        return when (category) {
+            ApplicationInfo.CATEGORY_SOCIAL -> "SOCIAL"
+            ApplicationInfo.CATEGORY_VIDEO -> "VIDEO"
+            ApplicationInfo.CATEGORY_GAME -> "GAME"
+            ApplicationInfo.CATEGORY_IMAGE -> "IMAGE"
+            ApplicationInfo.CATEGORY_AUDIO -> "AUDIO"
+            ApplicationInfo.CATEGORY_NEWS -> "NEWS"
+            ApplicationInfo.CATEGORY_PRODUCTIVITY -> "PRODUCTIVITY"
+            else -> "OTHER"
+        }
+    }
+
+    private fun drawableToBase64(drawable: Drawable): String {
+        val bitmap = if (drawable is BitmapDrawable) {
+            drawable.bitmap
+        } else {
+            val bitmap = Bitmap.createBitmap(
+                drawable.intrinsicWidth.coerceAtLeast(1),
+                drawable.intrinsicHeight.coerceAtLeast(1),
+                Bitmap.Config.ARGB_8888
+            )
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            bitmap
+        }
+
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        val byteArray = stream.toByteArray()
+        return Base64.encodeToString(byteArray, Base64.NO_WRAP)
+    }
+}
+```
+
+#### 11.6.2 ScreenTimeAndroidModule.kt への追加
+
+```kotlin
+// ScreenTimeAndroidModule.kt に追加
+
+class ScreenTimeAndroidModule : Module() {
+    private lateinit var installedAppsHelper: InstalledAppsHelper
+
+    override fun definition() = ModuleDefinition {
+        Name("ScreenTimeAndroid")
+
+        OnCreate {
+            installedAppsHelper = InstalledAppsHelper(appContext.reactContext!!)
+        }
+
+        // 既存の関数...
+
+        // インストール済みアプリ一覧を取得
+        AsyncFunction("getInstalledApps") {
+            return@AsyncFunction installedAppsHelper.getInstalledLauncherApps()
+        }
+
+        // アプリアイコンを取得（オプション）
+        AsyncFunction("getAppIcon") { packageName: String ->
+            return@AsyncFunction installedAppsHelper.getAppIcon(packageName)
+        }
+    }
+}
+```
+
+### 11.7 TypeScript インターフェース
+
+```typescript
+// src/native/ScreenTimeModule.ts に追加
+
+export interface InstalledApp {
+  packageName: string;
+  appName: string;
+  isSystemApp: boolean;
+  category?: string;
+}
+
+// ScreenTimeAPI に追加
+export interface ScreenTimeAPI {
+  // 既存のメソッド...
+
+  // Android専用: インストール済みアプリ一覧を取得
+  getInstalledApps(): Promise<InstalledApp[]>;
+
+  // Android専用: アプリアイコンを取得
+  getAppIcon(packageName: string): Promise<string | null>;
+}
+```
+
+### 11.8 UI実装
+
+#### 11.8.1 アプリ選択モーダル
+
+```typescript
+// src/components/AppSelectionModal.tsx
+
+import React, { useState, useEffect } from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  Image,
+  Platform,
+} from 'react-native';
+import { screenTimeService, InstalledApp } from '../services/screenTime';
+
+interface AppSelectionModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onSelect: (app: InstalledApp) => void;
+  excludePackages?: string[]; // 既に選択済みのアプリを除外
+}
+
+export function AppSelectionModal({
+  visible,
+  onClose,
+  onSelect,
+  excludePackages = [],
+}: AppSelectionModalProps) {
+  const [apps, setApps] = useState<InstalledApp[]>([]);
+  const [filteredApps, setFilteredApps] = useState<InstalledApp[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (visible && Platform.OS === 'android') {
+      loadApps();
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    const filtered = apps.filter(
+      app =>
+        !excludePackages.includes(app.packageName) &&
+        app.appName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredApps(filtered);
+  }, [apps, searchQuery, excludePackages]);
+
+  const loadApps = async () => {
+    setLoading(true);
+    try {
+      const installedApps = await screenTimeService.getInstalledApps();
+      setApps(installedApps);
+    } catch (error) {
+      console.error('Failed to load installed apps:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderApp = ({ item }: { item: InstalledApp }) => (
+    <TouchableOpacity
+      style={styles.appItem}
+      onPress={() => {
+        onSelect(item);
+        onClose();
+      }}
+    >
+      <View style={styles.appIcon}>
+        {/* アイコンはオプション - 必要に応じて実装 */}
+        <Text style={styles.appIconPlaceholder}>
+          {item.appName.charAt(0).toUpperCase()}
+        </Text>
+      </View>
+      <View style={styles.appInfo}>
+        <Text style={styles.appName}>{item.appName}</Text>
+        <Text style={styles.packageName}>{item.packageName}</Text>
+      </View>
+      {item.category && (
+        <Text style={styles.category}>{item.category}</Text>
+      )}
+    </TouchableOpacity>
+  );
+
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>アプリを選択</Text>
+          <TouchableOpacity onPress={onClose}>
+            <Text style={styles.closeButton}>閉じる</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TextInput
+          style={styles.searchInput}
+          placeholder="アプリを検索..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+
+        {loading ? (
+          <Text style={styles.loadingText}>読み込み中...</Text>
+        ) : (
+          <FlatList
+            data={filteredApps}
+            keyExtractor={item => item.packageName}
+            renderItem={renderApp}
+            contentContainerStyle={styles.list}
+          />
+        )}
+      </View>
+    </Modal>
+  );
+}
+```
+
+#### 11.8.2 app-selection.tsx の更新
+
+```typescript
+// app/(onboarding)/app-selection.tsx の handleAddMore を更新
+
+import { Platform } from 'react-native';
+import { AppSelectionModal } from '../../src/components/AppSelectionModal';
+
+// ... 既存のコード ...
+
+const [showAppModal, setShowAppModal] = useState(false);
+const [customApps, setCustomApps] = useState<CustomApp[]>([]);
+
+const handleAddMore = () => {
+  if (Platform.OS === 'android') {
+    // Android: カスタムアプリ選択モーダルを表示
+    setShowAppModal(true);
+  } else {
+    // iOS: Coming Soon（Family Controls Entitlement待ち）
+    Alert.alert(
+      t('settings.comingSoon.title'),
+      t('settings.comingSoon.addMoreApps'),
+      [{ text: 'OK' }]
+    );
+  }
+};
+
+const handleCustomAppSelect = (app: InstalledApp) => {
+  const newCustomApp: CustomApp = {
+    id: app.packageName as TargetAppId,
+    packageName: app.packageName,
+    label: app.appName,
+    isCustom: true,
+  };
+  setCustomApps([...customApps, newCustomApp]);
+  setLocalSelectedApps([...selectedApps, app.packageName as TargetAppId]);
+};
+
+// JSX内に追加
+{Platform.OS === 'android' && (
+  <AppSelectionModal
+    visible={showAppModal}
+    onClose={() => setShowAppModal(false)}
+    onSelect={handleCustomAppSelect}
+    excludePackages={[
+      ...appOptions.map(o => o.id),
+      ...customApps.map(c => c.packageName),
+    ]}
+  />
+)}
+```
+
+### 11.9 データ永続化
+
+```typescript
+// src/stores/useAppStore.ts に追加
+
+interface CustomApp {
+  packageName: string;
+  appName: string;
+  addedAt: string; // ISO日時
+}
+
+interface AppState {
+  // 既存のフィールド...
+  customApps: CustomApp[];
+  addCustomApp: (app: CustomApp) => void;
+  removeCustomApp: (packageName: string) => void;
+}
+
+// Zustandストアに追加
+customApps: [],
+addCustomApp: (app) => set((state) => ({
+  customApps: [...state.customApps, app],
+})),
+removeCustomApp: (packageName) => set((state) => ({
+  customApps: state.customApps.filter(a => a.packageName !== packageName),
+})),
+```
+
+### 11.10 工数見積もり
+
+| タスク | 工数 |
+|--------|------|
+| InstalledAppsHelper.kt 実装 | 0.5日 |
+| ScreenTimeAndroidModule 更新 | 0.5日 |
+| TypeScript インターフェース更新 | 0.5日 |
+| AppSelectionModal コンポーネント | 1日 |
+| app-selection.tsx 更新 | 0.5日 |
+| Zustandストア更新 | 0.5日 |
+| テスト・調整 | 1日 |
+| **合計** | **4.5日** |
+
+### 11.11 注意事項
+
+1. **Android 11+ (API 30+)**: `QUERY_ALL_PACKAGES` 権限が必要な場合あり
+   - Google Playポリシーで制限される可能性があるため、`<queries>` タグでの限定的な宣言を推奨
+
+2. **パフォーマンス**: アプリ一覧取得は重い処理
+   - 初回のみ取得してキャッシュする
+   - バックグラウンドスレッドで実行
+
+3. **アイコン取得**: Base64エンコードはオプション
+   - メモリ使用量を考慮し、必要に応じて実装
+
+---
+
+## 12. 次のアクション（更新）
+
+### 既存タスク
+1. [ ] Expo Native Module のスケルトン作成
+2. [ ] UsageStatsManager の基本実装
+3. [ ] 権限リクエストフローの実装
+4. [ ] オーバーレイUIのデザイン確定
+5. [ ] Foreground Service の実装
+6. [ ] 実機テスト（Pixel / Samsung / Xiaomi）
+7. [ ] Google Play Console 設定（Data Safety等）
+
+### 新規タスク（インストール済みアプリ選択機能）
+8. [ ] InstalledAppsHelper.kt 実装
+9. [ ] ScreenTimeAndroidModule に getInstalledApps 追加
+10. [ ] AppSelectionModal コンポーネント作成
+11. [ ] app-selection.tsx のプラットフォーム分岐実装
+12. [ ] Zustandストアにカスタムアプリ保存機能追加
+13. [ ] 実機テスト（アプリ一覧表示、選択、保存）
+
+---
+
 *作成日: 2025年12月*
-*最終更新: 2025年12月（Codexレビュー反映）*
+*最終更新: 2025年12月（インストール済みアプリ選択機能追加）*
 *StopShorts Android対応プロジェクト*

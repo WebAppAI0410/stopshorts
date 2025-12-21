@@ -7,7 +7,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
     ShieldIcon,
     ProgressBar,
-    StreakIndicator,
+    ProgressCard,
     Button,
 } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
@@ -19,14 +19,13 @@ export default function DashboardScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
     // Consolidated: use only useStatisticsStore for intervention/urge surfing stats
-    const { getTodayStats, getStreak, lifetime, getNewBadges } = useStatisticsStore();
+    const { getTodayStats, lifetime, getNewBadges } = useStatisticsStore();
 
     // Get real screen time data from Android native module
     const { todayData, loading: screenTimeLoading, isMockData } = useScreenTimeData();
 
     // Get statistics from intervention store
     const todayStatsNew = getTodayStats();
-    const currentStreak = getStreak();
     const newBadges = getNewBadges();
 
     // Check if we have real data (Android: from native module when data is fetched)
@@ -49,21 +48,6 @@ export default function DashboardScreen() {
         totalSavedMinutes: Math.round(lifetime.totalSavedHours * 60),
         urgeSurfingCompleted: todayStatsNew.urgeSurfing.completed,
     };
-
-    // Calculate streak from new store
-    // Show demo value (7 days) only when no real data exists
-    const streakDays = currentStreak || (hasRealData ? 0 : 7);
-
-    // Generate completed days for streak indicator
-    // Show demo pattern (4 days) only when no real data exists
-    const completedDays = Array.from({ length: 7 }, (_, i) => {
-        if (hasRealData) {
-            // Real data: show actual streak progress
-            return i < Math.min(currentStreak, 7);
-        }
-        // Demo mode: show 4 days completed
-        return i < 4;
-    });
 
     const handleStartSurfing = () => {
         router.push('/(main)/urge-surfing');
@@ -173,9 +157,11 @@ export default function DashboardScreen() {
                     <ProgressBar progress={Math.min(todayStats.interventionCount * 20, 100)} variant="secondary" />
                 </Animated.View>
 
-                {/* Streak Indicator */}
+                {/* Progress Card (Replacement for StreakIndicator) */}
                 <Animated.View entering={FadeInDown.duration(600).delay(200)} style={{ marginTop: spacing.lg }}>
-                    <StreakIndicator streakDays={streakDays} completedDays={completedDays} />
+                    <ProgressCard
+                        onPress={() => router.push('/(main)/statistics')}
+                    />
                 </Animated.View>
 
                 {/* Urge Surfing Card */}

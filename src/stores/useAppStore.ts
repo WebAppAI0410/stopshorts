@@ -26,6 +26,8 @@ import {
   type GoalType,
   type TargetAppId,
   type CustomApp,
+  // Intervention settings
+  type InterventionSettings,
   // Mapping functions
   goalTypeToPurpose,
 } from '../types';
@@ -70,6 +72,12 @@ interface AppState {
 
   // Custom Apps State (Android only - iOS pending Family Controls Entitlement)
   customApps: CustomApp[];
+
+  // Baseline for metrics comparison (saved during onboarding)
+  baselineMonthlyMinutes: number | null;
+
+  // Intervention Settings (Android only)
+  interventionSettings: InterventionSettings;
 
   // Statistics
   stats: DailyStats[];
@@ -124,6 +132,10 @@ interface AppState {
 
   // Subscription Actions
   setSubscriptionPlan: (plan: SubscriptionPlan) => void;
+
+  // Baseline & Intervention Actions
+  setBaselineMonthlyMinutes: (minutes: number) => void;
+  setInterventionSettings: (settings: Partial<InterventionSettings>) => void;
 }
 
 const initialState = {
@@ -165,6 +177,13 @@ const initialState = {
   goal: null,
   // Custom Apps initial state (Android only - iOS pending Family Controls Entitlement)
   customApps: [] as CustomApp[],
+  // Baseline for metrics comparison
+  baselineMonthlyMinutes: null as number | null,
+  // Intervention settings (Android only)
+  interventionSettings: {
+    timing: 'immediate',
+    delayMinutes: 5,
+  } as InterventionSettings,
 };
 
 export const useAppStore = create<AppState>()(
@@ -524,6 +543,21 @@ export const useAppStore = create<AppState>()(
             subscriptionStatus: 'active',
           });
         }
+      },
+
+      // Baseline & Intervention Actions
+      setBaselineMonthlyMinutes: (minutes) => {
+        set({ baselineMonthlyMinutes: minutes });
+      },
+
+      setInterventionSettings: (settings) => {
+        const { interventionSettings } = get();
+        set({
+          interventionSettings: {
+            ...interventionSettings,
+            ...settings,
+          },
+        });
       },
     }),
     {

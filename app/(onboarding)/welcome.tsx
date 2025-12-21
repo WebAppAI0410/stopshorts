@@ -13,7 +13,7 @@ export default function WelcomeScreen() {
     const { colors, typography, spacing, borderRadius } = useTheme();
 
     const handleStart = () => {
-        router.push('/(onboarding)/the-problem' as Href);
+        router.push('/(onboarding)/user-setup' as Href);
     };
 
     return (

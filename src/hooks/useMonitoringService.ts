@@ -55,12 +55,14 @@ export function useMonitoringService() {
   const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
   const selectedApps = useAppStore((state) => state.selectedApps);
   const customApps = useAppStore((state) => state.customApps);
+  const interventionSettings = useAppStore((state) => state.interventionSettings);
   const recordIntervention = useStatisticsStore((state) => state.recordIntervention);
 
   const isMonitoringRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
   const interventionListenerRef = useRef<EmitterSubscription | null>(null);
   const isMountedRef = useRef(true);
+  const lastSyncedSettingsRef = useRef<string | null>(null);
 
   // Memoize custom app package names to prevent infinite loops
   const customAppPackages = useMemo(
@@ -193,6 +195,32 @@ export function useMonitoringService() {
       updateTargetApps();
     }
   }, [selectedApps, customAppPackages, hasCompletedOnboarding, updateTargetApps]);
+
+  // Sync intervention settings to native when they change
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    if (!hasCompletedOnboarding) return;
+
+    const settingsKey = `${interventionSettings.timing}-${interventionSettings.delayMinutes}`;
+
+    // Only sync if settings actually changed
+    if (lastSyncedSettingsRef.current === settingsKey) return;
+
+    const syncSettings = async () => {
+      try {
+        await screenTimeService.setInterventionSettings(
+          interventionSettings.timing,
+          interventionSettings.delayMinutes
+        );
+        lastSyncedSettingsRef.current = settingsKey;
+        console.log('[MonitoringService] Synced intervention settings:', interventionSettings);
+      } catch (error) {
+        console.error('[MonitoringService] Failed to sync intervention settings:', error);
+      }
+    };
+
+    syncSettings();
+  }, [hasCompletedOnboarding, interventionSettings]);
 
   // Track mounted state for async operations
   useEffect(() => {

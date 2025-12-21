@@ -1,46 +1,90 @@
 /**
  * Screen Time Service
  *
- * Provides a high-level API for interacting with iOS Screen Time / Family Controls
+ * Provides a high-level API for interacting with screen time tracking
+ * - iOS: Uses Screen Time / Family Controls API
+ * - Android: Uses UsageStatsManager
  */
-import ScreenTime, {
-    isAvailable,
-    getAuthorizationStatus,
-    requestAuthorization,
+import { Platform } from 'react-native';
+import iOSScreenTime, {
+    isAvailable as isIOSAvailable,
+    getAuthorizationStatus as getIOSAuthorizationStatus,
+    requestAuthorization as requestIOSAuthorization,
     AuthorizationStatus,
     AuthorizationResult,
 } from '../../modules/screen-time';
+import { screenTimeService as androidService, PermissionStatus } from '../native/ScreenTimeModule';
 import type { ScreenTimeData } from '../types';
 
-export type { AuthorizationStatus, AuthorizationResult, ScreenTimeData };
+export type { AuthorizationStatus, AuthorizationResult, ScreenTimeData, PermissionStatus };
 
 /**
  * Check if Screen Time API is available on this device
  */
 export function isScreenTimeAvailable(): boolean {
-    return isAvailable();
+    if (Platform.OS === 'android') {
+        return true; // Always available on Android 8.0+
+    }
+    return isIOSAvailable();
 }
 
 /**
  * Get current authorization status
  */
 export function getScreenTimeAuthorizationStatus(): AuthorizationStatus {
-    return getAuthorizationStatus();
+    if (Platform.OS === 'android') {
+        // For Android, return 'notDetermined' - check permissions separately
+        return 'notDetermined';
+    }
+    return getIOSAuthorizationStatus();
+}
+
+/**
+ * Get Android permission status
+ */
+export async function getAndroidPermissionStatus(): Promise<PermissionStatus> {
+    return androidService.getPermissionStatus();
+}
+
+/**
+ * Open Usage Stats settings (Android only)
+ */
+export async function openUsageStatsSettings(): Promise<void> {
+    await androidService.openUsageStatsSettings();
+}
+
+/**
+ * Open Overlay settings (Android only)
+ */
+export async function openOverlaySettings(): Promise<void> {
+    await androidService.openOverlaySettings();
 }
 
 /**
  * Request Screen Time authorization from user
- * Shows the system permission dialog
+ * - iOS: Shows system permission dialog
+ * - Android: Returns current permission status (user must grant in Settings)
  */
 export async function requestScreenTimeAuthorization(): Promise<AuthorizationResult> {
-    return requestAuthorization();
+    if (Platform.OS === 'android') {
+        const status = await androidService.getPermissionStatus();
+        return {
+            success: status.usageStats,
+            status: status.usageStats ? 'approved' : 'notDetermined',
+        };
+    }
+    return requestIOSAuthorization();
 }
 
 /**
  * Check if Screen Time is authorized
  */
-export function isScreenTimeAuthorized(): boolean {
-    const status = getAuthorizationStatus();
+export async function isScreenTimeAuthorized(): Promise<boolean> {
+    if (Platform.OS === 'android') {
+        const status = await androidService.getPermissionStatus();
+        return status.usageStats;
+    }
+    const status = getIOSAuthorizationStatus();
     return status === 'approved';
 }
 
@@ -193,6 +237,9 @@ export default {
     getAuthorizationStatus: getScreenTimeAuthorizationStatus,
     requestAuthorization: requestScreenTimeAuthorization,
     isAuthorized: isScreenTimeAuthorized,
+    getAndroidPermissionStatus,
+    openUsageStatsSettings,
+    openOverlaySettings,
     getMockData: getMockScreenTimeData,
     getMockDailyBreakdown,
 };

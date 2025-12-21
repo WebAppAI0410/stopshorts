@@ -27,7 +27,7 @@ const PACKAGE_TO_APP_ID: Record<string, 'tiktok' | 'youtubeShorts' | 'instagramR
 export default function RealityCheckScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
-    const { calculateImpactFromScreenTime, getCustomAppPackages, customApps, selectedApps } = useAppStore();
+    const { setScreenTimeData: setStoredScreenTimeData, setScreenTimePermission, getCustomAppPackages, customApps, selectedApps, setBaselineMonthlyMinutes } = useAppStore();
     const [isLoading, setIsLoading] = useState(true);
     const [screenTimeData, setScreenTimeData] = useState<ScreenTimeData | null>(null);
     const [monthlyData, setMonthlyData] = useState<{ monthlyTotal: number; dailyAverage: number; weeklyAverage: number } | null>(null);
@@ -179,11 +179,17 @@ export default function RealityCheckScreen() {
                 console.log('[RealityCheck] SUCCESS: Data found, showing results');
 
                 setScreenTimeData(data);
+                // Persist for later onboarding steps
+                setStoredScreenTimeData(data);
+                setScreenTimePermission(true);
                 setCustomAppUsage(customUsageWithIcons);
             } else {
                 // iOS: use mock data (pending Family Controls Entitlement)
                 const mockData = screenTimeService.getMockData();
                 setScreenTimeData(mockData);
+                // Persist mock for later onboarding steps (iOS mock flow)
+                setStoredScreenTimeData(mockData);
+                setScreenTimePermission(true);
                 // Set mock monthly data based on weekly mock
                 setMonthlyData({
                     monthlyTotal: mockData.weeklyTotal * 4.3,
@@ -222,11 +228,25 @@ export default function RealityCheckScreen() {
         const customMonthlyTotal = customAppUsage.reduce((sum, app) => sum + app.monthlyMinutes, 0);
         const totalMonthlyMinutes = (monthlyData?.monthlyTotal || 0) + customMonthlyTotal;
 
+        // Save baseline for future metrics comparison
+        if (totalMonthlyMinutes > 0) {
+            setBaselineMonthlyMinutes(totalMonthlyMinutes);
+        }
+
         // Same calculation as displayed: totalMonthlyMinutes * 12 / 60
         const yearlyHours = Math.round(totalMonthlyMinutes * 12 / 60);
 
         // Create impact with the exact same yearlyHours shown on screen
         if (yearlyHours > 0) {
+            // Keep store screenTimeData aligned with custom-app adjusted average
+            if (screenTimeData) {
+                const totalDailyAverage = Math.round(totalMonthlyMinutes / 30);
+                setStoredScreenTimeData({
+                    ...screenTimeData,
+                    dailyAverage: totalDailyAverage,
+                    lastUpdated: new Date().toISOString(),
+                });
+            }
             const lifetimeLostYears = (yearlyHours * 50) / (24 * 365);
             const impact = {
                 yearlyLostHours: yearlyHours,

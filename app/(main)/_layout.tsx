@@ -1,11 +1,16 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { t } from '../../src/i18n';
 
 export default function MainLayout() {
     const { colors, typography } = useTheme();
+    const insets = useSafeAreaInsets();
+
+    // Account for Android navigation bar
+    const bottomPadding = Math.max(insets.bottom, 12);
 
     return (
         <Tabs
@@ -15,9 +20,9 @@ export default function MainLayout() {
                     backgroundColor: colors.background,
                     borderTopColor: colors.borderSubtle,
                     borderTopWidth: 1,
-                    height: 80,
-                    paddingBottom: 20,
-                    paddingTop: 12,
+                    height: 60 + bottomPadding,
+                    paddingBottom: bottomPadding,
+                    paddingTop: 8,
                 },
                 tabBarActiveTintColor: colors.textPrimary,
                 tabBarInactiveTintColor: colors.textMuted,

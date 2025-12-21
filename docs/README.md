@@ -6,51 +6,89 @@
 
 **コンセプト**: 「5分で止める、人生を取り戻す」
 
+**対応プラットフォーム**: iOS / Android
+
 ---
 
 ## ドキュメント構成
 
+### 📌 Core Documents（最優先で参照）
+
+| ドキュメント | 説明 | 状態 |
+|-------------|------|------|
+| `IMPLEMENTATION_SPEC.md` | 技術実装仕様（デザインシステム、コンポーネント） | ✅ Current |
+| `ONBOARDING_FLOW.md` | オンボーディングフロー v4（10ステップ） | ✅ Current |
+| `ROADMAP.md` | 実装ロードマップ v2.0 | ✅ Current |
+| `HABIT_COACHING_FEATURE.md` | 習慣化コーチング機能設計 v3.0 | ✅ Current |
+| `INTERVENTION_AND_METRICS_PLAN.md` | **NEW** 介入システム・統計指標 実装計画 | 🔄 Planning |
+
+### 📱 Platform-Specific Documents
+
+| ドキュメント | 説明 | 状態 |
+|-------------|------|------|
+| `ANDROID_IMPLEMENTATION_PLAN.md` | Android版アーキテクチャ（UsageStats + Overlay） | ✅ Current |
+| `ANDROID_INTEGRATION_PLAN.md` | Android統計・介入統合計画 | ✅ Current |
+| `PLAY_CONSOLE_SUBMISSION_FLOW.md` | Google Play提出チェックリスト | ✅ Current |
+| `DEEP_LINKING.md` | ディープリンク設定 | ✅ Current |
+
+### 📋 Specifications
+
+| ドキュメント | 説明 | 状態 |
+|-------------|------|------|
+| `specs/02_pricing_monetization.md` | 料金体系・マネタイズ設計 | ✅ Current |
+| `specs/03_internationalization.md` | 国際化要件 | 📝 Reference |
+| `specs/04_backend_architecture.md` | バックエンド構成（RevenueCat, CloudKit） | ✅ Current |
+| `specs/05_new_features_v2.md` | v2機能仕様（将来） | 📝 Future |
+| `specs/APPLE_SUBSCRIPTION_PLAN.md` | Apple IAP実装計画 | 🔄 In Progress |
+
+### 🎨 Design Documents
+
+| ドキュメント | 説明 | 状態 |
+|-------------|------|------|
+| `design/01_screen_design.md` | 画面設計・UIフロー | ✅ Current |
+| `design/02_personalization_behavioral.md` | パーソナライズ・行動変容設計 | ✅ Current |
+
+### 🔍 Reviews & Tracking
+
+| ドキュメント | 説明 | 状態 |
+|-------------|------|------|
+| `reviews/README.md` | レビュー一覧 | ✅ Current |
+| `reviews/2025-12-21_review.md` | アーキテクチャレビュー | ✅ Current |
+| `reviews/2025-12-21_tasks.md` | タスクリスト | ✅ Current |
+| `requirements_implementation_matrix.md` | 要件・実装対応表 | ✅ Current |
+| `issues/mvp_issues.md` | MVPタスク分解 | ✅ Current |
+
+### 📁 ディレクトリ構造
+
 ```
 docs/
-├── README.md                              # 本ドキュメント
-├── requirements_implementation_matrix.md  # 要件・実装 対応表（現行実装準拠）
-├── reviews/                               # 定期レビュー
-│   └── README.md                           # レビュー一覧
+├── README.md                              # 本ドキュメント（エントリーポイント）
+├── IMPLEMENTATION_SPEC.md                 # 技術実装仕様
+├── ONBOARDING_FLOW.md                     # オンボーディング v4
+├── ROADMAP.md                             # ロードマップ
+├── HABIT_COACHING_FEATURE.md              # 習慣化コーチング設計
+├── INTERVENTION_AND_METRICS_PLAN.md       # 介入・統計指標計画 ★NEW
+├── ANDROID_IMPLEMENTATION_PLAN.md         # Androidアーキテクチャ
+├── ANDROID_INTEGRATION_PLAN.md            # Android統計統合計画
+├── PLAY_CONSOLE_SUBMISSION_FLOW.md        # Play Store提出フロー
+├── DEEP_LINKING.md                        # ディープリンク設定
+├── requirements_implementation_matrix.md  # 要件・実装対応表
 ├── specs/                                 # 仕様書
-│   ├── 01_requirements.md                 # 要件定義書
-│   └── 02_pricing_monetization.md         # 料金体系・マネタイズ設計
+│   ├── 02_pricing_monetization.md         # 料金設計
+│   ├── 03_internationalization.md         # i18n
+│   ├── 04_backend_architecture.md         # バックエンド
+│   ├── 05_new_features_v2.md              # v2機能
+│   └── APPLE_SUBSCRIPTION_PLAN.md         # Apple IAP
 ├── design/                                # 設計書
-│   ├── 01_screen_design.md                # 画面設計書・UI/UXフロー
-│   └── 02_personalization_behavioral.md   # パーソナライズ・行動変容設計
-├── workflow/                              # 開発プロセス
-│   └── 01_development_workflow.md         # 開発ワークフロー・CI/CD設計
+│   ├── 01_screen_design.md                # 画面設計
+│   └── 02_personalization_behavioral.md   # 行動設計
+├── reviews/                               # レビュー
+│   ├── README.md                          # レビュー一覧
+│   ├── 2025-12-21_review.md               # アーキテクチャレビュー
+│   └── 2025-12-21_tasks.md                # タスクリスト
 └── issues/                                # タスク管理
     └── mvp_issues.md                      # MVP Issue分解
 ```
-
----
-
-## クイックスタート
-
-### 1. ドキュメントを読む順序
-
-1. **要件定義書** (`specs/01_requirements.md`)
-   - プロダクトビジョン、ターゲットユーザー、機能要件
-
-2. **画面設計書** (`design/01_screen_design.md`)
-   - 全画面のワイヤーフレーム、遷移フロー、デザインシステム
-
-3. **パーソナライズ設計** (`design/02_personalization_behavioral.md`)
-   - 行動変容の理論的基盤、パーソナライズロジック
-
-4. **料金体系** (`specs/02_pricing_monetization.md`)
-   - プラン設計、課金フロー、審査対応
-
-5. **開発ワークフロー** (`workflow/01_development_workflow.md`)
-   - 技術スタック、開発環境、CI/CD
-
-6. **MVP Issue分解** (`issues/mvp_issues.md`)
-   - 具体的なタスク一覧、優先度、受け入れ条件
 
 ---
 
@@ -58,138 +96,63 @@ docs/
 
 | カテゴリ | 技術 |
 |---------|------|
-| フレームワーク | React Native (Expo SDK 52+) |
-| 言語 | TypeScript, Swift |
-| スタイリング | NativeWind (Tailwind CSS) |
-| 状態管理 | Zustand |
+| フレームワーク | React Native (Expo SDK 54) |
+| 言語 | TypeScript, Swift, Kotlin |
+| スタイリング | NativeWind v4 (Tailwind CSS) |
+| 状態管理 | Zustand + AsyncStorage |
 | ルーティング | Expo Router |
-| ネイティブAPI | Screen Time API (iOS) |
+| アニメーション | React Native Reanimated |
+| ネイティブAPI (iOS) | Screen Time API (Family Controls) |
+| ネイティブAPI (Android) | UsageStatsManager + Overlay |
 | ビルド | EAS Build |
-| CI/CD | GitHub Actions |
-
----
-
-## 開発環境（Windows）
-
-### 必要なもの
-
-- Windows 10/11
-- Node.js 18+ LTS
-- Apple Developer Account（有料）
-- iPhone実機
-
-### セットアップ
-
-```bash
-# Expo CLIのインストール
-npm install -g eas-cli
-
-# Expoにログイン
-eas login
-
-# プロジェクト作成後
-npm install
-npx expo start
-```
 
 ---
 
 ## 主要機能
 
-### MVP（最小実行可能プロダクト）
+### コア機能
 
-| 機能 | 説明 |
-|------|------|
-| オンボーディング | 目的選択、権限取得、対象アプリ選択 |
-| 5分遮断 | Screen Time APIによる強制Shield |
-| パーソナライズ文言 | 目的に応じたShieldメッセージ |
-| 基本統計 | 今日/今週の介入回数、節約時間 |
+| 機能 | 説明 | 状態 |
+|------|------|------|
+| オンボーディング | 10ステップのセットアップフロー | ✅ 実装済 |
+| 介入システム | アプリ使用時のUrge Surfing | 🔄 改善中 |
+| 統計・分析 | 使用時間の可視化、減少率表示 | 🔄 改善中 |
+| Urge Surfing | 衝動をやり過ごす30秒エクササイズ | ✅ 実装済 |
 
-### v1.0（改善版）
+### 計画中の機能
 
-| 機能 | 説明 |
-|------|------|
-| 時間カスタマイズ | 3/5/10/15分の選択 |
-| 時間帯プロファイル | 時間帯別の設定 |
-| 詳細統計 | 月間データ、グラフ表示 |
-| 課金 | In-App Purchase |
-
----
-
-## 重要な制約
-
-### App Store審査
-
-1. **Screen Time APIのマネタイズ禁止** (Guideline 4.10)
-   - 遮断機能そのものは無料提供
-   - 課金は付加価値（統計、パーソナライズ等）に限定
-
-2. **Family Controlsエンタイトルメント**
-   - 配布には専用のエンタイトルメント申請が必要
-   - 開発初期から申請を開始すること
-
-### 技術制約
-
-1. **Windows開発**
-   - iOSローカルビルド不可 → EAS Build使用
-   - シミュレータ不可 → 実機テストのみ
-
-2. **Expo + iOS拡張**
-   - Managed workflowではexperimental
-   - 安定性リスクを考慮
+| 機能 | 説明 | ドキュメント |
+|------|------|-------------|
+| 介入タイミング設定 | 即時 or 時間経過後を選択可能 | `INTERVENTION_AND_METRICS_PLAN.md` |
+| 新統計指標 | 減少率、達成日数、Habit Score | `INTERVENTION_AND_METRICS_PLAN.md` |
+| 課金機能 | サブスクリプション | `specs/APPLE_SUBSCRIPTION_PLAN.md` |
 
 ---
 
-## 開発フロー
+## 開発環境
 
+### 必要なもの
+
+- Node.js 18+ LTS
+- Expo CLI (`npm install -g eas-cli`)
+- Android Studio (Android開発用)
+- Apple Developer Account (iOS開発用)
+
+### セットアップ
+
+```bash
+# 依存関係インストール
+npm install
+
+# 開発サーバー起動
+npx expo start
+
+# Android ビルド
+npx eas build --platform android --profile development
+
+# TypeScript チェック
+npx tsc --noEmit
 ```
-[Issue選択] → [ブランチ作成] → [実装] → [実機テスト] → [PR] → [レビュー] → [マージ]
-     ↑                             ↓
-     └──────── Claude Code支援 ────┘
-```
-
-### 日次サイクル
-
-1. **Morning**: GitHub Issues確認、タスク選択
-2. **Day**: Cursor + Claude Codeで実装、実機テスト
-3. **Evening**: コミット、PR作成
-
----
-
-## 次のアクション
-
-### 即座に始めるべきこと
-
-1. [ ] GitHubリポジトリ作成
-2. [ ] Apple Developer Programへの登録確認
-3. [ ] Family Controlsエンタイトルメント申請（P0）
-4. [ ] プロジェクト初期セットアップ（Issue #001）
-
-### 1週目の目標
-
-- Issue #001-#003 完了（基盤構築）
-- EAS Buildで実機テスト可能な状態
-
-### 2週目の目標
-
-- Issue #004-#009 完了（オンボーディング）
-- 画面遷移が動作する状態
-
-### 3-4週目の目標
-
-- Issue #013-#018 完了（Shield機能）
-- コア機能が動作する状態
-
----
-
-## 連絡先・リソース
-
-| リソース | URL |
-|---------|-----|
-| Apple Developer | https://developer.apple.com |
-| Expo Documentation | https://docs.expo.dev |
-| Screen Time API (WWDC21) | https://developer.apple.com/videos/play/wwdc2021/10123/ |
-| App Review Guidelines | https://developer.apple.com/app-store/review/guidelines/ |
 
 ---
 
@@ -198,3 +161,5 @@ npx expo start
 | 日付 | バージョン | 内容 |
 |------|-----------|------|
 | 2025-12-19 | 1.0 | 初版作成 |
+| 2025-12-21 | 2.0 | ドキュメント構成を更新、Android関連ドキュメント追加 |
+| 2025-12-22 | 2.1 | ドキュメント整理、不要ファイル削除、介入・統計計画追加 |

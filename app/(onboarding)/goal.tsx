@@ -31,8 +31,8 @@ export default function GoalScreen() {
         if (!selectedGoal) return;
         setGoal(selectedGoal);
         // Navigate to the next screen according to the onboarding flow
-        // Step 3 (Goal) → Step 4 (Screen Time Permission)
-        router.push('/(onboarding)/screentime-permission' as Href);
+        // Step 4 (Goal) → Step 5 (App Selection)
+        router.push('/(onboarding)/app-selection' as Href);
     };
 
     return (
@@ -97,7 +97,7 @@ export default function GoalScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={10} currentStep={3} />
+                    <ProgressIndicator totalSteps={10} currentStep={4} />
                 </View>
             </Animated.View>
         </SafeAreaView>

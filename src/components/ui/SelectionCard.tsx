@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Image, ImageSourcePropType } from 'react-native';
 import Animated, {
     useAnimatedStyle,
     withSpring,
@@ -14,6 +14,8 @@ export type SelectionCardProps = {
     selected: boolean;
     onPress: () => void;
     icon?: keyof typeof Ionicons.glyphMap;
+    imageSource?: ImageSourcePropType; // Static asset or require() for app icons
+    imageUri?: string; // Base64 image URI for dynamic app icons (custom apps)
     compact?: boolean;
 };
 
@@ -25,6 +27,8 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
     selected,
     onPress,
     icon,
+    imageSource,
+    imageUri,
     compact = false,
 }) => {
     const { colors, typography, spacing, borderRadius } = useTheme();
@@ -61,21 +65,34 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
             ]}
         >
             <View style={styles.content}>
-                {icon && (
+                {(icon || imageSource || imageUri) && (
                     <View
                         style={[
                             styles.iconContainer,
                             {
                                 marginRight: spacing.md,
                                 backgroundColor: selected ? colors.accent : colors.surface,
+                                overflow: 'hidden',
                             },
                         ]}
                     >
-                        <Ionicons
-                            name={icon}
-                            size={24}
-                            color={selected ? '#FFFFFF' : colors.textSecondary}
-                        />
+                        {imageSource ? (
+                            <Image
+                                source={imageSource}
+                                style={{ width: 36, height: 36, borderRadius: 8 }}
+                            />
+                        ) : imageUri ? (
+                            <Image
+                                source={{ uri: imageUri }}
+                                style={{ width: 36, height: 36, borderRadius: 8 }}
+                            />
+                        ) : icon ? (
+                            <Ionicons
+                                name={icon}
+                                size={24}
+                                color={selected ? '#FFFFFF' : colors.textSecondary}
+                            />
+                        ) : null}
                     </View>
                 )}
                 <View style={{ flex: 1 }}>

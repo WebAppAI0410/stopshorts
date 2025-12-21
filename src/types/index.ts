@@ -10,6 +10,17 @@ export type ManagedApp = 'tiktok' | 'youtubeShorts' | 'instagramReels';
 // Target App IDs (Extended set for app selection)
 export type TargetAppId = 'tiktok' | 'youtubeShorts' | 'instagramReels' | 'twitter' | 'facebookReels' | 'snapchat';
 
+/**
+ * Custom app added by user (Android only)
+ * Note: iOS implementation pending - requires Family Controls Entitlement approval
+ */
+export interface CustomApp {
+  packageName: string;
+  appName: string;
+  category: string;
+  addedAt: string; // ISO date string
+}
+
 // Implementation Intent Types
 export type IntentType = 'breathe' | 'stretch' | 'water' | 'checklist' | 'custom';
 
@@ -260,4 +271,13 @@ export interface PricingPlan {
   features: string[];
   isDefault?: boolean;
   savings?: number; // percentage
+}
+
+// Intervention Settings (Android)
+export type InterventionTiming = 'immediate' | 'delayed';
+export type InterventionDelayMinutes = 5 | 10 | 15;
+
+export interface InterventionSettings {
+  timing: InterventionTiming;
+  delayMinutes: InterventionDelayMinutes;
 }

@@ -44,12 +44,17 @@ interface StatisticsState {
   lifetime: LifetimeStatistics;
   interventionHistory: InterventionRecord[]; // Detailed intervention records
 
+  // Habit Score (replacement for streak - gradual increase/decrease)
+  habitScore: number; // 0-100
+  habitScoreLastUpdatedDate: string | null; // YYYY-MM-DD (prevents duplicate daily evaluation)
+
   // Actions
   recordUrgeSurfing: (record: UrgeSurfingRecordInput) => void;
   recordIntervention: (input: InterventionInput) => void;
   recordUsageTime: (appId: string, minutes: number) => void;
   recordTrainingSession: (minutes: number) => void;
   updateStreak: () => void;
+  updateHabitScore: (dailyGoalMinutes: number) => void;
 
   // Getters
   getTodayStats: () => DailyStatistics;
@@ -58,6 +63,14 @@ interface StatisticsState {
   getNewBadges: () => Badge[];
   getEarnedBadges: () => Badge[];
   getTotalSavedMinutes: () => number;
+  getHabitScore: () => number;
+  getMonthlyAchievementStats: (dailyGoalMinutes: number) => {
+    achievedDays: number;
+    totalDaysWithData: number;
+    achievementRate: number;
+  };
+  getReductionRate: (baselineMonthlyMinutes: number | null) => number | null;
+  getWeeklyTrend: () => number[]; // Last 4 weeks usage in minutes
 
   // Utilities
   resetDailyStats: () => void;
@@ -118,12 +131,38 @@ function createEmptyLifetime(): LifetimeStatistics {
 // Estimated minutes saved per completed urge surfing session
 const MINUTES_SAVED_PER_SURF = 5;
 
+// Helper to get yesterday's date key
+function getYesterdayKey(): string {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return getDateKey(yesterday);
+}
+
+// Helper to check if a date is in current month
+function isCurrentMonth(dateKey: string): boolean {
+  const now = new Date();
+  const [year, month] = dateKey.split('-').map(Number);
+  return year === now.getFullYear() && month === now.getMonth() + 1;
+}
+
+// Helper to get Monday-based week start
+function getMondayWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday = 1
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 export const useStatisticsStore = create<StatisticsState>()(
   persist(
     (set, get) => ({
       dailyStats: {},
       lifetime: createEmptyLifetime(),
       interventionHistory: [],
+      habitScore: 50, // Start at 50 (middle)
+      habitScoreLastUpdatedDate: null,
 
       recordUrgeSurfing: (record) => {
         const dateKey = getDateKey();
@@ -296,6 +335,42 @@ export const useStatisticsStore = create<StatisticsState>()(
         });
       },
 
+      updateHabitScore: (dailyGoalMinutes) => {
+        const state = get();
+        const today = getDateKey();
+
+        // Date guard: only evaluate once per day
+        if (state.habitScoreLastUpdatedDate === today) {
+          return;
+        }
+
+        const yesterdayKey = getYesterdayKey();
+        const yesterdayStats = state.dailyStats[yesterdayKey];
+
+        // If no data for yesterday, don't update
+        if (!yesterdayStats || yesterdayStats.totalUsageMinutes === 0) {
+          // Still mark as evaluated to prevent re-checking
+          set({ habitScoreLastUpdatedDate: today });
+          return;
+        }
+
+        const achieved = yesterdayStats.totalUsageMinutes <= dailyGoalMinutes;
+        let newScore = state.habitScore;
+
+        if (achieved) {
+          // Goal achieved: +10 points (max 100)
+          newScore = Math.min(100, newScore + 10);
+        } else {
+          // Goal not achieved: -3 points (min 0)
+          newScore = Math.max(0, newScore - 3);
+        }
+
+        set({
+          habitScore: newScore,
+          habitScoreLastUpdatedDate: today,
+        });
+      },
+
       getTodayStats: () => {
         const dateKey = getDateKey();
         return get().dailyStats[dateKey] || createEmptyDailyStats(dateKey);
@@ -399,6 +474,73 @@ export const useStatisticsStore = create<StatisticsState>()(
         return get().lifetime.totalSavedHours * 60;
       },
 
+      getHabitScore: () => {
+        return get().habitScore;
+      },
+
+      getMonthlyAchievementStats: (dailyGoalMinutes) => {
+        const state = get();
+        const daysWithData = Object.entries(state.dailyStats)
+          .filter(([dateKey, stats]) =>
+            isCurrentMonth(dateKey) && stats.totalUsageMinutes > 0
+          );
+
+        if (daysWithData.length === 0) {
+          return { achievedDays: 0, totalDaysWithData: 0, achievementRate: 0 };
+        }
+
+        const achievedDays = daysWithData.filter(
+          ([_, stats]) => stats.totalUsageMinutes <= dailyGoalMinutes
+        ).length;
+
+        return {
+          achievedDays,
+          totalDaysWithData: daysWithData.length,
+          achievementRate: (achievedDays / daysWithData.length) * 100,
+        };
+      },
+
+      getReductionRate: (baselineMonthlyMinutes) => {
+        if (!baselineMonthlyMinutes || baselineMonthlyMinutes <= 0) {
+          return null;
+        }
+
+        const state = get();
+        // Calculate current month's total usage
+        const currentMonthUsage = Object.entries(state.dailyStats)
+          .filter(([dateKey]) => isCurrentMonth(dateKey))
+          .reduce((sum, [_, stats]) => sum + stats.totalUsageMinutes, 0);
+
+        const reductionRate =
+          ((baselineMonthlyMinutes - currentMonthUsage) / baselineMonthlyMinutes) * 100;
+        return Math.round(reductionRate * 10) / 10; // Round to 1 decimal
+      },
+
+      getWeeklyTrend: () => {
+        const state = get();
+        const weeklyTotals: number[] = [];
+
+        // Get last 4 weeks (Monday start)
+        for (let weekOffset = 3; weekOffset >= 0; weekOffset--) {
+          const weekStart = getMondayWeekStart(new Date());
+          weekStart.setDate(weekStart.getDate() - weekOffset * 7);
+
+          let weekTotal = 0;
+          for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+            const date = new Date(weekStart);
+            date.setDate(date.getDate() + dayOffset);
+            const dateKey = getDateKey(date);
+            const stats = state.dailyStats[dateKey];
+            if (stats) {
+              weekTotal += stats.totalUsageMinutes;
+            }
+          }
+          weeklyTotals.push(weekTotal);
+        }
+
+        return weeklyTotals;
+      },
+
       resetDailyStats: () => {
         set({ dailyStats: {} });
       },
@@ -407,6 +549,8 @@ export const useStatisticsStore = create<StatisticsState>()(
         set({
           dailyStats: {},
           lifetime: createEmptyLifetime(),
+          habitScore: 50,
+          habitScoreLastUpdatedDate: null,
         });
       },
     }),

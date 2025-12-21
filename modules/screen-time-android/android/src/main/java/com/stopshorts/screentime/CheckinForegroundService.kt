@@ -13,6 +13,10 @@ import androidx.core.app.NotificationCompat
 /**
  * Foreground Service that monitors app usage and triggers check-in overlays
  * when target apps (TikTok, YouTube, Instagram) are detected.
+ *
+ * Supports two intervention timing modes:
+ * - immediate: Show overlay immediately when target app is detected
+ * - delayed: Show overlay after user has been using the app for X minutes
  */
 class CheckinForegroundService : Service() {
 
@@ -26,8 +30,11 @@ class CheckinForegroundService : Service() {
             }
         }
         private const val NOTIFICATION_ID = 1001
+        private const val INTERVENTION_NOTIFICATION_ID = 1002
         private const val CHANNEL_ID = "checkin_monitoring_channel"
+        private const val INTERVENTION_CHANNEL_ID = "checkin_intervention_channel"
         private const val CHANNEL_NAME = "App Monitoring"
+        private const val INTERVENTION_CHANNEL_NAME = "Intervention Alerts"
 
         private const val CHECK_INTERVAL_MS = 1500L // Check every 1.5 seconds
         private const val COOLDOWN_PERIOD_MS = 5 * 60 * 1000L // 5 minutes cooldown
@@ -35,7 +42,15 @@ class CheckinForegroundService : Service() {
         const val ACTION_START_MONITORING = "com.stopshorts.screentime.START_MONITORING"
         const val ACTION_STOP_MONITORING = "com.stopshorts.screentime.STOP_MONITORING"
         const val ACTION_UPDATE_TARGETS = "com.stopshorts.screentime.UPDATE_TARGETS"
+        const val ACTION_UPDATE_SETTINGS = "com.stopshorts.screentime.UPDATE_SETTINGS"
         const val EXTRA_PACKAGE_NAMES = "package_names"
+        const val EXTRA_TIMING = "timing"
+        const val EXTRA_DELAY_MINUTES = "delay_minutes"
+
+        // Shared preference keys
+        private const val PREFS_NAME = "checkin_settings"
+        private const val PREF_TIMING = "intervention_timing"
+        private const val PREF_DELAY = "intervention_delay"
 
         /**
          * Start the monitoring service
@@ -73,6 +88,27 @@ class CheckinForegroundService : Service() {
             }
             context.startService(intent)
         }
+
+        /**
+         * Update intervention settings (timing mode and delay)
+         */
+        fun updateInterventionSettings(context: Context, timing: String, delayMinutes: Int) {
+            // Save to shared preferences for persistence
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            prefs.edit().apply {
+                putString(PREF_TIMING, timing)
+                putInt(PREF_DELAY, delayMinutes)
+                apply()
+            }
+
+            // Update running service if active
+            val intent = Intent(context, CheckinForegroundService::class.java).apply {
+                action = ACTION_UPDATE_SETTINGS
+                putExtra(EXTRA_TIMING, timing)
+                putExtra(EXTRA_DELAY_MINUTES, delayMinutes)
+            }
+            context.startService(intent)
+        }
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -81,6 +117,14 @@ class CheckinForegroundService : Service() {
     private var targetPackages: MutableSet<String> = mutableSetOf()
     private val lastCheckinTimestamps: MutableMap<String, Long> = mutableMapOf()
     private var isMonitoring = false
+
+    // Intervention timing settings
+    private var interventionTiming: String = "immediate" // "immediate" or "delayed"
+    private var interventionDelayMinutes: Int = 5 // 5, 10, or 15
+
+    // Track continuous usage start time for each app (for delayed mode)
+    private val appUsageStartTimes: MutableMap<String, Long> = mutableMapOf()
+    private val interventionTriggeredForSession: MutableSet<String> = mutableSetOf()
 
     private val monitoringRunnable = object : Runnable {
         override fun run() {
@@ -101,7 +145,19 @@ class CheckinForegroundService : Service() {
         usageStatsTracker = UsageStatsTracker(applicationContext)
         overlayController = OverlayController(applicationContext)
         createNotificationChannel()
+        createInterventionNotificationChannel()
+        loadInterventionSettings()
         setupOverlayCallback()
+    }
+
+    /**
+     * Load intervention settings from shared preferences
+     */
+    private fun loadInterventionSettings() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        interventionTiming = prefs.getString(PREF_TIMING, "immediate") ?: "immediate"
+        interventionDelayMinutes = prefs.getInt(PREF_DELAY, 5)
+        logDebug("Loaded settings: timing=$interventionTiming, delay=$interventionDelayMinutes min")
     }
 
     /**
@@ -188,9 +244,27 @@ class CheckinForegroundService : Service() {
                     ?: UsageStatsTracker.TARGET_PACKAGES
                 updateTargetApps(packages)
             }
+            ACTION_UPDATE_SETTINGS -> {
+                val timing = intent.getStringExtra(EXTRA_TIMING) ?: "immediate"
+                val delayMinutes = intent.getIntExtra(EXTRA_DELAY_MINUTES, 5)
+                updateInterventionSettings(timing, delayMinutes)
+            }
         }
 
         return START_STICKY
+    }
+
+    /**
+     * Update intervention settings at runtime
+     */
+    private fun updateInterventionSettings(timing: String, delayMinutes: Int) {
+        interventionTiming = timing
+        interventionDelayMinutes = delayMinutes
+        logDebug("Updated settings: timing=$timing, delay=$delayMinutes min")
+
+        // Clear usage tracking when settings change
+        appUsageStartTimes.clear()
+        interventionTriggeredForSession.clear()
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -253,18 +327,74 @@ class CheckinForegroundService : Service() {
     private fun checkForegroundApp() {
         try {
             val currentApp = usageStatsTracker.getCurrentForegroundApp()
+            val now = System.currentTimeMillis()
 
             // Check if current app is in target list
             if (currentApp != null && currentApp in targetPackages) {
-                // Check cooldown period
-                if (shouldShowOverlay(currentApp)) {
-                    triggerCheckinOverlay(currentApp)
-                    lastCheckinTimestamps[currentApp] = System.currentTimeMillis()
+                if (interventionTiming == "immediate") {
+                    // Immediate mode: show overlay right away (with cooldown)
+                    if (shouldShowOverlay(currentApp)) {
+                        triggerCheckinOverlay(currentApp)
+                        lastCheckinTimestamps[currentApp] = now
+                    }
+                } else {
+                    // Delayed mode: track usage time and show after delay
+                    handleDelayedIntervention(currentApp, now)
+                }
+            } else {
+                // User switched away from target app - reset tracking for all apps
+                // that the user is no longer using
+                val appsToReset = appUsageStartTimes.keys.filter { it != currentApp }
+                appsToReset.forEach { pkg ->
+                    appUsageStartTimes.remove(pkg)
+                    interventionTriggeredForSession.remove(pkg)
                 }
             }
         } catch (e: Exception) {
             // Log error but don't crash the service
             e.printStackTrace()
+        }
+    }
+
+    /**
+     * Handle delayed intervention mode - show overlay after user has used app for X minutes
+     */
+    private fun handleDelayedIntervention(packageName: String, now: Long) {
+        // Check if we already triggered intervention for this session
+        if (packageName in interventionTriggeredForSession) {
+            // Check cooldown for next intervention
+            if (shouldShowOverlay(packageName)) {
+                // Reset session tracking and start new tracking period
+                interventionTriggeredForSession.remove(packageName)
+                appUsageStartTimes[packageName] = now
+            }
+            return
+        }
+
+        // Start tracking if not already
+        if (packageName !in appUsageStartTimes) {
+            appUsageStartTimes[packageName] = now
+            logDebug("Started tracking $packageName at $now")
+            return
+        }
+
+        // Check if delay has elapsed
+        val startTime = appUsageStartTimes[packageName]!!
+        val elapsedMs = now - startTime
+        val delayMs = interventionDelayMinutes * 60 * 1000L
+
+        if (elapsedMs >= delayMs) {
+            logDebug("Delay elapsed for $packageName (${elapsedMs}ms >= ${delayMs}ms)")
+
+            // Send high-priority notification first
+            sendInterventionNotification(packageName)
+
+            // Show overlay
+            triggerCheckinOverlay(packageName)
+
+            // Mark as triggered for this session
+            interventionTriggeredForSession.add(packageName)
+            lastCheckinTimestamps[packageName] = now
         }
     }
 
@@ -320,6 +450,79 @@ class CheckinForegroundService : Service() {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
+    }
+
+    /**
+     * Create high-priority notification channel for intervention alerts
+     */
+    private fun createInterventionNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                INTERVENTION_CHANNEL_ID,
+                INTERVENTION_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Alerts when you've been using a tracked app for too long"
+                setShowBadge(true)
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 250, 250, 250)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            }
+
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    /**
+     * Send high-priority notification when intervention is triggered
+     */
+    private fun sendInterventionNotification(packageName: String) {
+        val appName = UsageStatsTracker.APP_DISPLAY_NAMES[packageName] ?: packageName
+
+        // Create intent to open the app with deep link
+        val deepLinkUri = android.net.Uri.parse("stopshorts://urge-surfing?app=$packageName")
+        val deepLinkIntent = Intent(Intent.ACTION_VIEW, deepLinkUri).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            setPackage(applicationContext.packageName)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            deepLinkIntent,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+        )
+
+        val iconResId = applicationContext.resources.getIdentifier(
+            "ic_launcher",
+            "mipmap",
+            applicationContext.packageName
+        ).takeIf { it != 0 } ?: android.R.drawable.ic_dialog_alert
+
+        val notification = NotificationCompat.Builder(this, INTERVENTION_CHANNEL_ID)
+            .setContentTitle("⏰ $interventionDelayMinutes 分経過しました")
+            .setContentText("$appName を使い続けていますね。休憩しませんか？")
+            .setSmallIcon(iconResId)
+            .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setAutoCancel(true)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                "衝動サーフィングを開始",
+                pendingIntent
+            )
+            .build()
+
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(INTERVENTION_NOTIFICATION_ID, notification)
+        logDebug("Sent intervention notification for $appName")
     }
 
     /**

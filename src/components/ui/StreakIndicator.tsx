@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -7,21 +7,31 @@ import { useTheme } from '../../contexts/ThemeContext';
 interface StreakIndicatorProps {
     streakDays: number;
     completedDays: boolean[]; // Array of 7 booleans for M-S
+    onPress?: () => void;
 }
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-export function StreakIndicator({ streakDays, completedDays }: StreakIndicatorProps) {
+export function StreakIndicator({ streakDays, completedDays, onPress }: StreakIndicatorProps) {
     const { colors, typography, spacing, borderRadius } = useTheme();
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.xl, borderColor: colors.border, borderWidth: 1 }]}>
+        <TouchableOpacity
+            style={[styles.container, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.xl, borderColor: colors.border, borderWidth: 1 }]}
+            onPress={onPress}
+            activeOpacity={0.7}
+        >
             <View style={styles.header}>
                 <View style={styles.titleRow}>
                     <Text style={{ fontSize: 18, marginRight: 6 }}>🔥</Text>
-                    <Text style={[typography.h3, { color: colors.textPrimary }]}>
-                        {streakDays} Day Streak
-                    </Text>
+                    <View>
+                        <Text style={[typography.h3, { color: colors.textPrimary }]}>
+                            {streakDays}日連続
+                        </Text>
+                        <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>
+                            アプリ利用継続中
+                        </Text>
+                    </View>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
             </View>
@@ -79,7 +89,7 @@ export function StreakIndicator({ streakDays, completedDays }: StreakIndicatorPr
                     );
                 })}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 

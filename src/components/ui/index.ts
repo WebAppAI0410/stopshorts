@@ -7,5 +7,6 @@ export * from './SelectionCard';
 export * from './ShieldIcon';
 export * from './ProgressBar';
 export * from './StreakIndicator';
+export * from './ProgressCard';
 export * from './StatCard';
 export * from './WeeklyBarChart';
