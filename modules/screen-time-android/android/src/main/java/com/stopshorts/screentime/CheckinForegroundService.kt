@@ -190,23 +190,7 @@ class CheckinForegroundService : Service() {
             override fun onUrgeSurfing() {
                 // User chose to do urge surfing - launch app with deep link
                 val appPackage = currentDetectedApp ?: ""
-                val deepLinkUri = android.net.Uri.parse("stopshorts://urge-surfing?app=$appPackage")
-
-                val deepLinkIntent = Intent(Intent.ACTION_VIEW, deepLinkUri).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    setPackage(applicationContext.packageName)
-                }
-
-                try {
-                    applicationContext.startActivity(deepLinkIntent)
-                    logDebug("Launching urge surfing with deep link: $deepLinkUri")
-                } catch (e: Exception) {
-                    // Fallback: just open the app
-                    logDebug("Deep link failed, opening app normally")
-                    val launchIntent = packageManager.getLaunchIntentForPackage(applicationContext.packageName)
-                    launchIntent?.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    launchIntent?.let { applicationContext.startActivity(it) }
-                }
+                launchUrgeSurfing(appPackage)
 
                 // Send intervention event (proceeded = false since they're doing something constructive)
                 sendInterventionEvent(proceeded = false, appPackage = appPackage)
@@ -227,6 +211,35 @@ class CheckinForegroundService : Service() {
         }
         applicationContext.sendBroadcast(intent)
         logDebug("Sent intervention event - proceeded=$proceeded, app=$appPackage")
+    }
+
+    /**
+     * Launch urge surfing screen via deep link
+     * @return true if launch succeeded, false otherwise
+     */
+    private fun launchUrgeSurfing(appPackage: String): Boolean {
+        val deepLinkUri = android.net.Uri.parse("stopshorts://urge-surfing?app=$appPackage")
+        val deepLinkIntent = Intent(Intent.ACTION_VIEW, deepLinkUri).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            setPackage(applicationContext.packageName)
+        }
+
+        return try {
+            applicationContext.startActivity(deepLinkIntent)
+            logDebug("Launching urge surfing with deep link: $deepLinkUri")
+            true
+        } catch (e: Exception) {
+            logDebug("Deep link failed, opening app normally")
+            val launchIntent = packageManager.getLaunchIntentForPackage(applicationContext.packageName)
+            launchIntent?.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            return try {
+                launchIntent?.let { applicationContext.startActivity(it) }
+                true
+            } catch (fallbackError: Exception) {
+                logDebug("Failed to launch app normally: ${fallbackError.message}")
+                false
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -332,9 +345,15 @@ class CheckinForegroundService : Service() {
             // Check if current app is in target list
             if (currentApp != null && currentApp in targetPackages) {
                 if (interventionTiming == "immediate") {
-                    // Immediate mode: show overlay right away (with cooldown)
+                    // Immediate mode: launch urge surfing directly if possible, fallback to overlay
                     if (shouldShowOverlay(currentApp)) {
-                        triggerCheckinOverlay(currentApp)
+                        currentDetectedApp = currentApp
+                        val opened = launchUrgeSurfing(currentApp)
+                        if (opened) {
+                            sendInterventionEvent(proceeded = false, appPackage = currentApp)
+                        } else {
+                            triggerCheckinOverlay(currentApp)
+                        }
                         lastCheckinTimestamps[currentApp] = now
                     }
                 } else {
@@ -386,11 +405,17 @@ class CheckinForegroundService : Service() {
         if (elapsedMs >= delayMs) {
             logDebug("Delay elapsed for $packageName (${elapsedMs}ms >= ${delayMs}ms)")
 
-            // Send high-priority notification first
-            sendInterventionNotification(packageName)
-
-            // Show overlay
-            triggerCheckinOverlay(packageName)
+            // Attempt to launch urge surfing directly; fallback to notification + overlay
+            currentDetectedApp = packageName
+            val opened = launchUrgeSurfing(packageName)
+            if (opened) {
+                sendInterventionEvent(proceeded = false, appPackage = packageName)
+            } else {
+                // Send high-priority notification first
+                sendInterventionNotification(packageName)
+                // Show overlay as fallback
+                triggerCheckinOverlay(packageName)
+            }
 
             // Mark as triggered for this session
             interventionTriggeredForSession.add(packageName)

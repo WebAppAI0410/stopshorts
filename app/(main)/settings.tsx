@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Header, GlowOrb } from '../../src/components/ui';
-import { useTheme, ThemeMode } from '../../src/contexts/ThemeContext';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
 
@@ -56,9 +56,12 @@ function SettingRow({
 
 export default function SettingsScreen() {
     const router = useRouter();
-    const { colors, typography, spacing, borderRadius, themeMode, setThemeMode } = useTheme();
-    const { reset, interventionDurationMinutes, setInterventionDuration, goal, alternativeActivity, ifThenPlan, selectedApps, customApps } = useAppStore();
+    const { colors, typography, spacing, borderRadius, themeMode } = useTheme();
+    const { reset, interventionDurationMinutes, goal, alternativeActivity, ifThenPlan, selectedApps, customApps, interventionSettings } = useAppStore();
     const selectedCustomCount = customApps.filter((app) => app.isSelected !== false).length;
+    const interventionLabel = interventionSettings.timing === 'immediate'
+        ? '即時'
+        : `遅延 ${interventionSettings.delayMinutes}分`;
 
     const handleReset = () => {
         Alert.alert(
@@ -98,17 +101,13 @@ export default function SettingsScreen() {
                         {t('settings.theme.title').toUpperCase()}
                     </Text>
                     <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg, borderColor: colors.border }]}>
-                        <SettingRow
-                            {...settingRowCommonProps}
-                            label={t('settings.theme.title')}
-                            value={t(`settings.theme.${themeMode}`)}
-                            icon="color-palette-outline"
-                            onPress={() => {
-                                const modes: ThemeMode[] = ['light', 'dark', 'system'];
-                                const next = modes[(modes.indexOf(themeMode) + 1) % modes.length];
-                                setThemeMode(next);
-                            }}
-                        />
+        <SettingRow
+            {...settingRowCommonProps}
+            label={t('settings.theme.title')}
+            value={t(`settings.theme.${themeMode}`)}
+            icon="color-palette-outline"
+            onPress={() => router.push('/(main)/theme-settings')}
+        />
                     </View>
                 </Animated.View>
 
@@ -117,27 +116,27 @@ export default function SettingsScreen() {
                         {t('settings.yourSettings.title').toUpperCase()}
                     </Text>
                     <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg, borderColor: colors.border }]}>
-                        <SettingRow
-                            {...settingRowCommonProps}
-                            label={t('settings.yourSettings.goal')}
-                            value={goal ? t(`onboarding.v3.goal.options.${goal}.title`) : '-'}
-                            icon="flag-outline"
-                            onPress={() => Alert.alert(t('settings.comingSoon.title'), t('settings.comingSoon.message'))}
-                        />
-                        <SettingRow
-                            {...settingRowCommonProps}
-                            label={t('settings.yourSettings.alternative')}
-                            value={alternativeActivity ? t(`onboarding.v3.alternative.options.${alternativeActivity}`) : '-'}
-                            icon="swap-horizontal-outline"
-                            onPress={() => Alert.alert(t('settings.comingSoon.title'), t('settings.comingSoon.message'))}
-                        />
-                        <SettingRow
-                            {...settingRowCommonProps}
-                            label={t('settings.yourSettings.ifThen')}
-                            value={ifThenPlan ? t(`onboarding.v3.ifThen.options.${ifThenPlan.action}`) : '-'}
-                            icon="git-branch-outline"
-                            onPress={() => Alert.alert(t('settings.comingSoon.title'), t('settings.comingSoon.message'))}
-                        />
+        <SettingRow
+            {...settingRowCommonProps}
+            label={t('settings.yourSettings.goal')}
+            value={goal ? t(`onboarding.v3.goal.options.${goal}.title`) : '-'}
+            icon="flag-outline"
+            onPress={() => router.push('/(main)/goal-settings')}
+        />
+        <SettingRow
+            {...settingRowCommonProps}
+            label={t('settings.yourSettings.alternative')}
+            value={alternativeActivity ? t(`onboarding.v3.alternative.options.${alternativeActivity}`) : '-'}
+            icon="swap-horizontal-outline"
+            onPress={() => router.push('/(main)/alternative-settings')}
+        />
+        <SettingRow
+            {...settingRowCommonProps}
+            label={t('settings.yourSettings.ifThen')}
+            value={ifThenPlan ? t(`onboarding.v3.ifThen.options.${ifThenPlan.action}`) : '-'}
+            icon="git-branch-outline"
+            onPress={() => router.push('/(main)/if-then-settings')}
+        />
                         <SettingRow
                             {...settingRowCommonProps}
                             label={t('settings.yourSettings.targetApps')}
@@ -155,15 +154,18 @@ export default function SettingsScreen() {
                     <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg, borderColor: colors.border }]}>
                         <SettingRow
                             {...settingRowCommonProps}
-                            label={t('settings.limits.interventionTime')}
-                            value={t('settings.limits.minutesValue', { minutes: interventionDurationMinutes })}
-                            icon="time-outline"
-                            onPress={() => {
-                                const durations = [1, 3, 5, 10];
-                                const next = durations[(durations.indexOf(interventionDurationMinutes) + 1) % durations.length];
-                                setInterventionDuration(next);
-                            }}
+                            label={t('settings.limits.interventionSettings')}
+                            value={interventionLabel}
+                            icon="hand-left-outline"
+                            onPress={() => router.push('/(main)/intervention-settings')}
                         />
+        <SettingRow
+            {...settingRowCommonProps}
+            label={t('settings.limits.interventionTime')}
+            value={t('settings.limits.minutesValue', { minutes: interventionDurationMinutes })}
+            icon="time-outline"
+            onPress={() => router.push('/(main)/intervention-duration')}
+        />
                     </View>
                 </Animated.View>
 

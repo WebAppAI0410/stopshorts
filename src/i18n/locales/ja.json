@@ -589,6 +589,7 @@
     },
     "limits": {
       "title": "制限設定",
+      "interventionSettings": "介入設定",
       "interventionTime": "介入時間",
       "minutesValue": "{{minutes}}分"
     },

@@ -85,6 +85,54 @@ export default function MainLayout() {
                     ),
                 }}
             />
+            <Tabs.Screen
+                name="target-apps"
+                options={{
+                    href: null,
+                }}
+            />
+            <Tabs.Screen
+                name="theme-settings"
+                options={{
+                    href: null,
+                }}
+            />
+            <Tabs.Screen
+                name="goal-settings"
+                options={{
+                    href: null,
+                }}
+            />
+            <Tabs.Screen
+                name="alternative-settings"
+                options={{
+                    href: null,
+                }}
+            />
+            <Tabs.Screen
+                name="if-then-settings"
+                options={{
+                    href: null,
+                }}
+            />
+            <Tabs.Screen
+                name="intervention-duration"
+                options={{
+                    href: null,
+                }}
+            />
+            <Tabs.Screen
+                name="intervention-settings"
+                options={{
+                    href: null,
+                }}
+            />
+            <Tabs.Screen
+                name="urge-surfing"
+                options={{
+                    href: null,
+                }}
+            />
             {/* Hide shield from tab bar - it's a modal screen */}
             <Tabs.Screen
                 name="shield"
