@@ -21,7 +21,8 @@ const THEME_STORAGE_KEY = '@stopshorts_theme_mode';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const systemColorScheme = useColorScheme();
-    const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
+    // Default to dark mode for this app's design aesthetic
+    const [themeMode, setThemeModeState] = useState<ThemeMode>('dark');
 
     useEffect(() => {
         const loadTheme = async () => {

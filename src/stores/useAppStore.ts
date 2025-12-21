@@ -137,6 +137,9 @@ interface AppState {
   // Baseline & Intervention Actions
   setBaselineMonthlyMinutes: (minutes: number) => void;
   setInterventionSettings: (settings: Partial<InterventionSettings>) => void;
+
+  // Onboarding Actions
+  restartOnboarding: () => void;
 }
 
 const initialState = {
@@ -572,6 +575,15 @@ export const useAppStore = create<AppState>()(
             ...interventionSettings,
             ...settings,
           },
+        });
+      },
+
+      // Onboarding Actions
+      restartOnboarding: () => {
+        // Reset only onboarding-related state, keep user data and settings
+        set({
+          hasCompletedOnboarding: false,
+          onboardingCommitment: null,
         });
       },
     }),

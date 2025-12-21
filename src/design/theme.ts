@@ -12,17 +12,28 @@ export const palette = {
         600: '#21262D', // Borders, dividers
         500: '#30363D', // Subtle borders
     },
+    // Light backgrounds (Ink & Paper theme)
+    light: {
+        50: '#FAFAFA',   // Deepest background (paper white)
+        100: '#F5F5F4',  // Card backgrounds (warm paper)
+        200: '#E7E5E4',  // Elevated surfaces
+        300: '#D6D3D1',  // Borders, dividers
+        400: '#A8A29E',  // Subtle borders
+    },
     // Emerald/Teal accents (primary)
     emerald: {
         500: '#10B981', // Primary green
         400: '#34D399', // Light green
         300: '#6EE7B7', // Lighter
+        600: '#059669', // Darker for light mode
         glow: 'rgba(16, 185, 129, 0.4)', // For glow effects
+        glowLight: 'rgba(16, 185, 129, 0.2)', // Subtle glow for light mode
     },
     // Teal/Cyan for gradients
     teal: {
         500: '#14B8A6',
         400: '#2DD4BF',
+        600: '#0D9488', // Darker for light mode
     },
     // Purple/Violet for gradients
     purple: {
@@ -30,21 +41,30 @@ export const palette = {
         400: '#A78BFA',
         300: '#C4B5FD',
     },
-    // Text colors
+    // Text colors (dark mode)
     text: {
         primary: '#F0F6FC',
         secondary: '#8B949E',
-        muted: '#9AA0AD', // Improved contrast for dark backgrounds (was #6E7681)
+        muted: '#9AA0AD',
         inverse: '#0D1117',
+    },
+    // Text colors (light mode - ink colors)
+    textLight: {
+        primary: '#1C1917',   // Stone 900 - deep ink
+        secondary: '#57534E', // Stone 600
+        muted: '#78716C',     // Stone 500
+        inverse: '#FAFAFA',   // Light for dark backgrounds
     },
     // Semantic
     orange: {
         500: '#F97316', // Streak fire color
         400: '#FB923C',
+        600: '#EA580C', // Darker for light mode
     },
     red: {
         500: '#EF4444',
         400: '#F87171',
+        600: '#DC2626', // Darker for light mode
     },
 };
 
@@ -124,6 +144,7 @@ export const borderRadius = {
 
 // Glass effect styles
 export const glassEffect = {
+    // Dark mode glass
     card: {
         backgroundColor: 'rgba(22, 27, 34, 0.8)',
         borderColor: 'rgba(48, 54, 61, 0.6)',
@@ -132,6 +153,17 @@ export const glassEffect = {
     cardSolid: {
         backgroundColor: palette.dark[800],
         borderColor: palette.dark[500],
+        borderWidth: 1,
+    },
+    // Light mode glass
+    cardLight: {
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        borderColor: 'rgba(214, 211, 209, 0.6)',
+        borderWidth: 1,
+    },
+    cardSolidLight: {
+        backgroundColor: palette.light[100],
+        borderColor: palette.light[300],
         borderWidth: 1,
     },
 };
@@ -185,10 +217,46 @@ export const darkTheme = {
     cardGlow: 'rgba(16, 185, 129, 0.15)',
 };
 
-// For backwards compatibility, light theme maps to dark in this app
+// Light theme - Ink & Paper design
 export const lightTheme = {
-    ...darkTheme,
-    // Override for light mode if needed in future
+    // Backgrounds
+    background: palette.light[50],
+    backgroundCard: palette.light[100],
+    backgroundCardGlass: 'rgba(245, 245, 244, 0.8)',
+    surface: palette.light[200],
+    backgroundElevated: '#FFFFFF',
+
+    // Text
+    textPrimary: palette.textLight.primary,
+    textSecondary: palette.textLight.secondary,
+    textMuted: palette.textLight.muted,
+    textInverse: palette.textLight.inverse,
+
+    // Accents (slightly darker for better contrast on light backgrounds)
+    primary: palette.emerald[600],
+    primaryLight: palette.emerald[500],
+    accent: palette.emerald[600],
+    accentLight: palette.emerald[400],
+    accentGlow: palette.emerald.glowLight,
+    accentMuted: 'rgba(16, 185, 129, 0.1)',
+
+    // Gradients
+    gradientStart: palette.emerald[500],
+    gradientEnd: palette.teal[500],
+
+    // Semantic
+    success: palette.emerald[600],
+    warning: palette.orange[600],
+    error: palette.red[600],
+    streak: palette.orange[500],
+
+    // Borders
+    border: palette.light[300],
+    borderSubtle: palette.light[200],
+
+    // Special
+    shieldGlow: 'rgba(16, 185, 129, 0.2)',
+    cardGlow: 'rgba(16, 185, 129, 0.1)',
 };
 
 export type Theme = typeof darkTheme;
