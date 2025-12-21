@@ -57,7 +57,7 @@ function SettingRow({
 export default function SettingsScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius, themeMode } = useTheme();
-    const { reset, restartOnboarding, interventionDurationMinutes, goal, alternativeActivity, customAlternativeActivity, ifThenPlan, selectedApps, customApps, interventionSettings } = useAppStore();
+    const { reset, interventionDurationMinutes, goal, alternativeActivity, customAlternativeActivity, ifThenPlan, selectedApps, customApps, interventionSettings } = useAppStore();
     const selectedCustomCount = customApps.filter((app) => app.isSelected !== false).length;
     const interventionLabel = interventionSettings.timing === 'immediate'
         ? '即時'
@@ -90,23 +90,6 @@ export default function SettingsScreen() {
                     text: t('settings.data.resetButton'),
                     style: 'destructive',
                     onPress: () => reset()
-                }
-            ]
-        );
-    };
-
-    const handleRestartOnboarding = () => {
-        Alert.alert(
-            'オンボーディングを再体験',
-            'アプリの初回体験を最初からやり直しますか？設定やデータは保持されます。',
-            [
-                { text: t('common.cancel'), style: 'cancel' },
-                {
-                    text: '再体験する',
-                    onPress: () => {
-                        restartOnboarding();
-                        router.replace('/(onboarding)/welcome');
-                    }
                 }
             ]
         );
@@ -218,20 +201,6 @@ export default function SettingsScreen() {
                 </Animated.View>
 
                 <Animated.View entering={FadeInDown.duration(600).delay(300)} style={styles.section}>
-                    <Text style={[typography.label, { color: colors.textMuted, marginBottom: spacing.md }]}>
-                        その他
-                    </Text>
-                    <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg, borderColor: colors.border }]}>
-                        <SettingRow
-                            {...settingRowCommonProps}
-                            label="オンボーディングを再体験"
-                            icon="refresh-outline"
-                            onPress={handleRestartOnboarding}
-                        />
-                    </View>
-                </Animated.View>
-
-                <Animated.View entering={FadeInDown.duration(600).delay(350)} style={styles.section}>
                     <Text style={[typography.label, { color: colors.textMuted, marginBottom: spacing.md }]}>
                         {t('settings.data.title').toUpperCase()}
                     </Text>
