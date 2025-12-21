@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, Header, SelectionCard } from '../../src/components/ui';
+import { Header, SelectionCard } from '../../src/components/ui';
 import { useTheme, ThemeMode } from '../../src/contexts/ThemeContext';
 import { t } from '../../src/i18n';
 import { useSettingsBack } from '../../src/hooks/useSettingsBack';
@@ -21,12 +21,10 @@ const themeOptions: ThemeOption[] = [
 
 export default function ThemeSettingsScreen() {
   const { colors, typography, spacing, themeMode, setThemeMode } = useTheme();
-  const [selectedMode, setSelectedMode] = useState<ThemeMode>(themeMode);
   const handleBack = useSettingsBack();
 
-  const handleSave = () => {
-    setThemeMode(selectedMode);
-    handleBack();
+  const handleSelectTheme = (mode: ThemeMode) => {
+    setThemeMode(mode);
   };
 
   return (
@@ -62,21 +60,13 @@ export default function ThemeSettingsScreen() {
               <SelectionCard
                 title={t(`settings.theme.${option.id}`)}
                 icon={option.icon}
-                selected={selectedMode === option.id}
-                onPress={() => setSelectedMode(option.id)}
+                selected={themeMode === option.id}
+                onPress={() => handleSelectTheme(option.id)}
               />
             </Animated.View>
           ))}
         </View>
       </ScrollView>
-
-      <View style={[styles.footer, { paddingHorizontal: spacing.gutter }]}>
-        <Button
-          title={t('common.save')}
-          onPress={handleSave}
-          size="lg"
-        />
-      </View>
     </SafeAreaView>
   );
 }
@@ -94,9 +84,5 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     gap: 12,
-  },
-  footer: {
-    paddingTop: 20,
-    paddingBottom: 24,
   },
 });
