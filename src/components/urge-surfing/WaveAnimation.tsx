@@ -87,25 +87,66 @@ export function WaveAnimation({
     transform: [{ translateX: waveOffset.value * -SCREEN_WIDTH }],
   }));
 
-  // Surfer position - follows the peak of the wave
-  const surferY = useDerivedValue(() => {
-    // Surfer stays on top of wave, with slight bobbing
-    const baseY = interpolate(progress, [0, 0.5, 1], [0.25, 0.1, 0.65]);
-    const bob = Math.sin(wavePhase.value * 2) * 0.02;
-    return (baseY + bob) * height;
+  // Surfer position - follows the wave movement realistically
+  const surferX = useDerivedValue(() => {
+    // Surfer position centers on screen with wave-riding sway
+    const baseX = SCREEN_WIDTH / 2 - 20;
+    // Forward/backward movement as if riding down the wave face
+    const waveSway = Math.sin(wavePhase.value * 1.5) * 15;
+    return baseX + waveSway;
   });
 
-  const surferX = useDerivedValue(() => {
-    // Slight horizontal sway
-    const sway = Math.sin(wavePhase.value) * 10;
-    return SCREEN_WIDTH / 2 - 20 + sway;
+  const surferY = useDerivedValue(() => {
+    // Calculate wave height at surfer's position
+    const waveFrequency = 0.015;
+    const surferPosInWave = surferX.value + (waveOffset.value * SCREEN_WIDTH);
+
+    // Base wave position that moves with progress
+    const baseWaveY = 0.35 + (1 - progress) * 0.1;
+    const waveAmplitude = 25 - progress * 15;
+
+    // Calculate actual wave Y at surfer position
+    const waveY = baseWaveY * height +
+      Math.sin(surferPosInWave * waveFrequency + wavePhase.value) * waveAmplitude;
+
+    // Offset to place surfer on top of wave
+    return waveY - 35;
+  });
+
+  // Calculate wave slope for realistic tilt
+  const surferRotation = useDerivedValue(() => {
+    const waveFrequency = 0.015;
+    const surferPosInWave = surferX.value + (waveOffset.value * SCREEN_WIDTH);
+    const waveAmplitude = 25 - progress * 15;
+
+    // Calculate derivative (slope) of wave at surfer position
+    const slope = Math.cos(surferPosInWave * waveFrequency + wavePhase.value) *
+      waveAmplitude * waveFrequency;
+
+    // Convert slope to rotation angle (atan gives radians, convert to degrees)
+    // Scale down for more natural look
+    const rotationDeg = Math.atan(slope) * (180 / Math.PI) * 2;
+
+    // Clamp rotation to reasonable range
+    return Math.max(-20, Math.min(20, rotationDeg));
+  });
+
+  // Scale effect - slightly larger when on wave peak
+  const surferScale = useDerivedValue(() => {
+    const waveFrequency = 0.015;
+    const surferPosInWave = surferX.value + (waveOffset.value * SCREEN_WIDTH);
+    const sineValue = Math.sin(surferPosInWave * waveFrequency + wavePhase.value);
+
+    // Scale up slightly at peaks, down at troughs
+    return 1 + sineValue * 0.1;
   });
 
   const animatedSurferStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: surferX.value },
       { translateY: surferY.value },
-      { rotate: `${Math.sin(wavePhase.value) * 5}deg` },
+      { rotate: `${surferRotation.value}deg` },
+      { scale: surferScale.value },
     ],
   }));
 
