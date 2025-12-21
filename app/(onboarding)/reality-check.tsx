@@ -220,12 +220,19 @@ export default function RealityCheckScreen() {
         if (screenTimeData && monthlyData) {
             // Include custom app usage in the impact calculation
             const customMonthlyTotal = customAppUsage.reduce((sum, app) => sum + app.monthlyMinutes, 0);
-            const customDailyAverage = Math.round(customMonthlyTotal / 30);
+
+            // Calculate total monthly minutes (same as displayed on this screen)
+            const totalMonthlyMinutes = monthlyData.monthlyTotal + customMonthlyTotal;
+
+            // Convert monthly total to daily average: monthly ÷ 30 days
+            // This ensures consistency with the yearlyHours displayed on this screen
+            // (yearlyHours = totalMonthlyMinutes * 12 / 60 = dailyAverage * 30 * 12 / 60 = dailyAverage * 6)
+            const totalDailyAverage = Math.round(totalMonthlyMinutes / 30);
 
             const updatedScreenTimeData = {
                 ...screenTimeData,
-                // Add custom app daily average to the total
-                dailyAverage: monthlyData.dailyAverage + customDailyAverage,
+                // Use calculated daily average from total monthly minutes
+                dailyAverage: totalDailyAverage,
             };
             calculateImpactFromScreenTime(updatedScreenTimeData);
         }

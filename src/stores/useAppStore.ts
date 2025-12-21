@@ -25,12 +25,14 @@ import {
   // App selection types
   type GoalType,
   type TargetAppId,
+  type CustomApp,
   // Mapping functions
   goalTypeToPurpose,
 } from '../types';
 
 interface AppState {
   // User State
+  userName: string | null;
   hasCompletedOnboarding: boolean;
   purpose: UserPurpose | null;
   addictionAssessment: AddictionAssessment | null;
@@ -66,10 +68,14 @@ interface AppState {
   selectedApps: TargetAppId[];
   goal: GoalType | null;
 
+  // Custom Apps State (Android only - iOS pending Family Controls Entitlement)
+  customApps: CustomApp[];
+
   // Statistics
   stats: DailyStats[];
 
   // Actions
+  setUserName: (name: string) => void;
   setOnboardingComplete: () => void;
   setPurpose: (purpose: UserPurpose) => void;
   setAddictionAssessment: (assessment: AddictionAssessment) => void;
@@ -111,11 +117,17 @@ interface AppState {
   setSelectedApps: (apps: TargetAppId[]) => void;
   setGoal: (goal: GoalType) => void;
 
+  // Custom Apps Actions (Android only - iOS pending Family Controls Entitlement)
+  addCustomApp: (app: Omit<CustomApp, 'addedAt'>) => void;
+  removeCustomApp: (packageName: string) => void;
+  getCustomAppPackages: () => string[];
+
   // Subscription Actions
   setSubscriptionPlan: (plan: SubscriptionPlan) => void;
 }
 
 const initialState = {
+  userName: null,
   hasCompletedOnboarding: false,
   purpose: null,
   addictionAssessment: null,
@@ -151,12 +163,17 @@ const initialState = {
   // App Selection initial state
   selectedApps: ['tiktok', 'youtubeShorts', 'instagramReels'] as TargetAppId[],
   goal: null,
+  // Custom Apps initial state (Android only - iOS pending Family Controls Entitlement)
+  customApps: [] as CustomApp[],
 };
 
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       ...initialState,
+
+      setUserName: (name) =>
+        set({ userName: name }),
 
       setOnboardingComplete: () =>
         set({ hasCompletedOnboarding: true }),
@@ -397,7 +414,9 @@ export const useAppStore = create<AppState>()(
 
       calculateImpactFromScreenTime: (data) => {
         const dailyHours = data.dailyAverage / 60;
-        const yearlyLostHours = dailyHours * 365;
+        // Use 360 days (12 months × 30 days) to match reality-check display calculation
+        // (yearlyHours = totalMonthlyMinutes * 12 / 60 = dailyAverage * 30 * 12 / 60 = dailyAverage * 6)
+        const yearlyLostHours = dailyHours * 360;
         const remainingYears = 50;
         const lifetimeLostYears = (yearlyLostHours * remainingYears) / (24 * 365);
 
@@ -462,6 +481,32 @@ export const useAppStore = create<AppState>()(
 
       setGoal: (goal) =>
         set({ goal }),
+
+      // Custom Apps Actions (Android only - iOS pending Family Controls Entitlement)
+      addCustomApp: (app) => {
+        const { customApps } = get();
+        // Avoid duplicates
+        if (customApps.some((a) => a.packageName === app.packageName)) {
+          return;
+        }
+        const newApp: CustomApp = {
+          ...app,
+          addedAt: new Date().toISOString(),
+        };
+        set({ customApps: [...customApps, newApp] });
+      },
+
+      removeCustomApp: (packageName) => {
+        const { customApps } = get();
+        set({
+          customApps: customApps.filter((a) => a.packageName !== packageName),
+        });
+      },
+
+      getCustomAppPackages: () => {
+        const { customApps } = get();
+        return customApps.map((a) => a.packageName);
+      },
 
       // Subscription Actions
       setSubscriptionPlan: (plan) => {
