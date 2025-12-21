@@ -5,14 +5,17 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
+import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
 import { t } from '../../src/i18n';
 
 export default function ProfileScreen() {
     const { colors, typography, spacing, borderRadius } = useTheme();
-    const { purpose, stats, subscriptionPlan } = useAppStore();
+    const { purpose, subscriptionPlan } = useAppStore();
+    const { lifetime } = useStatisticsStore();
 
-    const totalInterventions = stats.reduce((sum, s) => sum + s.interventionCount, 0);
-    const totalMinutesSaved = stats.reduce((sum, s) => sum + s.totalBlockedMinutes, 0);
+    // Use consolidated statistics from useStatisticsStore
+    const totalInterventions = lifetime.totalInterventions;
+    const totalMinutesSaved = Math.round(lifetime.totalSavedHours * 60);
 
     const purposeLabels: Record<string, string> = {
         sleep: t('profile.goals.sleep'),

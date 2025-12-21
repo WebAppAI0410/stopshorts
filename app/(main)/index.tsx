@@ -11,7 +11,6 @@ import {
     Button,
 } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
-import { useAppStore } from '../../src/stores/useAppStore';
 import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
 import { useScreenTimeData } from '../../src/hooks/useScreenTimeData';
 import { t } from '../../src/i18n';
@@ -19,7 +18,7 @@ import { t } from '../../src/i18n';
 export default function DashboardScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
-    const { stats } = useAppStore();
+    // Consolidated: use only useStatisticsStore for intervention/urge surfing stats
     const { getTodayStats, getStreak, lifetime, getNewBadges } = useStatisticsStore();
 
     // Get real screen time data from Android native module
@@ -36,11 +35,11 @@ export default function DashboardScreen() {
     const hasRealData = hasRealScreenTimeData || todayStatsNew.urgeSurfing.completed > 0;
 
     // Get today's statistics
-    // For Android: Use real usage data from native module (even if 0)
-    // For iOS: Fall back to store data
+    // Android: Use real usage data from native module
+    // iOS: Show 0 (real screen time not available without Family Controls entitlement)
     const todayUsageMinutes = hasRealScreenTimeData
         ? (todayData?.totalMinutes ?? 0)
-        : (stats.find(s => s.date === new Date().toISOString().split('T')[0])?.totalBlockedMinutes || 0);
+        : 0;
 
     const todayStats = {
         interventionCount: todayStatsNew.interventions.triggered,
@@ -52,14 +51,17 @@ export default function DashboardScreen() {
     };
 
     // Calculate streak from new store
-    const streakDays = currentStreak || 7;
+    // Show demo value (7 days) only when no real data exists
+    const streakDays = currentStreak || (hasRealData ? 0 : 7);
 
     // Generate completed days for streak indicator
+    // Show demo pattern (4 days) only when no real data exists
     const completedDays = Array.from({ length: 7 }, (_, i) => {
-        if (currentStreak > 0) {
+        if (hasRealData) {
+            // Real data: show actual streak progress
             return i < Math.min(currentStreak, 7);
         }
-        // Demo data if no streak
+        // Demo mode: show 4 days completed
         return i < 4;
     });
 

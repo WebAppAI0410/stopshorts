@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { StatCard, WeeklyBarChart } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
-import { useAppStore } from '../../src/stores/useAppStore';
 import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
 import { useScreenTimeData } from '../../src/hooks/useScreenTimeData';
 import { t } from '../../src/i18n';
@@ -15,7 +14,7 @@ const DEMO_WEEKLY_DATA = [120, 95, 140, 80, 110, 150, 130];
 
 export default function StatisticsScreen() {
     const { colors, typography, spacing, borderRadius } = useTheme();
-    const { stats } = useAppStore();
+    // Consolidated: use only useStatisticsStore for all statistics
     const {
         getWeeklyStats,
         getStreak,
@@ -54,9 +53,8 @@ export default function StatisticsScreen() {
                 const nativeDay = nativeWeeklyData.dailyBreakdown.find(d => d.date === dateString);
                 dayMinutes = nativeDay?.minutes || 0;
             } else {
-                // Fall back to old stats or demo data
-                const dayStats = stats.find(s => s.date === dateString);
-                dayMinutes = dayStats?.totalBlockedMinutes || DEMO_WEEKLY_DATA[6 - i];
+                // iOS: Fall back to demo data (real screen time requires Family Controls entitlement)
+                dayMinutes = DEMO_WEEKLY_DATA[6 - i];
             }
 
             result.push({
@@ -66,7 +64,7 @@ export default function StatisticsScreen() {
         }
 
         return result;
-    }, [stats, hasRealScreenTimeData, nativeWeeklyData]);
+    }, [hasRealScreenTimeData, nativeWeeklyData]);
 
     const totalWeekMinutes = hasRealScreenTimeData
         ? (nativeWeeklyData?.weeklyTotal || 0)
@@ -77,9 +75,10 @@ export default function StatisticsScreen() {
     // Get current day for highlighting
     const today = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][new Date().getDay()];
 
-    // Streak and interventions - use new store data with demo fallback
-    const streakDays = currentStreak || (hasRealData ? stats.length : 28);
-    const totalInterventions = lifetime.totalInterventions || stats.reduce((sum, s) => sum + s.interventionCount, 0) || 42;
+    // Streak and interventions - use consolidated useStatisticsStore
+    // Show demo values (28 days streak, 42 interventions) only when no real data exists
+    const streakDays = currentStreak || (hasRealData ? currentStreak : 28);
+    const totalInterventions = lifetime.totalInterventions || (hasRealData ? 0 : 42);
     const totalUrgeSurfing = lifetime.totalUrgeSurfingCompleted || 0;
     const successRate = weeklyStats.successRate || 0;
 
