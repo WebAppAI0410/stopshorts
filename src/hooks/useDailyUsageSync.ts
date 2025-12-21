@@ -9,7 +9,7 @@
  * - Updates the habit score
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
 import { screenTimeService } from '../native/ScreenTimeModule';
 import { useAppStore } from '../stores/useAppStore';
@@ -28,28 +28,31 @@ function getYesterday(): Date {
   return d;
 }
 
-// Package name to app ID mapping
-const PACKAGE_TO_APP_ID: Record<string, 'tiktok' | 'youtubeShorts' | 'instagramReels'> = {
-  'com.zhiliaoapp.musically': 'tiktok',
-  'com.ss.android.ugc.trill': 'tiktok',
-  'com.google.android.youtube': 'youtubeShorts',
-  'com.instagram.android': 'instagramReels',
-};
-
 export function useDailyUsageSync() {
   const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
   const selectedApps = useAppStore((state) => state.selectedApps);
   const customApps = useAppStore((state) => state.customApps);
   const dailyGoalMinutes = useAppStore((state) => state.dailyGoalMinutes);
 
-  const recordUsageTime = useStatisticsStore((state) => state.recordUsageTime);
   const updateHabitScore = useStatisticsStore((state) => state.updateHabitScore);
-  const dailyStats = useStatisticsStore((state) => state.dailyStats);
+  const dailyStatsRef = useRef(useStatisticsStore.getState().dailyStats);
 
   const lastSyncDateRef = useRef<string | null>(null);
   const isSyncingRef = useRef(false);
 
-  const customAppPackages = customApps.map((app) => app.packageName);
+  // Memoize custom app packages to prevent infinite loops
+  const customAppPackages = useMemo(
+    () => customApps.map((app) => app.packageName),
+    [customApps]
+  );
+
+  // Keep dailyStats ref updated
+  useEffect(() => {
+    const unsubscribe = useStatisticsStore.subscribe(
+      (state) => { dailyStatsRef.current = state.dailyStats; }
+    );
+    return unsubscribe;
+  }, []);
 
   /**
    * Sync yesterday's usage data to the statistics store
@@ -69,6 +72,7 @@ export function useDailyUsageSync() {
     }
 
     // Skip if we already have data for yesterday
+    const dailyStats = dailyStatsRef.current;
     if (dailyStats[yesterdayKey] && dailyStats[yesterdayKey].totalUsageMinutes > 0) {
       console.log('[DailyUsageSync] Already have data for yesterday, updating habit score only');
       lastSyncDateRef.current = today;
@@ -118,7 +122,7 @@ export function useDailyUsageSync() {
     } finally {
       isSyncingRef.current = false;
     }
-  }, [selectedApps, customAppPackages, dailyGoalMinutes, dailyStats, recordUsageTime, updateHabitScore]);
+  }, [selectedApps, customAppPackages, dailyGoalMinutes, updateHabitScore]);
 
   // Sync on app coming to foreground
   useEffect(() => {

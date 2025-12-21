@@ -177,13 +177,17 @@ export function useMonitoringService() {
 
     if (hasCompletedOnboarding) {
       // Check if already monitoring
-      screenTimeService.isMonitoringActive().then((isActive) => {
-        if (!isActive) {
-          startMonitoring();
-        } else {
-          isMonitoringRef.current = true;
-        }
-      });
+      screenTimeService.isMonitoringActive()
+        .then((isActive) => {
+          if (!isActive) {
+            startMonitoring();
+          } else {
+            isMonitoringRef.current = true;
+          }
+        })
+        .catch((error) => {
+          console.error('[MonitoringService] Error checking monitoring status:', error);
+        });
     }
   }, [hasCompletedOnboarding, startMonitoring]);
 

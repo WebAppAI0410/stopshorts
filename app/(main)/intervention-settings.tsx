@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, Switch, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, Switch, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,6 +35,11 @@ export default function InterventionSettingsScreen() {
             router.back();
         } catch (error) {
             console.error('[InterventionSettings] Failed to save:', error);
+            Alert.alert(
+                '保存エラー',
+                '設定の保存に失敗しました。もう一度お試しください。',
+                [{ text: 'OK' }]
+            );
         } finally {
             setIsSaving(false);
         }

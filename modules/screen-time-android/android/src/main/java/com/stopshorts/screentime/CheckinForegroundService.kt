@@ -379,7 +379,7 @@ class CheckinForegroundService : Service() {
         }
 
         // Check if delay has elapsed
-        val startTime = appUsageStartTimes[packageName]!!
+        val startTime = appUsageStartTimes[packageName] ?: return
         val elapsedMs = now - startTime
         val delayMs = interventionDelayMinutes * 60 * 1000L
 
