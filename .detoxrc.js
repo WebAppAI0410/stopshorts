@@ -13,7 +13,7 @@ module.exports = {
         process.env.DETOX_IOS_BINARY_PATH ||
         'ios/build/Build/Products/Debug-iphonesimulator/StopShorts.app',
       build:
-        'xcodebuild -workspace ios/StopShorts.xcworkspace -scheme StopShorts -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build',
+        'npx expo prebuild --platform ios --no-install --clean && xcodebuild -workspace ios/StopShorts.xcworkspace -scheme StopShorts -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build',
     },
     'android.debug': {
       type: 'android.apk',
@@ -24,7 +24,7 @@ module.exports = {
         process.env.DETOX_ANDROID_TEST_BINARY_PATH ||
         'android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk',
       build:
-        'cd android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug',
+        'npx expo prebuild --platform android --no-install --clean && cd android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug',
     },
   },
   devices: {

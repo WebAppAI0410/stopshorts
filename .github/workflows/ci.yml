@@ -48,6 +48,8 @@ jobs:
         run: |
           mkdir -p artifacts/android
           eas build:download --platform android --id $EAS_ANDROID_BUILD_ID --path artifacts/android/app-debug.apk
+      - name: Prebuild Android native project
+        run: npx expo prebuild --platform android --no-install --clean
       - name: Build Detox test APK
         run: cd android && ./gradlew assembleAndroidTest -DtestBuildType=debug
       - name: Run Detox on Android emulator

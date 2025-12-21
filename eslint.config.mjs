@@ -37,7 +37,12 @@ export default tseslint.config(
     ignores: ['node_modules/', 'dist/', '.expo/', '*.config.js', '*.config.mjs'],
   },
   {
-    files: ['.detoxrc.js', 'e2e/**/*.js', 'modules/screen-time/plugin/withScreenTime.js'],
+    files: [
+      '.detoxrc.js',
+      'e2e/**/*.js',
+      'modules/screen-time/plugin/withScreenTime.js',
+      'modules/detox/plugin/withDetox.js',
+    ],
     rules: {
       'no-undef': 'off',
       '@typescript-eslint/no-require-imports': 'off',

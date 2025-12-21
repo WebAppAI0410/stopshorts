@@ -37,7 +37,8 @@
       "expo-router",
       "expo-localization",
       "expo-dev-client",
-      "./modules/screen-time/plugin/withScreenTime"
+      "./modules/screen-time/plugin/withScreenTime",
+      "./modules/detox/plugin/withDetox"
     ],
     "experiments": {
       "typedRoutes": true
