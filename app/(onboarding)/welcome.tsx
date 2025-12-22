@@ -1,19 +1,27 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, ProgressIndicator, GlowOrb } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
 
 export default function WelcomeScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
+    const { completeOnboarding } = useAppStore();
 
     const handleStart = () => {
         router.push('/(onboarding)/user-setup' as Href);
+    };
+
+    const handleSkipToDemo = () => {
+        // Skip onboarding and go directly to dashboard (demo mode)
+        completeOnboarding();
+        router.replace('/(main)');
     };
 
     return (
@@ -116,6 +124,17 @@ export default function WelcomeScreen() {
                 <View style={{ marginTop: spacing.xl }}>
                     <ProgressIndicator totalSteps={10} currentStep={1} />
                 </View>
+
+                {/* Demo mode skip button */}
+                <TouchableOpacity
+                    onPress={handleSkipToDemo}
+                    style={styles.skipButton}
+                    activeOpacity={0.7}
+                >
+                    <Text style={[typography.caption, { color: colors.textMuted }]}>
+                        デモモードでスキップ →
+                    </Text>
+                </TouchableOpacity>
             </Animated.View>
         </SafeAreaView>
     );
@@ -147,5 +166,10 @@ const styles = StyleSheet.create({
     footer: {
         paddingTop: 20,
         paddingBottom: 40,
+    },
+    skipButton: {
+        marginTop: 24,
+        alignItems: 'center',
+        paddingVertical: 8,
     },
 });
