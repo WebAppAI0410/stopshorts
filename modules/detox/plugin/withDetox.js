@@ -162,6 +162,7 @@ function withDetox(config) {
                     `  s.version = '${detoxVersion}'\n` +
                     `  s.summary = 'Detox test framework'\n` +
                     `  s.description = 'Detox iOS test framework (prebuilt)'\n` +
+                    `  s.source = { :path => '.' }\n` +
                     `  s.homepage = 'https://github.com/wix/Detox'\n` +
                     `  s.license = { :type => 'MIT' }\n` +
                     `  s.author = { 'Wix' => 'detox@wix.com' }\n` +

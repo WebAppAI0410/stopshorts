@@ -54,6 +54,7 @@ jobs:
           mkdir -p artifacts/android
           eas build:download --platform android --fingerprint $EAS_ANDROID_FINGERPRINT --non-interactive --json > /tmp/eas-android-download.json
           APK_PATH=$(node -e "const fs=require('fs');const raw=fs.readFileSync('/tmp/eas-android-download.json','utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');const data=JSON.parse(raw.slice(start,end+1));console.log(data.path||data.filePath||data.artifactPath||data.localFilePath||'');")
+          APK_PATH=$(echo "$APK_PATH" | sed -e 's/^\"//' -e 's/\"$//')
           if [ -z \"$APK_PATH\" ]; then
             APK_PATH=$(find . -maxdepth 3 -name \"*.apk\" -type f | head -n 1)
           fi
@@ -61,7 +62,7 @@ jobs:
             echo \"No APK found after download.\" >&2
             exit 1
           fi
-          mv \"$APK_PATH\" artifacts/android/app-debug.apk
+          mv $APK_PATH artifacts/android/app-debug.apk
       - name: Prebuild Android native project
         run: npx expo prebuild --platform android --no-install --clean
       - name: Build Detox test APK
@@ -121,6 +122,7 @@ jobs:
           mkdir -p artifacts/ios
           eas build:download --platform ios --fingerprint $EAS_IOS_FINGERPRINT --non-interactive --json > /tmp/eas-ios-download.json
           ARCHIVE_PATH=$(node -e "const fs=require('fs');const raw=fs.readFileSync('/tmp/eas-ios-download.json','utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');const data=JSON.parse(raw.slice(start,end+1));console.log(data.path||data.filePath||data.artifactPath||data.localFilePath||'');")
+          ARCHIVE_PATH=$(echo "$ARCHIVE_PATH" | sed -e 's/^\"//' -e 's/\"$//')
           if [ -z \"$ARCHIVE_PATH\" ]; then
             ARCHIVE_PATH=$(find . -maxdepth 3 -name \"*.tar.gz\" -type f | head -n 1)
           fi
@@ -128,7 +130,7 @@ jobs:
             echo \"No iOS archive found after download.\" >&2
             exit 1
           fi
-          mv \"$ARCHIVE_PATH\" artifacts/ios/ios-build.tar.gz
+          mv $ARCHIVE_PATH artifacts/ios/ios-build.tar.gz
       - name: Extract iOS app
         run: |
           mkdir -p artifacts/ios/app
