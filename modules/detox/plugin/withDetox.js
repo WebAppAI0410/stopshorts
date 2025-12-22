@@ -5,6 +5,7 @@ const {
 } = require('@expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 function ensureAndroidTestRunner(contents) {
     if (contents.includes('testInstrumentationRunner')) {
@@ -57,7 +58,7 @@ function ensurePodfileDetox(podfileContents) {
     }
 
     const lines = podfileContents.split('\n');
-    const insertLine = "  pod 'Detox', :path => '../node_modules/detox/ios', :configurations => ['Debug']";
+    const insertLine = "  pod 'Detox', :podspec => File.join(__dir__, 'Detox', 'Detox.podspec'), :configurations => ['Debug']";
 
     for (let i = 0; i < lines.length; i += 1) {
         if (lines[i].startsWith('  post_install do')) {
@@ -136,6 +137,40 @@ function withDetox(config) {
                 if (updated !== contents) {
                     fs.writeFileSync(podfilePath, updated);
                 }
+            }
+
+            const projectRoot = config.modRequest.projectRoot;
+            const detoxRoot = path.join(projectRoot, 'node_modules', 'detox');
+            const detoxPackageJson = path.join(detoxRoot, 'package.json');
+            const detoxVersion = fs.existsSync(detoxPackageJson)
+                ? JSON.parse(fs.readFileSync(detoxPackageJson, 'utf8')).version
+                : '0.0.0';
+            const detoxFrameworkArchive = path.join(detoxRoot, 'Detox-ios-framework.tbz');
+            const iosDetoxDir = path.join(config.modRequest.platformProjectRoot, 'Detox');
+            const detoxFrameworkPath = path.join(iosDetoxDir, 'Detox.framework');
+            const detoxPodspecPath = path.join(iosDetoxDir, 'Detox.podspec');
+
+            if (fs.existsSync(detoxFrameworkArchive) && !fs.existsSync(detoxFrameworkPath)) {
+                fs.mkdirSync(iosDetoxDir, { recursive: true });
+                execSync(`tar -xjf "${detoxFrameworkArchive}" -C "${iosDetoxDir}"`);
+            }
+
+            if (!fs.existsSync(detoxPodspecPath)) {
+                fs.mkdirSync(iosDetoxDir, { recursive: true });
+                const podspec = `Pod::Spec.new do |s|\n` +
+                    `  s.name = 'Detox'\n` +
+                    `  s.version = '${detoxVersion}'\n` +
+                    `  s.summary = 'Detox test framework'\n` +
+                    `  s.description = 'Detox iOS test framework (prebuilt)'\n` +
+                    `  s.homepage = 'https://github.com/wix/Detox'\n` +
+                    `  s.license = { :type => 'MIT' }\n` +
+                    `  s.author = { 'Wix' => 'detox@wix.com' }\n` +
+                    `  s.platform = :ios, '12.0'\n` +
+                    `  s.vendored_frameworks = 'Detox.framework'\n` +
+                    `  s.frameworks = 'XCTest'\n` +
+                    `  s.requires_arc = true\n` +
+                    `end\n`;
+                fs.writeFileSync(detoxPodspecPath, podspec);
             }
             return config;
         },
