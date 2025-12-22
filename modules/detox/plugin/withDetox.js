@@ -57,7 +57,7 @@ function ensurePodfileDetox(podfileContents) {
     }
 
     const lines = podfileContents.split('\n');
-    const insertLine = "  pod 'Detox', :configurations => ['Debug']";
+    const insertLine = "  pod 'Detox', :path => '../node_modules/detox/ios', :configurations => ['Debug']";
 
     for (let i = 0; i < lines.length; i += 1) {
         if (lines[i].startsWith('  post_install do')) {

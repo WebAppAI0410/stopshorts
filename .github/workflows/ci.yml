@@ -46,15 +46,14 @@ jobs:
           echo "EAS_ANDROID_BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
       - name: Generate Android fingerprint
         run: |
-          FINGERPRINT_JSON=$(eas fingerprint:generate --json --non-interactive --platform android --build-profile detox-android)
-          echo "$FINGERPRINT_JSON" > /tmp/eas-android-fingerprint.json
-          FINGERPRINT=$(node -e "const data=require('/tmp/eas-android-fingerprint.json'); console.log(data.fingerprint);")
+          eas fingerprint:generate --json --non-interactive --platform android --build-profile detox-android > /tmp/eas-android-fingerprint.json
+          FINGERPRINT=$(node -e "const fs=require('fs');const raw=fs.readFileSync('/tmp/eas-android-fingerprint.json','utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');const data=JSON.parse(raw.slice(start,end+1));console.log(data.hash);")
           echo "EAS_ANDROID_FINGERPRINT=$FINGERPRINT" >> $GITHUB_ENV
       - name: Download Android build
         run: |
           mkdir -p artifacts/android
           eas build:download --platform android --fingerprint $EAS_ANDROID_FINGERPRINT --non-interactive --json > /tmp/eas-android-download.json
-          APK_PATH=$(node -e "const fs=require('fs');const raw=fs.readFileSync('/tmp/eas-android-download.json','utf8'); try {const data=JSON.parse(raw); console.log(data.path||data.filePath||data.artifactPath||'');} catch { console.log(''); }")
+          APK_PATH=$(node -e "const fs=require('fs');const raw=fs.readFileSync('/tmp/eas-android-download.json','utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');const data=JSON.parse(raw.slice(start,end+1));console.log(data.path||data.filePath||data.artifactPath||data.localFilePath||'');")
           if [ -z \"$APK_PATH\" ]; then
             APK_PATH=$(find . -maxdepth 3 -name \"*.apk\" -type f | head -n 1)
           fi
@@ -114,15 +113,14 @@ jobs:
         run: exit 1
       - name: Generate iOS fingerprint
         run: |
-          FINGERPRINT_JSON=$(eas fingerprint:generate --json --non-interactive --platform ios --build-profile detox-ios)
-          echo "$FINGERPRINT_JSON" > /tmp/eas-ios-fingerprint.json
-          FINGERPRINT=$(node -e "const data=require('/tmp/eas-ios-fingerprint.json'); console.log(data.fingerprint);")
+          eas fingerprint:generate --json --non-interactive --platform ios --build-profile detox-ios > /tmp/eas-ios-fingerprint.json
+          FINGERPRINT=$(node -e "const fs=require('fs');const raw=fs.readFileSync('/tmp/eas-ios-fingerprint.json','utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');const data=JSON.parse(raw.slice(start,end+1));console.log(data.hash);")
           echo "EAS_IOS_FINGERPRINT=$FINGERPRINT" >> $GITHUB_ENV
       - name: Download iOS build
         run: |
           mkdir -p artifacts/ios
           eas build:download --platform ios --fingerprint $EAS_IOS_FINGERPRINT --non-interactive --json > /tmp/eas-ios-download.json
-          ARCHIVE_PATH=$(node -e "const fs=require('fs');const raw=fs.readFileSync('/tmp/eas-ios-download.json','utf8'); try {const data=JSON.parse(raw); console.log(data.path||data.filePath||data.artifactPath||'');} catch { console.log(''); }")
+          ARCHIVE_PATH=$(node -e "const fs=require('fs');const raw=fs.readFileSync('/tmp/eas-ios-download.json','utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');const data=JSON.parse(raw.slice(start,end+1));console.log(data.path||data.filePath||data.artifactPath||data.localFilePath||'');")
           if [ -z \"$ARCHIVE_PATH\" ]; then
             ARCHIVE_PATH=$(find . -maxdepth 3 -name \"*.tar.gz\" -type f | head -n 1)
           fi
