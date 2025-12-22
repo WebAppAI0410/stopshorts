@@ -288,7 +288,7 @@ export default function AppSelectionScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={10} currentStep={5} />
+                    <ProgressIndicator totalSteps={11} currentStep={5} />
                 </View>
             </Animated.View>
 

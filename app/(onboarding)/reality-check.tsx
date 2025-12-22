@@ -642,7 +642,7 @@ export default function RealityCheckScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <GlowOrb position="top-right" size="large" color="accent" intensity={0.12} />
 
-            <Header showBack />
+            <Header showBack variant="ghost" />
 
             <ScrollView
                 style={styles.scrollView}
@@ -719,7 +719,7 @@ export default function RealityCheckScreen() {
                     disabled={!screenTimeData}
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={10} currentStep={6} />
+                    <ProgressIndicator totalSteps={11} currentStep={6} />
                 </View>
             </Animated.View>
         </SafeAreaView>

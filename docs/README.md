@@ -8,6 +8,8 @@
 
 **対応プラットフォーム**: iOS / Android
 
+**プロジェクト進捗**: 直近の実装状況は `AGENT.md` を参照（リポジトリ直下）
+
 ---
 
 ## ドキュメント構成
@@ -20,7 +22,10 @@
 | `ONBOARDING_FLOW.md` | オンボーディングフロー v4（10ステップ） | ✅ Current |
 | `ROADMAP.md` | 実装ロードマップ v2.0 | ✅ Current |
 | `HABIT_COACHING_FEATURE.md` | 習慣化コーチング機能設計 v3.0 | ✅ Current |
-| `INTERVENTION_AND_METRICS_PLAN.md` | **NEW** 介入システム・統計指標 実装計画 | 🔄 Planning |
+| `INTERVENTION_AND_METRICS_PLAN.md` | 介入システム・統計指標 実装計画 | 🔄 Planning |
+| `SWIPE_SIMULATOR_DESIGN.md` | スワイプシミュレーター設計・実装 | ✅ Implemented |
+| `URGE_SURFING_RESEARCH.md` | Urge Surfing心理学的根拠 | ✅ Current |
+| `TESTING.md` | テスト方針・実行方法 | ✅ Current |
 
 ### 📱 Platform-Specific Documents
 
@@ -67,7 +72,10 @@ docs/
 ├── ONBOARDING_FLOW.md                     # オンボーディング v4
 ├── ROADMAP.md                             # ロードマップ
 ├── HABIT_COACHING_FEATURE.md              # 習慣化コーチング設計
-├── INTERVENTION_AND_METRICS_PLAN.md       # 介入・統計指標計画 ★NEW
+├── INTERVENTION_AND_METRICS_PLAN.md       # 介入・統計指標計画
+├── SWIPE_SIMULATOR_DESIGN.md              # スワイプシミュレーター設計
+├── URGE_SURFING_RESEARCH.md               # Urge Surfing研究
+├── TESTING.md                             # テスト方針・実行方法
 ├── ANDROID_IMPLEMENTATION_PLAN.md         # Androidアーキテクチャ
 ├── ANDROID_INTEGRATION_PLAN.md            # Android統計統合計画
 ├── PLAY_CONSOLE_SUBMISSION_FLOW.md        # Play Store提出フロー
@@ -86,8 +94,10 @@ docs/
 │   ├── README.md                          # レビュー一覧
 │   ├── 2025-12-21_review.md               # アーキテクチャレビュー
 │   └── 2025-12-21_tasks.md                # タスクリスト
-└── issues/                                # タスク管理
-    └── mvp_issues.md                      # MVP Issue分解
+├── issues/                                # タスク管理
+│   └── mvp_issues.md                      # MVP Issue分解
+└── mockups/                               # HTMLモックアップ
+    └── wave_mockup.html                   # 波アニメーションモックアップ
 ```
 
 ---
@@ -117,7 +127,9 @@ docs/
 | オンボーディング | 10ステップのセットアップフロー | ✅ 実装済 |
 | 介入システム | アプリ使用時のUrge Surfing | 🔄 改善中 |
 | 統計・分析 | 使用時間の可視化、減少率表示 | 🔄 改善中 |
-| Urge Surfing | 衝動をやり過ごす30秒エクササイズ | ✅ 実装済 |
+| Urge Surfing | 衝動をやり過ごす30秒/60秒エクササイズ | ✅ 実装済 |
+| スワイプシミュレーター | TikTok/Instagram/YouTube風UIでの介入デモ | ✅ 実装済 |
+| 波アニメーション | 呼吸連動の海波アニメーション | ✅ 実装済 |
 
 ### 計画中の機能
 
@@ -163,3 +175,4 @@ npx tsc --noEmit
 | 2025-12-19 | 1.0 | 初版作成 |
 | 2025-12-21 | 2.0 | ドキュメント構成を更新、Android関連ドキュメント追加 |
 | 2025-12-22 | 2.1 | ドキュメント整理、不要ファイル削除、介入・統計計画追加 |
+| 2025-12-23 | 2.2 | スワイプシミュレーター・波アニメーション完成、プロフィール統合 |

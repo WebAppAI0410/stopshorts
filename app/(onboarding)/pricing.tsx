@@ -97,7 +97,7 @@ export default function PricingScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <GlowOrb position="top-right" size="medium" color="accent" intensity={0.1} />
 
-            <Header showBack />
+            <Header showBack variant="ghost" />
 
             <ScrollView
                 style={styles.scrollView}

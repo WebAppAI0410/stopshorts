@@ -1,9 +1,17 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+    TextInput,
+    KeyboardAvoidingView,
+    Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
@@ -24,11 +32,26 @@ const avatarIconMap: Record<AvatarIcon, keyof typeof Ionicons.glyphMap> = {
     sparkles: 'sparkles',
 };
 
+const avatarOptions: AvatarIcon[] = [
+    'person',
+    'happy',
+    'heart',
+    'star',
+    'rocket',
+    'leaf',
+    'flame',
+    'diamond',
+    'shield',
+    'sparkles',
+];
+
 export default function ProfileScreen() {
-    const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
-    const { purpose, subscriptionPlan, userName, userAvatar } = useAppStore();
+    const { purpose, subscriptionPlan, userName, userAvatar, setUserName, setUserAvatar } = useAppStore();
     const { lifetime } = useStatisticsStore();
+
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [editingName, setEditingName] = useState(userName || '');
 
     // Use consolidated statistics from useStatisticsStore
     const totalInterventions = lifetime.totalInterventions;
@@ -42,151 +65,254 @@ export default function ProfileScreen() {
         mental: t('profile.goals.mental'),
     };
 
+    const handleSaveName = () => {
+        if (editingName.trim().length > 0) {
+            setUserName(editingName.trim());
+        }
+    };
+
+    const handleSelectAvatar = (avatar: AvatarIcon) => {
+        setUserAvatar(avatar);
+    };
+
+    const toggleEditProfile = () => {
+        if (isEditingProfile) {
+            // Save when closing
+            handleSaveName();
+        } else {
+            // Reset editing name when opening
+            setEditingName(userName || '');
+        }
+        setIsEditingProfile(!isEditingProfile);
+    };
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={{ paddingHorizontal: spacing.gutter, paddingTop: 20, paddingBottom: 100 }}
-                showsVerticalScrollIndicator={false}
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-                {/* Header */}
-                <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
-                    <Text style={[typography.h2, { color: colors.textSecondary }]}>
-                        {t('profile.title')}
-                    </Text>
-                </Animated.View>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={{ paddingHorizontal: spacing.gutter, paddingTop: 20, paddingBottom: 100 }}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Header */}
+                    <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
+                        <Text style={[typography.h2, { color: colors.textSecondary }]}>
+                            {t('profile.title')}
+                        </Text>
+                    </Animated.View>
 
-                {/* Avatar Section */}
-                <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.avatarSection}>
-                    <TouchableOpacity
-                        style={styles.avatarContainer}
-                        onPress={() => router.push('/(main)/profile-settings' as Href)}
-                        activeOpacity={0.8}
-                    >
-                        <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
-                            <Ionicons
-                                name={avatarIconMap[userAvatar]}
-                                size={48}
-                                color={colors.textInverse}
+                    {/* Avatar Section */}
+                    <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.avatarSection}>
+                        <TouchableOpacity
+                            style={styles.avatarContainer}
+                            onPress={toggleEditProfile}
+                            activeOpacity={0.8}
+                        >
+                            <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
+                                <Ionicons
+                                    name={avatarIconMap[userAvatar]}
+                                    size={48}
+                                    color={colors.textInverse}
+                                />
+                            </View>
+                            <View style={[styles.editBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                                <Ionicons
+                                    name={isEditingProfile ? 'checkmark' : 'pencil'}
+                                    size={12}
+                                    color={isEditingProfile ? colors.accent : colors.textSecondary}
+                                />
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Name - editable or display */}
+                        {isEditingProfile ? (
+                            <TextInput
+                                style={[
+                                    styles.nameInput,
+                                    {
+                                        backgroundColor: colors.backgroundCard,
+                                        borderColor: colors.border,
+                                        color: colors.textPrimary,
+                                        borderRadius: borderRadius.lg,
+                                        marginTop: spacing.md,
+                                    },
+                                ]}
+                                value={editingName}
+                                onChangeText={setEditingName}
+                                placeholder="ニックネームを入力"
+                                placeholderTextColor={colors.textMuted}
+                                returnKeyType="done"
+                                onSubmitEditing={handleSaveName}
+                                textAlign="center"
+                                autoFocus
                             />
-                        </View>
-                        <View style={[styles.editBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                            <Ionicons name="pencil" size={12} color={colors.textSecondary} />
-                        </View>
-                    </TouchableOpacity>
-                    <Text style={[typography.h2, { color: colors.textPrimary, marginTop: spacing.md }]}>
-                        {userName || t('profile.user')}
-                    </Text>
-                    <View style={[styles.badge, { backgroundColor: colors.surface, borderRadius: borderRadius.full }]}>
-                        <Text style={[typography.caption, { color: colors.accent }]}>
-                            {subscriptionPlan === 'free' ? t('profile.freePlan') : t('profile.premium')}
-                        </Text>
-                    </View>
-                </Animated.View>
+                        ) : (
+                            <Text style={[typography.h2, { color: colors.textPrimary, marginTop: spacing.md }]}>
+                                {userName || t('profile.user')}
+                            </Text>
+                        )}
 
-                {/* Stats Summary */}
-                <Animated.View
-                    entering={FadeInDown.duration(600).delay(200)}
-                    style={[
-                        styles.statsCard,
-                        {
-                            backgroundColor: colors.backgroundCard,
-                            borderRadius: borderRadius.xl,
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                        }
-                    ]}
-                >
-                    <View style={styles.statItem}>
-                        <Text style={[typography.statLarge, { color: colors.textPrimary }]}>
-                            {totalInterventions}
-                        </Text>
-                        <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
-                            {t('profile.totalInterventions')}
-                        </Text>
-                    </View>
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                    <View style={styles.statItem}>
-                        <Text style={[typography.statLarge, { color: colors.textPrimary }]}>
-                            {Math.floor(totalMinutesSaved / 60)}h
-                        </Text>
-                        <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
-                            {t('profile.timeSaved')}
-                        </Text>
-                    </View>
-                </Animated.View>
-
-                {/* Goal */}
-                <Animated.View
-                    entering={FadeInDown.duration(600).delay(300)}
-                    style={[
-                        styles.goalCard,
-                        {
-                            backgroundColor: colors.backgroundCard,
-                            borderRadius: borderRadius.xl,
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                            marginTop: spacing.lg,
-                        }
-                    ]}
-                >
-                    <View style={styles.goalHeader}>
-                        <Ionicons name="flag-outline" size={20} color={colors.accent} />
-                        <Text style={[typography.label, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
-                            {t('profile.yourGoal')}
-                        </Text>
-                    </View>
-                    <Text style={[typography.h3, { color: colors.textPrimary, marginTop: spacing.sm }]}>
-                        {purposeLabels[purpose || 'sleep'] || t('profile.setYourGoal')}
-                    </Text>
-                </Animated.View>
-
-                {/* Achievements Preview */}
-                <Animated.View
-                    entering={FadeInDown.duration(600).delay(400)}
-                    style={[
-                        styles.achievementsCard,
-                        {
-                            backgroundColor: colors.backgroundCard,
-                            borderRadius: borderRadius.xl,
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                            marginTop: spacing.lg,
-                        }
-                    ]}
-                >
-                    <View style={styles.achievementsHeader}>
-                        <View style={styles.titleRow}>
-                            <Ionicons name="trophy-outline" size={20} color={colors.warning} />
-                            <Text style={[typography.h3, { color: colors.textPrimary, marginLeft: spacing.sm }]}>
-                                {t('profile.achievements')}
+                        <View style={[styles.badge, { backgroundColor: colors.surface, borderRadius: borderRadius.full }]}>
+                            <Text style={[typography.caption, { color: colors.accent }]}>
+                                {subscriptionPlan === 'free' ? t('profile.freePlan') : t('profile.premium')}
                             </Text>
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                    </View>
-                    <View style={styles.badgesRow}>
-                        {['🛡️', '🔥', '⭐'].map((emoji, index) => (
+                    </Animated.View>
+
+                    {/* Avatar Selection (when editing) */}
+                    {isEditingProfile && (
+                        <Animated.View
+                            entering={FadeIn.duration(300)}
+                            style={[
+                                styles.avatarGrid,
+                                {
+                                    backgroundColor: colors.backgroundCard,
+                                    borderRadius: borderRadius.xl,
+                                    borderWidth: 1,
+                                    borderColor: colors.border,
+                                    marginBottom: spacing.lg,
+                                },
+                            ]}
+                        >
+                            <Text style={[typography.label, { color: colors.textMuted, marginBottom: spacing.sm }]}>
+                                アイコンを選択
+                            </Text>
+                            <View style={styles.avatarOptions}>
+                                {avatarOptions.map((avatar) => (
+                                    <TouchableOpacity
+                                        key={avatar}
+                                        style={[
+                                            styles.avatarOption,
+                                            {
+                                                backgroundColor:
+                                                    userAvatar === avatar ? colors.accentMuted : colors.surface,
+                                                borderRadius: borderRadius.lg,
+                                                borderWidth: userAvatar === avatar ? 2 : 0,
+                                                borderColor: colors.accent,
+                                            },
+                                        ]}
+                                        onPress={() => handleSelectAvatar(avatar)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Ionicons
+                                            name={avatarIconMap[avatar]}
+                                            size={28}
+                                            color={userAvatar === avatar ? colors.accent : colors.textSecondary}
+                                        />
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </Animated.View>
+                    )}
+
+                    {/* Stats Summary */}
+                    <Animated.View
+                        entering={FadeInDown.duration(600).delay(200)}
+                        style={[
+                            styles.statsCard,
+                            {
+                                backgroundColor: colors.backgroundCard,
+                                borderRadius: borderRadius.xl,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                            }
+                        ]}
+                    >
+                        <View style={styles.statItem}>
+                            <Text style={[typography.statLarge, { color: colors.textPrimary }]}>
+                                {totalInterventions}
+                            </Text>
+                            <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
+                                {t('profile.totalInterventions')}
+                            </Text>
+                        </View>
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <View style={styles.statItem}>
+                            <Text style={[typography.statLarge, { color: colors.textPrimary }]}>
+                                {Math.floor(totalMinutesSaved / 60)}h
+                            </Text>
+                            <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
+                                {t('profile.timeSaved')}
+                            </Text>
+                        </View>
+                    </Animated.View>
+
+                    {/* Goal */}
+                    <Animated.View
+                        entering={FadeInDown.duration(600).delay(300)}
+                        style={[
+                            styles.goalCard,
+                            {
+                                backgroundColor: colors.backgroundCard,
+                                borderRadius: borderRadius.xl,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                                marginTop: spacing.lg,
+                            }
+                        ]}
+                    >
+                        <View style={styles.goalHeader}>
+                            <Ionicons name="flag-outline" size={20} color={colors.accent} />
+                            <Text style={[typography.label, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
+                                {t('profile.yourGoal')}
+                            </Text>
+                        </View>
+                        <Text style={[typography.h3, { color: colors.textPrimary, marginTop: spacing.sm }]}>
+                            {purposeLabels[purpose || 'sleep'] || t('profile.setYourGoal')}
+                        </Text>
+                    </Animated.View>
+
+                    {/* Achievements Preview */}
+                    <Animated.View
+                        entering={FadeInDown.duration(600).delay(400)}
+                        style={[
+                            styles.achievementsCard,
+                            {
+                                backgroundColor: colors.backgroundCard,
+                                borderRadius: borderRadius.xl,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                                marginTop: spacing.lg,
+                            }
+                        ]}
+                    >
+                        <View style={styles.achievementsHeader}>
+                            <View style={styles.titleRow}>
+                                <Ionicons name="trophy-outline" size={20} color={colors.warning} />
+                                <Text style={[typography.h3, { color: colors.textPrimary, marginLeft: spacing.sm }]}>
+                                    {t('profile.achievements')}
+                                </Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                        </View>
+                        <View style={styles.badgesRow}>
+                            {['🛡️', '🔥', '⭐'].map((emoji, index) => (
+                                <View
+                                    key={index}
+                                    style={[
+                                        styles.achievementBadge,
+                                        { backgroundColor: colors.surface, borderRadius: borderRadius.lg }
+                                    ]}
+                                >
+                                    <Text style={{ fontSize: 24 }}>{emoji}</Text>
+                                </View>
+                            ))}
                             <View
-                                key={index}
                                 style={[
                                     styles.achievementBadge,
                                     { backgroundColor: colors.surface, borderRadius: borderRadius.lg }
                                 ]}
                             >
-                                <Text style={{ fontSize: 24 }}>{emoji}</Text>
+                                <Text style={[typography.body, { color: colors.textMuted }]}>+3</Text>
                             </View>
-                        ))}
-                        <View
-                            style={[
-                                styles.achievementBadge,
-                                { backgroundColor: colors.surface, borderRadius: borderRadius.lg }
-                            ]}
-                        >
-                            <Text style={[typography.body, { color: colors.textMuted }]}>+3</Text>
                         </View>
-                    </View>
-                </Animated.View>
-            </ScrollView>
+                    </Animated.View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -231,6 +357,28 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 6,
         marginTop: 8,
+    },
+    nameInput: {
+        borderWidth: 1,
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        fontSize: 18,
+        fontWeight: '600',
+        minWidth: 200,
+    },
+    avatarGrid: {
+        padding: 16,
+    },
+    avatarOptions: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    avatarOption: {
+        width: 56,
+        height: 56,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     statsCard: {
         flexDirection: 'row',

@@ -50,7 +50,7 @@ export default function StartScreen() {
             <GlowOrb position="top-right" size="large" color="accent" intensity={0.12} />
             <GlowOrb position="bottom-left" size="medium" color="primary" intensity={0.08} />
 
-            <Header showBack />
+            <Header showBack variant="ghost" />
 
             <ScrollView
                 style={styles.scrollView}
@@ -250,7 +250,7 @@ export default function StartScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={10} currentStep={10} />
+                    <ProgressIndicator totalSteps={11} currentStep={11} />
                 </View>
             </Animated.View>
         </SafeAreaView>

@@ -15,9 +15,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
+import { useAppStore } from '../../stores/useAppStore';
 import { Button } from '../ui';
 import { IntensitySlider } from './IntensitySlider';
 import { BreathingGuide } from './BreathingGuide';
+import { WaveAnimation } from './WaveAnimation';
+import { useSharedValue, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
 // TODO: Use t() for i18n when translations are ready
 
 type SurfingPhase = 'initial' | 'surfing' | 'complete';
@@ -47,8 +50,12 @@ export function UrgeSurfingScreen({
   const [intensityBefore, setIntensityBefore] = useState(5);
   const [intensityAfter, setIntensityAfter] = useState(3);
   const [isSliderActive, setIsSliderActive] = useState(false);
+  const [cycleCount, setCycleCount] = useState(3); // Default 3 cycles (30s)
 
+  const { userName } = useAppStore();
   const { recordUrgeSurfing, recordIntervention } = useStatisticsStore();
+
+  const progress = useSharedValue(0);
 
   // Reset state when screen comes into focus (allows repeated practice)
   useFocusEffect(
@@ -67,7 +74,13 @@ export function UrgeSurfingScreen({
 
   const handleStartSurfing = useCallback(() => {
     setPhase('surfing');
-  }, []);
+    cancelAnimation(progress);
+    progress.value = 0;
+    progress.value = withTiming(1, {
+      duration: cycleCount * 10000, // 10s per cycle
+      easing: Easing.linear,
+    });
+  }, [cycleCount]);
 
   const handleBreathingComplete = useCallback(() => {
     setPhase('complete');
@@ -80,12 +93,12 @@ export function UrgeSurfingScreen({
     recordUrgeSurfing({
       intensityBefore,
       intensityAfter,
-      durationSeconds: SURFING_DURATION_MS / 1000,
+      durationSeconds: cycleCount * 10,
       completed: true,
     });
     recordIntervention({ proceeded: false }); // Dismissed = didn't proceed to app
     onDismiss();
-  }, [intensityBefore, intensityAfter, recordUrgeSurfing, recordIntervention, onDismiss]);
+  }, [intensityBefore, intensityAfter, recordUrgeSurfing, recordIntervention, onDismiss, cycleCount]);
 
   const handleSkip = useCallback(() => {
     // Record skipped urge surfing
@@ -191,9 +204,31 @@ export function UrgeSurfingScreen({
               </Text>
             </View>
 
+            <View style={[styles.section, { marginTop: spacing.xl }]}>
+              <Text style={[typography.label, { color: colors.textSecondary }]}>
+                時間をえらぶ
+              </Text>
+              <View style={styles.durationSelector}>
+                <Button
+                  title="30秒 (3回)"
+                  onPress={() => setCycleCount(3)}
+                  variant={cycleCount === 3 ? 'primary' : 'outline'}
+                  size="sm"
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  title="60秒 (6回)"
+                  onPress={() => setCycleCount(6)}
+                  variant={cycleCount === 6 ? 'primary' : 'outline'}
+                  size="sm"
+                  style={{ flex: 1 }}
+                />
+              </View>
+            </View>
+
             <View style={[styles.buttonContainer, { marginTop: spacing.xl }]}>
               <Button
-                title="🌊 波に乗る（30秒）"
+                title={`🌊 波に乗る（${cycleCount * 10}秒）`}
                 onPress={handleStartSurfing}
                 size="lg"
               />
@@ -222,17 +257,29 @@ export function UrgeSurfingScreen({
               </Text>
               <Text
                 style={[
+                  typography.bodySmall,
+                  { color: colors.primary, textAlign: 'center', marginTop: spacing.sm, fontWeight: '600' },
+                ]}
+              >
+                {userName ? `${userName}さんの` : ''}「{blockedAppName}を見たい」という衝動
+              </Text>
+              <Text
+                style={[
                   typography.caption,
                   { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xs },
                 ]}
               >
-                深呼吸をしながら、衝動を観察しましょう
+                深呼吸をしながら、この「波」を静かに観察しましょう
               </Text>
             </View>
 
             <View style={{ marginTop: spacing.xl }}>
+              <WaveAnimation progress={progress} height={200} />
+            </View>
+
+            <View style={{ marginTop: spacing.xl }}>
               <BreathingGuide
-                cycles={BREATH_CYCLES}
+                cycles={cycleCount}
                 onComplete={handleBreathingComplete}
                 autoStart={true}
               />
@@ -422,6 +469,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
+  },
+  durationSelector: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
   },
 });
 

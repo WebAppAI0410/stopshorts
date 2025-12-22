@@ -122,7 +122,7 @@ export default function WelcomeScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={10} currentStep={1} />
+                    <ProgressIndicator totalSteps={11} currentStep={1} />
                 </View>
 
                 {/* Demo mode skip button */}

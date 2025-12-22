@@ -97,7 +97,7 @@ export default function GoalScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={10} currentStep={4} />
+                    <ProgressIndicator totalSteps={11} currentStep={4} />
                 </View>
             </Animated.View>
         </SafeAreaView>

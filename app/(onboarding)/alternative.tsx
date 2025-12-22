@@ -152,7 +152,7 @@ export default function AlternativeScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={10} currentStep={7} />
+                    <ProgressIndicator totalSteps={11} currentStep={7} />
                 </View>
             </Animated.View>
         </SafeAreaView>

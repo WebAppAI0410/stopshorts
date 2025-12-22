@@ -153,7 +153,7 @@ export default function IfThenScreen() {
                     size="lg"
                 />
                 <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={10} currentStep={8} />
+                    <ProgressIndicator totalSteps={11} currentStep={8} />
                 </View>
             </Animated.View>
         </SafeAreaView>

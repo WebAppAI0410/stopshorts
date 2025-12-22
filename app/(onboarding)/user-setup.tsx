@@ -583,7 +583,7 @@ export default function UserSetupScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <GlowOrb position="top-right" size="large" color="accent" intensity={0.1} />
 
-            <Header showBack />
+            <Header showBack variant="ghost" />
 
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
@@ -647,7 +647,7 @@ export default function UserSetupScreen() {
                 )}
 
                 <View style={{ marginTop: spacing.lg }}>
-                    <ProgressIndicator totalSteps={10} currentStep={2} />
+                    <ProgressIndicator totalSteps={11} currentStep={2} />
                 </View>
             </Animated.View>
         </SafeAreaView>

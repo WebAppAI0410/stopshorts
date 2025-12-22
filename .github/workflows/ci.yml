@@ -18,6 +18,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm test -- --runInBand
 
   e2e-android:
     runs-on: ubuntu-latest

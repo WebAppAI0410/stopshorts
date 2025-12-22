@@ -1,27 +1,27 @@
 /**
  * WaveAnimation Component
  * Animated wave visualization for urge surfing
+ * Matches the mockup behavior with horizontal flowing waves that calm over time
  */
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useRef } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  Easing,
-  interpolate,
+  useAnimatedProps,
   useDerivedValue,
+  interpolateColor,
+  type SharedValue,
+  useFrameCallback,
 } from 'react-native-reanimated';
-import Svg, { Path, Defs, LinearGradient, Stop, G, Circle, Ellipse } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '../../contexts/ThemeContext';
+import { palette } from '../../design/theme';
 
 interface WaveAnimationProps {
   /** Current progress (0-1) */
-  progress: number;
-  /** Show surfer emoji */
-  showSurfer?: boolean;
+  progress: SharedValue<number>;
   /** Wave color (uses theme primary if not specified) */
   waveColor?: string;
   /** Height of the wave container */
@@ -29,265 +29,147 @@ interface WaveAnimationProps {
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const WAVE_WIDTH = SCREEN_WIDTH * 2;
 
-const AnimatedG = Animated.createAnimatedComponent(G);
-
-/**
- * Meditating person SVG component
- * A peaceful silhouette sitting in lotus position
- */
-interface MeditatingPersonProps {
-  color: string;
-  size?: number;
-}
-
-function MeditatingPersonSvg({ color, size = 60 }: MeditatingPersonProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 100 100">
-      {/* Head */}
-      <Circle cx="50" cy="22" r="12" fill={color} />
-
-      {/* Body - torso */}
-      <Path
-        d="M50 34 Q50 50 50 55 Q45 60 35 65 L35 70 Q50 68 50 68 Q50 68 65 70 L65 65 Q55 60 50 55"
-        fill={color}
-      />
-
-      {/* Arms in meditation pose */}
-      <Path
-        d="M35 50 Q25 55 22 60 Q20 65 25 68 Q30 70 35 65 Q40 60 42 55"
-        fill={color}
-      />
-      <Path
-        d="M65 50 Q75 55 78 60 Q80 65 75 68 Q70 70 65 65 Q60 60 58 55"
-        fill={color}
-      />
-
-      {/* Hands resting on knees */}
-      <Circle cx="28" cy="68" r="5" fill={color} />
-      <Circle cx="72" cy="68" r="5" fill={color} />
-
-      {/* Crossed legs in lotus */}
-      <Ellipse cx="50" cy="82" rx="25" ry="10" fill={color} />
-
-      {/* Subtle glow/aura behind */}
-      <Circle cx="50" cy="50" r="45" fill={color} opacity={0.1} />
-    </Svg>
-  );
-}
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 /**
  * Generate SVG path for a wave
+ * This function will be called on the UI thread for smooth morphing
  */
-function generateWavePath(
+const getWavePath = (
   width: number,
   height: number,
-  yPosition: number,
-  amplitude: number = 20,
-  frequency: number = 0.015,
-  phase: number = 0
-): string {
-  const y = height * yPosition;
-  let path = `M 0 ${y}`;
+  progress: number,
+  phaseOffset: number,
+  time: number,
+  amplitudeMultiplier: number,
+  frequencyMultiplier: number,
+  baseHeightOffset: number
+) => {
+  'worklet';
+  // Intensity factor: 1 at start (intense), 0 at end (calm)
+  const intensityFactor = 1 - progress;
 
-  for (let x = 0; x <= width; x += 5) {
-    const waveY = y + Math.sin(x * frequency + phase) * amplitude;
-    path += ` L ${x} ${waveY}`;
+  // Amplitude: starts intense (70) and goes to calm (5)
+  const baseAmp = 5 + intensityFactor * 65;
+  const totalAmp = baseAmp * amplitudeMultiplier;
+
+  // Base Y position: moves lower as it calms down (110 -> 160 for wave1)
+  const baseY = height * (0.44 + baseHeightOffset) + progress * (height * 0.2);
+
+  // Wave frequency: gets slightly smoother as it calms
+  const freq = (0.015 + (1 - intensityFactor) * 0.005) * frequencyMultiplier;
+
+  // Horizontal movement speed: faster when intense, slower when calm
+  // This creates the flowing wave effect
+  const speedFactor = 0.003 + intensityFactor * 0.005;
+  const dynamicPhase = phaseOffset + time * speedFactor;
+
+  let path = `M 0 ${baseY}`;
+
+  // Create path points
+  for (let x = 0; x <= width; x += 8) {
+    const y = baseY + Math.sin(x * freq + dynamicPhase) * totalAmp;
+    path += ` L ${x} ${y}`;
   }
 
   path += ` L ${width} ${height} L 0 ${height} Z`;
   return path;
-}
+};
 
 export function WaveAnimation({
   progress,
-  showSurfer = true,
   waveColor,
-  height = 200,
+  height = 250,
 }: WaveAnimationProps) {
   const { colors } = useTheme();
-  const finalWaveColor = waveColor || colors.primary;
 
-  // Animation values
-  const waveOffset = useSharedValue(0);
-  const wavePhase = useSharedValue(0);
+  // Continuously incrementing time value for wave movement
+  const time = useSharedValue(0);
+  const startTime = useRef(Date.now());
 
-  // Start wave animation
-  useEffect(() => {
-    waveOffset.value = withRepeat(
-      withTiming(1, { duration: 3000, easing: Easing.linear }),
-      -1,
-      false
+  // Use frame callback for smooth 60fps animation
+  useFrameCallback(() => {
+    // Increment time based on elapsed milliseconds for consistent speed
+    time.value = Date.now() - startTime.current;
+  });
+
+  // Calculate shared color for all paths (Emerald -> Teal transition)
+  const waveColorValue = useDerivedValue(() => {
+    return interpolateColor(
+      progress.value,
+      [0, 1],
+      [colors.primary, palette.teal[500]]
     );
+  });
 
-    wavePhase.value = withRepeat(
-      withTiming(Math.PI * 2, { duration: 4000, easing: Easing.linear }),
-      -1,
-      false
-    );
-  }, [waveOffset, wavePhase]);
-
-  // Animated wave container style (horizontal movement)
-  const animatedWaveStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: waveOffset.value * -SCREEN_WIDTH }],
+  // Wave 1 (back) - slowest, largest amplitude, lowest frequency
+  const wave1Props = useAnimatedProps(() => ({
+    d: getWavePath(
+      SCREEN_WIDTH,
+      height,
+      progress.value,
+      0,                    // phaseOffset
+      time.value,           // time
+      1.0,                  // amplitudeMultiplier
+      1.0,                  // frequencyMultiplier
+      0                     // baseHeightOffset
+    ),
+    fill: waveColorValue.value,
   }));
 
-  // Meditator position - gentle floating on the wave
-  const meditatorX = useDerivedValue(() => {
-    // Center horizontally with very subtle sway
-    const baseX = SCREEN_WIDTH / 2 - 30; // Center the 60px wide icon
-    const gentleSway = Math.sin(wavePhase.value * 0.5) * 5;
-    return baseX + gentleSway;
-  });
-
-  const meditatorY = useDerivedValue(() => {
-    // Calculate wave height at meditator's position
-    const waveFrequency = 0.015;
-    const posInWave = meditatorX.value + 30 + (waveOffset.value * SCREEN_WIDTH);
-
-    // Base wave position
-    const baseWaveY = 0.35 + (1 - progress) * 0.1;
-    const waveAmplitude = 25 - progress * 15;
-
-    // Calculate actual wave Y at position
-    const waveY = baseWaveY * height +
-      Math.sin(posInWave * waveFrequency + wavePhase.value) * waveAmplitude;
-
-    // Offset to float above the wave
-    return waveY - 55;
-  });
-
-  // Breathing scale - gentle expansion/contraction synced with breath
-  const breathScale = useDerivedValue(() => {
-    // Slower breathing rhythm (4 seconds per cycle)
-    const breathCycle = Math.sin(wavePhase.value * 0.5);
-    // Very subtle scale change (0.95 to 1.05)
-    return 1 + breathCycle * 0.05;
-  });
-
-  // Subtle vertical float independent of wave
-  const breathFloat = useDerivedValue(() => {
-    const breathCycle = Math.sin(wavePhase.value * 0.5);
-    return breathCycle * 3;
-  });
-
-  // Aura glow opacity - pulses with breathing
-  const auraOpacity = useDerivedValue(() => {
-    const breathCycle = Math.sin(wavePhase.value * 0.5);
-    return 0.3 + breathCycle * 0.2;
-  });
-
-  const animatedMeditatorStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: meditatorX.value },
-      { translateY: meditatorY.value + breathFloat.value },
-      { scale: breathScale.value },
-    ],
-    opacity: interpolate(progress, [0, 0.1, 0.9, 1], [0.8, 1, 1, 0.8]),
+  // Wave 2 (middle) - medium speed
+  const wave2Props = useAnimatedProps(() => ({
+    d: getWavePath(
+      SCREEN_WIDTH,
+      height,
+      progress.value,
+      Math.PI / 2,          // phaseOffset
+      time.value * 1.2,     // slightly faster
+      0.85,                 // smaller amplitude
+      1.2,                  // higher frequency
+      0.06                  // slightly lower base
+    ),
+    fill: waveColorValue.value,
   }));
 
-  const animatedAuraStyle = useAnimatedStyle(() => ({
-    opacity: auraOpacity.value,
-    transform: [{ scale: 1 + Math.sin(wavePhase.value * 0.5) * 0.1 }],
+  // Wave 3 (front) - fastest, smallest amplitude, highest frequency
+  const wave3Props = useAnimatedProps(() => ({
+    d: getWavePath(
+      SCREEN_WIDTH,
+      height,
+      progress.value,
+      Math.PI,              // phaseOffset
+      time.value * 1.5,     // fastest
+      0.7,                  // smallest amplitude
+      1.5,                  // highest frequency
+      0.12                  // lowest base
+    ),
+    fill: waveColorValue.value,
   }));
-
-  // Generate wave paths with different phases for layered effect
-  const wavePath1 = useMemo(() => {
-    return generateWavePath(
-      WAVE_WIDTH,
-      height,
-      0.35 + (1 - progress) * 0.1,
-      25 - progress * 15,
-      0.015,
-      0
-    );
-  }, [height, progress]);
-
-  const wavePath2 = useMemo(() => {
-    return generateWavePath(
-      WAVE_WIDTH,
-      height,
-      0.4 + (1 - progress) * 0.1,
-      20 - progress * 10,
-      0.018,
-      Math.PI / 3
-    );
-  }, [height, progress]);
-
-  const wavePath3 = useMemo(() => {
-    return generateWavePath(
-      WAVE_WIDTH,
-      height,
-      0.45 + (1 - progress) * 0.1,
-      15 - progress * 5,
-      0.02,
-      Math.PI / 2
-    );
-  }, [height, progress]);
 
   return (
     <View style={[styles.container, { height }]}>
-      {/* Background gradient */}
-      <View style={[styles.background, { backgroundColor: colors.backgroundCard }]} />
+      {/* Background with slight glassmorphism */}
+      <View style={[styles.background, { backgroundColor: colors.backgroundCardGlass || 'rgba(22, 27, 34, 0.7)' }]} />
 
-      {/* Wave layers */}
-      <Animated.View style={[styles.waveContainer, animatedWaveStyle]}>
-        <Svg width={WAVE_WIDTH} height={height} viewBox={`0 0 ${WAVE_WIDTH} ${height}`}>
-          <Defs>
-            <LinearGradient id="waveGradient1" x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor={finalWaveColor} stopOpacity={0.3} />
-              <Stop offset="100%" stopColor={finalWaveColor} stopOpacity={0.6} />
-            </LinearGradient>
-            <LinearGradient id="waveGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor={finalWaveColor} stopOpacity={0.4} />
-              <Stop offset="100%" stopColor={finalWaveColor} stopOpacity={0.7} />
-            </LinearGradient>
-            <LinearGradient id="waveGradient3" x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor={finalWaveColor} stopOpacity={0.5} />
-              <Stop offset="100%" stopColor={finalWaveColor} stopOpacity={0.9} />
-            </LinearGradient>
-          </Defs>
+      <Svg width={SCREEN_WIDTH} height={height} viewBox={`0 0 ${SCREEN_WIDTH} ${height}`}>
+        <AnimatedPath animatedProps={wave1Props} fillOpacity={0.3} />
+        <AnimatedPath animatedProps={wave2Props} fillOpacity={0.5} />
+        <AnimatedPath animatedProps={wave3Props} fillOpacity={0.7} />
+      </Svg>
 
-          {/* Back wave (lightest) */}
-          <Path d={wavePath1} fill="url(#waveGradient1)" />
-
-          {/* Middle wave */}
-          <Path d={wavePath2} fill="url(#waveGradient2)" />
-
-          {/* Front wave (darkest) */}
-          <Path d={wavePath3} fill="url(#waveGradient3)" />
-        </Svg>
-      </Animated.View>
-
-      {/* Meditating person */}
-      {showSurfer && (
-        <>
-          {/* Aura glow behind meditator */}
-          <Animated.View style={[styles.aura, animatedMeditatorStyle, animatedAuraStyle]}>
-            <View style={[styles.auraInner, { backgroundColor: finalWaveColor }]} />
-          </Animated.View>
-
-          {/* Meditator */}
-          <Animated.View style={[styles.meditator, animatedMeditatorStyle]}>
-            <MeditatingPersonSvg color={finalWaveColor} size={60} />
-          </Animated.View>
-        </>
-      )}
-
-      {/* Progress indicator */}
-      <View style={styles.progressContainer}>
-        <View style={[styles.progressBar, { backgroundColor: colors.borderSubtle }]}>
-          <View
-            style={[
-              styles.progressFill,
-              {
-                backgroundColor: finalWaveColor,
-                width: `${progress * 100}%`,
-              },
-            ]}
-          />
-        </View>
+      {/* Progress shadow bar at the bottom */}
+      <View style={styles.progressShadow}>
+        <Animated.View
+          style={[
+            styles.progressFill,
+            { backgroundColor: colors.primary },
+            useAnimatedStyle(() => ({
+              width: `${Math.round(progress.value * 100)}%` as any,
+            })),
+          ]}
+        />
       </View>
     </View>
   );
@@ -297,44 +179,24 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     overflow: 'hidden',
-    borderRadius: 16,
+    borderRadius: 24,
     position: 'relative',
+    borderWidth: 1,
+    borderColor: 'rgba(48, 54, 61, 0.6)',
   },
   background: {
     ...StyleSheet.absoluteFillObject,
   },
-  waveContainer: {
+  progressShadow: {
     position: 'absolute',
     bottom: 0,
     left: 0,
-  },
-  meditator: {
-    position: 'absolute',
-  },
-  aura: {
-    position: 'absolute',
-  },
-  auraInner: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginLeft: -10,
-    marginTop: -10,
-  },
-  progressContainer: {
-    position: 'absolute',
-    bottom: 12,
-    left: 16,
-    right: 16,
-  },
-  progressBar: {
+    right: 0,
     height: 4,
-    borderRadius: 2,
-    overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2,
   },
 });
 

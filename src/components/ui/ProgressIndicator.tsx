@@ -23,6 +23,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
                 return (
                     <View
                         key={index}
+                        testID={`progress-dot-${step}`}
                         style={[
                             styles.dot,
                             {
