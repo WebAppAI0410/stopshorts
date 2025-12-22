@@ -44,10 +44,25 @@ jobs:
           echo "$BUILD_JSON" > /tmp/eas-android-build.json
           BUILD_ID=$(node -e "const data=require('/tmp/eas-android-build.json'); console.log(data[0].id);")
           echo "EAS_ANDROID_BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+      - name: Generate Android fingerprint
+        run: |
+          FINGERPRINT_JSON=$(eas fingerprint:generate --json --non-interactive --platform android --build-profile detox-android)
+          echo "$FINGERPRINT_JSON" > /tmp/eas-android-fingerprint.json
+          FINGERPRINT=$(node -e "const data=require('/tmp/eas-android-fingerprint.json'); console.log(data.fingerprint);")
+          echo "EAS_ANDROID_FINGERPRINT=$FINGERPRINT" >> $GITHUB_ENV
       - name: Download Android build
         run: |
           mkdir -p artifacts/android
-          eas build:download --platform android --id $EAS_ANDROID_BUILD_ID --path artifacts/android/app-debug.apk
+          eas build:download --platform android --fingerprint $EAS_ANDROID_FINGERPRINT --non-interactive --json > /tmp/eas-android-download.json
+          APK_PATH=$(node -e "const fs=require('fs');const raw=fs.readFileSync('/tmp/eas-android-download.json','utf8'); try {const data=JSON.parse(raw); console.log(data.path||data.filePath||data.artifactPath||'');} catch { console.log(''); }")
+          if [ -z \"$APK_PATH\" ]; then
+            APK_PATH=$(find . -maxdepth 3 -name \"*.apk\" -type f | head -n 1)
+          fi
+          if [ -z \"$APK_PATH\" ]; then
+            echo \"No APK found after download.\" >&2
+            exit 1
+          fi
+          mv \"$APK_PATH\" artifacts/android/app-debug.apk
       - name: Prebuild Android native project
         run: npx expo prebuild --platform android --no-install --clean
       - name: Build Detox test APK
@@ -82,14 +97,40 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Trigger EAS iOS simulator build
         run: |
+          set +e
           BUILD_JSON=$(eas build --platform ios --profile detox-ios --non-interactive --json)
+          BUILD_STATUS=$?
           echo "$BUILD_JSON" > /tmp/eas-ios-build.json
           BUILD_ID=$(node -e "const data=require('/tmp/eas-ios-build.json'); console.log(data[0].id);")
           echo "EAS_IOS_BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+          echo "EAS_IOS_BUILD_EXIT=$BUILD_STATUS" >> $GITHUB_ENV
+          exit 0
+      - name: Inspect iOS build on failure
+        if: ${{ env.EAS_IOS_BUILD_EXIT != '0' }}
+        run: |
+          eas build:view $EAS_IOS_BUILD_ID --json || true
+      - name: Fail if iOS build failed
+        if: ${{ env.EAS_IOS_BUILD_EXIT != '0' }}
+        run: exit 1
+      - name: Generate iOS fingerprint
+        run: |
+          FINGERPRINT_JSON=$(eas fingerprint:generate --json --non-interactive --platform ios --build-profile detox-ios)
+          echo "$FINGERPRINT_JSON" > /tmp/eas-ios-fingerprint.json
+          FINGERPRINT=$(node -e "const data=require('/tmp/eas-ios-fingerprint.json'); console.log(data.fingerprint);")
+          echo "EAS_IOS_FINGERPRINT=$FINGERPRINT" >> $GITHUB_ENV
       - name: Download iOS build
         run: |
           mkdir -p artifacts/ios
-          eas build:download --platform ios --id $EAS_IOS_BUILD_ID --path artifacts/ios/ios-build.tar.gz
+          eas build:download --platform ios --fingerprint $EAS_IOS_FINGERPRINT --non-interactive --json > /tmp/eas-ios-download.json
+          ARCHIVE_PATH=$(node -e "const fs=require('fs');const raw=fs.readFileSync('/tmp/eas-ios-download.json','utf8'); try {const data=JSON.parse(raw); console.log(data.path||data.filePath||data.artifactPath||'');} catch { console.log(''); }")
+          if [ -z \"$ARCHIVE_PATH\" ]; then
+            ARCHIVE_PATH=$(find . -maxdepth 3 -name \"*.tar.gz\" -type f | head -n 1)
+          fi
+          if [ -z \"$ARCHIVE_PATH\" ]; then
+            echo \"No iOS archive found after download.\" >&2
+            exit 1
+          fi
+          mv \"$ARCHIVE_PATH\" artifacts/ios/ios-build.tar.gz
       - name: Extract iOS app
         run: |
           mkdir -p artifacts/ios/app
