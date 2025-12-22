@@ -3,7 +3,7 @@
  * Main urge surfing experience with 3 phases
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
@@ -16,7 +16,6 @@ import Animated, {
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
 import { Button } from '../ui';
-import { WaveAnimation } from './WaveAnimation';
 import { IntensitySlider } from './IntensitySlider';
 import { BreathingGuide } from './BreathingGuide';
 // TODO: Use t() for i18n when translations are ready
@@ -47,8 +46,6 @@ export function UrgeSurfingScreen({
   const [phase, setPhase] = useState<SurfingPhase>('initial');
   const [intensityBefore, setIntensityBefore] = useState(5);
   const [intensityAfter, setIntensityAfter] = useState(3);
-  const [surfingProgress, setSurfingProgress] = useState(0);
-  const [startTime, setStartTime] = useState<number | null>(null);
   const [isSliderActive, setIsSliderActive] = useState(false);
 
   const { recordUrgeSurfing, recordIntervention } = useStatisticsStore();
@@ -60,8 +57,6 @@ export function UrgeSurfingScreen({
       setPhase('initial');
       setIntensityBefore(5);
       setIntensityAfter(3);
-      setSurfingProgress(0);
-      setStartTime(null);
       setIsSliderActive(false);
     }, [])
   );
@@ -70,27 +65,8 @@ export function UrgeSurfingScreen({
   const handleSlidingStart = useCallback(() => setIsSliderActive(true), []);
   const handleSlidingEnd = useCallback(() => setIsSliderActive(false), []);
 
-  // Update surfing progress
-  useEffect(() => {
-    if (phase !== 'surfing' || !startTime) return;
-
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / SURFING_DURATION_MS, 1);
-      setSurfingProgress(progress);
-
-      if (progress >= 1) {
-        clearInterval(interval);
-      }
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [phase, startTime]);
-
   const handleStartSurfing = useCallback(() => {
     setPhase('surfing');
-    setStartTime(Date.now());
-    setSurfingProgress(0);
   }, []);
 
   const handleBreathingComplete = useCallback(() => {
@@ -242,7 +218,7 @@ export function UrgeSurfingScreen({
           >
             <View style={styles.header}>
               <Text style={[typography.h2, { color: colors.textPrimary, textAlign: 'center' }]}>
-                🌊 衝動サーフィング中
+                🧘 衝動サーフィング中
               </Text>
               <Text
                 style={[
@@ -250,19 +226,11 @@ export function UrgeSurfingScreen({
                   { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xs },
                 ]}
               >
-                波の上で深呼吸を続けましょう
+                深呼吸をしながら、衝動を観察しましょう
               </Text>
             </View>
 
-            <View style={[styles.waveContainer, { marginTop: spacing.lg }]}>
-              <WaveAnimation
-                progress={surfingProgress}
-                showSurfer={true}
-                height={180}
-              />
-            </View>
-
-            <View style={{ marginTop: spacing.lg }}>
+            <View style={{ marginTop: spacing.xl }}>
               <BreathingGuide
                 cycles={BREATH_CYCLES}
                 onComplete={handleBreathingComplete}
@@ -433,11 +401,6 @@ const styles = StyleSheet.create({
   },
   section: {
     width: '100%',
-  },
-  waveContainer: {
-    width: '100%',
-    marginHorizontal: -24,
-    paddingHorizontal: 24,
   },
   infoCard: {},
   quoteCard: {},
