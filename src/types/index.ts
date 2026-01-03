@@ -91,6 +91,9 @@ export interface SleepProfile {
 // Warning Level for time-based coaching
 export type WarningLevel = 'low' | 'medium' | 'high' | 'critical';
 
+// Urge surfing duration (seconds)
+export type UrgeSurfingDurationSeconds = 30 | 60;
+
 // User State
 export interface UserState {
   // Onboarding
@@ -115,6 +118,7 @@ export interface UserState {
 
   // Settings
   interventionDurationMinutes: number;
+  urgeSurfingDurationSeconds: UrgeSurfingDurationSeconds;
 
   // Implementation Intent
   implementationIntent: ImplementationIntentConfig | null;
@@ -295,3 +299,56 @@ export interface InterventionSettings {
   timing: InterventionTiming;
   delayMinutes: InterventionDelayMinutes;
 }
+
+// Re-export intervention types from intervention.ts
+export type {
+  InterventionType,
+  IntentionId,
+  IntentionLog,
+  FrictionPhase,
+} from './intervention';
+
+// Re-export training types from training.ts
+export type {
+  ContentType,
+  TrainingCategory,
+  TrainingTopic,
+  TrainingContent,
+  QuizQuestion,
+  WorksheetPrompt,
+  TrainingProgress,
+  TrainingStats,
+} from './training';
+
+export { DEFAULT_TRAINING_STATS } from './training';
+
+// Re-export AI types from ai.ts
+export type {
+  Message,
+  WorkingMemory,
+  SessionSummary,
+  LongTermMemory,
+  Insight,
+  Trigger,
+  Strategy,
+  AIIfThenPlan,
+  SessionEndTrigger,
+  CurrentSession,
+  ModelStatus,
+  ModelInfo,
+  PersonaId,
+  Persona,
+  GenerationConfig,
+  AIState,
+  AIActions,
+  ParseResult,
+  StorageCheckResult,
+} from './ai';
+
+export {
+  TOKEN_BUDGET,
+  MAX_CONTEXT_TOKENS,
+  LONG_TERM_LIMITS,
+  DEFAULT_GENERATION_CONFIG,
+  DEFAULT_LONG_TERM_MEMORY,
+} from './ai';

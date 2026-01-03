@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, Switch, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -7,25 +7,49 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { Button, SelectionCard } from '../../src/components/ui';
 import { screenTimeService } from '../../src/native/ScreenTimeModule';
-import type { InterventionTiming, InterventionDelayMinutes } from '../../src/types';
+import { t } from '../../src/i18n';
+import type { InterventionTiming, InterventionDelayMinutes, InterventionType } from '../../src/types';
 import { useSettingsBack } from '../../src/hooks/useSettingsBack';
 
 export default function InterventionSettingsScreen() {
     const { colors, typography, spacing, borderRadius } = useTheme();
-    const { interventionSettings, setInterventionSettings } = useAppStore();
+    const {
+        interventionSettings,
+        setInterventionSettings,
+        selectedInterventionType,
+        setSelectedInterventionType,
+    } = useAppStore();
 
     const [timing, setTiming] = useState<InterventionTiming>(interventionSettings.timing);
     const [delayMinutes, setDelayMinutes] = useState<InterventionDelayMinutes>(interventionSettings.delayMinutes);
+    const [interventionType, setInterventionType] = useState<InterventionType>(selectedInterventionType);
     const [isSaving, setIsSaving] = useState(false);
     const handleBack = useSettingsBack();
 
     const isAndroid = Platform.OS === 'android';
+
+    const shortcutOptions: { key: string; labelKey: string }[] = [
+        { key: 'tiktok', labelKey: 'intervention.settings.shortcuts.apps.tiktok' },
+        { key: 'youtube', labelKey: 'intervention.settings.shortcuts.apps.youtube' },
+        { key: 'instagram', labelKey: 'intervention.settings.shortcuts.apps.instagram' },
+        { key: 'custom', labelKey: 'intervention.settings.shortcuts.apps.custom' },
+    ];
+
+    const handleShortcutPress = (key: string) => {
+        const appLabel = t(`intervention.settings.shortcuts.apps.${key}`);
+        Alert.alert(
+            t('intervention.settings.shortcuts.alertTitle'),
+            t('intervention.settings.shortcuts.alertMessage', { app: appLabel }),
+            [{ text: t('common.confirm') }]
+        );
+    };
 
     const handleSave = async () => {
         setIsSaving(true);
         try {
             // Update store
             setInterventionSettings({ timing, delayMinutes });
+            setSelectedInterventionType(interventionType);
 
             // Sync to native on Android
             if (isAndroid) {
@@ -34,21 +58,23 @@ export default function InterventionSettingsScreen() {
 
             handleBack();
         } catch (error) {
-            console.error('[InterventionSettings] Failed to save:', error);
+            if (__DEV__) {
+                console.error('[InterventionSettings] Failed to save:', error);
+            }
             Alert.alert(
-                '保存エラー',
-                '設定の保存に失敗しました。もう一度お試しください。',
-                [{ text: 'OK' }]
+                t('intervention.settings.saveError.title'),
+                t('intervention.settings.saveError.message'),
+                [{ text: t('common.confirm') }]
             );
         } finally {
             setIsSaving(false);
         }
     };
 
-    const delayOptions: { value: InterventionDelayMinutes; label: string }[] = [
-        { value: 5, label: '5分' },
-        { value: 10, label: '10分' },
-        { value: 15, label: '15分' },
+    const delayOptions: { value: InterventionDelayMinutes }[] = [
+        { value: 5 },
+        { value: 10 },
+        { value: 15 },
     ];
 
     return (
@@ -65,7 +91,7 @@ export default function InterventionSettingsScreen() {
                             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                         </Pressable>
                         <Text style={[typography.h2, { color: colors.textPrimary }]}>
-                            介入設定
+                            {t('intervention.settings.title')}
                         </Text>
                         <View style={{ width: 40 }} />
                     </View>
@@ -74,28 +100,67 @@ export default function InterventionSettingsScreen() {
                 {/* Description */}
                 <Animated.View entering={FadeInDown.duration(600).delay(100)}>
                     <Text style={[typography.body, { color: colors.textSecondary, marginBottom: spacing.lg }]}>
-                        ショート動画アプリを使用した際の介入タイミングを設定します。
-                        {!isAndroid && '\n\n注意: iOSでは即時介入のみ利用可能です（通知リマインダー）。'}
+                        {t('intervention.settings.description')}
+                        {!isAndroid && '\n\n' + t('intervention.settings.iosNote')}
                     </Text>
                 </Animated.View>
 
-                {/* Timing Selection */}
+                {/* Intervention Type Selection */}
                 <Animated.View entering={FadeInDown.duration(600).delay(200)}>
                     <Text style={[typography.h3, { color: colors.textPrimary, marginBottom: spacing.md }]}>
-                        介入タイミング
+                        {t('intervention.settings.types.title')}
                     </Text>
 
                     <SelectionCard
-                        title="即時介入"
-                        subtitle="アプリ起動時すぐに介入画面を表示"
+                        title={t('intervention.settings.types.breathing.title')}
+                        subtitle={t('intervention.settings.types.breathing.description')}
+                        selected={interventionType === 'breathing'}
+                        onPress={() => setInterventionType('breathing')}
+                        icon="leaf"
+                    />
+
+                    <SelectionCard
+                        title={t('intervention.settings.types.friction.title')}
+                        subtitle={t('intervention.settings.types.friction.description')}
+                        selected={interventionType === 'friction'}
+                        onPress={() => setInterventionType('friction')}
+                        icon="time"
+                    />
+
+                    <SelectionCard
+                        title={t('intervention.settings.types.mirror.title')}
+                        subtitle={t('intervention.settings.types.mirror.description')}
+                        selected={interventionType === 'mirror'}
+                        onPress={() => setInterventionType('mirror')}
+                        icon="person"
+                    />
+
+                    <SelectionCard
+                        title={t('intervention.settings.types.ai.title')}
+                        subtitle={t('intervention.settings.types.ai.description')}
+                        selected={interventionType === 'ai'}
+                        onPress={() => setInterventionType('ai')}
+                        icon="sparkles"
+                    />
+                </Animated.View>
+
+                {/* Timing Selection */}
+                <Animated.View entering={FadeInDown.duration(600).delay(300)} style={{ marginTop: spacing.lg }}>
+                    <Text style={[typography.h3, { color: colors.textPrimary, marginBottom: spacing.md }]}>
+                        {t('intervention.settings.timing.title')}
+                    </Text>
+
+                    <SelectionCard
+                        title={t('intervention.settings.timing.immediate.title')}
+                        subtitle={t('intervention.settings.timing.immediate.description')}
                         selected={timing === 'immediate'}
                         onPress={() => setTiming('immediate')}
                         icon="flash"
                     />
 
                     <SelectionCard
-                        title="時間経過後に介入"
-                        subtitle={`アプリを${delayMinutes}分使用後に介入画面を表示`}
+                        title={t('intervention.settings.timing.delayed.title')}
+                        subtitle={t('intervention.settings.timing.delayed.description', { minutes: delayMinutes })}
                         selected={timing === 'delayed'}
                         onPress={() => {
                             if (isAndroid) setTiming('delayed');
@@ -107,7 +172,7 @@ export default function InterventionSettingsScreen() {
                         <View style={[styles.warningBanner, { backgroundColor: colors.warning + '20', borderRadius: borderRadius.lg }]}>
                             <Ionicons name="warning" size={18} color={colors.warning} />
                             <Text style={[typography.caption, { color: colors.warning, marginLeft: spacing.sm, flex: 1 }]}>
-                                iOSでは時間経過後の介入は利用できません。代わりに通知リマインダーを設定できます。
+                                {t('intervention.settings.timing.iosWarning')}
                             </Text>
                         </View>
                     )}
@@ -115,16 +180,16 @@ export default function InterventionSettingsScreen() {
 
                 {/* Delay Time Selection (Only for delayed mode on Android) */}
                 {timing === 'delayed' && isAndroid && (
-                    <Animated.View entering={FadeInDown.duration(600).delay(300)} style={{ marginTop: spacing.lg }}>
+                    <Animated.View entering={FadeInDown.duration(600).delay(400)} style={{ marginTop: spacing.lg }}>
                         <Text style={[typography.h3, { color: colors.textPrimary, marginBottom: spacing.md }]}>
-                            介入までの時間
+                            {t('intervention.settings.threshold.title')}
                         </Text>
 
                         <View style={styles.delayOptionsRow}>
                             {delayOptions.map((option) => (
                                 <View key={option.value} style={styles.delayOption}>
                                     <SelectionCard
-                                        title={option.label}
+                                        title={t('intervention.settings.delay.minutes', { value: option.value })}
                                         selected={delayMinutes === option.value}
                                         onPress={() => setDelayMinutes(option.value)}
                                         compact
@@ -134,16 +199,16 @@ export default function InterventionSettingsScreen() {
                         </View>
 
                         <Text style={[typography.caption, { color: colors.textMuted, marginTop: spacing.sm, textAlign: 'center' }]}>
-                            選択した時間、アプリを連続使用すると介入画面が表示されます
+                            {t('intervention.settings.threshold.note')}
                         </Text>
                     </Animated.View>
                 )}
 
-                {/* iOS Notification Reminder Section */}
+                {/* iOS Shortcuts Section */}
                 {!isAndroid && (
-                    <Animated.View entering={FadeInDown.duration(600).delay(300)} style={{ marginTop: spacing.xl }}>
+                    <Animated.View entering={FadeInDown.duration(600).delay(400)} style={{ marginTop: spacing.xl }}>
                         <Text style={[typography.h3, { color: colors.textPrimary, marginBottom: spacing.md }]}>
-                            通知リマインダー
+                            {t('intervention.settings.shortcuts.title')}
                         </Text>
 
                         <View style={[styles.notificationCard, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.xl, borderColor: colors.border, borderWidth: 1 }]}>
@@ -152,34 +217,37 @@ export default function InterventionSettingsScreen() {
                                     <Ionicons name="notifications" size={24} color={colors.accent} />
                                     <View style={{ marginLeft: spacing.md }}>
                                         <Text style={[typography.body, { color: colors.textPrimary }]}>
-                                            定期リマインダー
+                                            {t('intervention.settings.shortcuts.instant.title')}
                                         </Text>
                                         <Text style={[typography.caption, { color: colors.textSecondary }]}>
-                                            使用量を確認する通知を送信
+                                            {t('intervention.settings.shortcuts.instant.description')}
                                         </Text>
                                     </View>
                                 </View>
-                                <Switch
-                                    value={false}
-                                    onValueChange={() => {
-                                        // TODO: Implement iOS notification scheduling
-                                    }}
-                                    trackColor={{ false: colors.surface, true: colors.accent }}
-                                    thumbColor={colors.background}
-                                />
                             </View>
                         </View>
 
                         <Text style={[typography.caption, { color: colors.textMuted, marginTop: spacing.sm }]}>
-                            iOSではアプリのスクリーンタイムAPIへのアクセスが制限されているため、
-                            リアルタイム介入の代わりに通知リマインダーを使用します。
+                            {t('intervention.settings.shortcuts.note')}
                         </Text>
+
+                        <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
+                            {shortcutOptions.map((option) => (
+                                <SelectionCard
+                                    key={option.key}
+                                    title={t('intervention.settings.shortcuts.addButton', { app: t(option.labelKey) })}
+                                    selected={false}
+                                    onPress={() => handleShortcutPress(option.key)}
+                                    compact
+                                />
+                            ))}
+                        </View>
                     </Animated.View>
                 )}
 
                 {/* How it works */}
                 <Animated.View
-                    entering={FadeInDown.duration(600).delay(400)}
+                    entering={FadeInDown.duration(600).delay(500)}
                     style={[
                         styles.infoCard,
                         {
@@ -190,23 +258,27 @@ export default function InterventionSettingsScreen() {
                     ]}
                 >
                     <Text style={[typography.label, { color: colors.primary, marginBottom: spacing.sm }]}>
-                        🧠 仕組み
+                        {t('intervention.settings.howItWorks.title')}
                     </Text>
                     <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
-                        {timing === 'immediate'
-                            ? '対象アプリを開くと、すぐに「本当に使いますか？」という確認画面が表示されます。衝動的な使用を防ぎ、意識的な選択を促します。'
-                            : `対象アプリを${delayMinutes}分間使用すると、休憩を促す画面が表示されます。適度な使用は許容しつつ、長時間の使用を防ぎます。`}
+                        {interventionType === 'friction'
+                            ? t('intervention.settings.howItWorks.friction')
+                            : interventionType === 'mirror'
+                                ? t('intervention.settings.howItWorks.mirror')
+                                : timing === 'immediate'
+                                    ? t('intervention.settings.howItWorks.breathingImmediate')
+                                    : t('intervention.settings.howItWorks.breathingDelayed', { minutes: delayMinutes })}
                     </Text>
                 </Animated.View>
             </ScrollView>
 
             {/* Save Button */}
             <Animated.View
-                entering={FadeInDown.duration(600).delay(500)}
+                entering={FadeInDown.duration(600).delay(600)}
                 style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]}
             >
                 <Button
-                    title={isSaving ? '保存中...' : '保存'}
+                    title={isSaving ? t('intervention.settings.saving') : t('common.save')}
                     onPress={handleSave}
                     disabled={isSaving}
                     style={{ width: '100%' }}

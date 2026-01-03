@@ -1,16 +1,22 @@
 /**
  * Urge Surfing Page
- * Full screen urge surfing experience
+ * Full screen urge surfing / intervention experience
  *
  * Deep link: stopshorts://urge-surfing?app=<packageName>
  * - app: Package name of the blocked app (from Android overlay)
  * - appName: Display name of the blocked app
- * - source: Where the user came from (shield, training, manual)
+ * - source: Where the user came from (shield, training, manual, shortcut)
+ *
+ * Supports multiple intervention types:
+ * - 'breathing': Traditional urge surfing with breathing exercises
+ * - 'friction': Progressive wait time + intention confirmation
  */
 
 import React from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { UrgeSurfingScreen } from '../../src/components/urge-surfing';
+import { FrictionIntervention, MirrorIntervention, AIIntervention } from '../../src/components/interventions';
+import { useAppStore } from '../../src/stores/useAppStore';
 
 // Map package names to display names
 const PACKAGE_TO_APP_NAME: Record<string, string> = {
@@ -29,7 +35,14 @@ export default function UrgeSurfingPage() {
     app?: string;       // Package name (from deep link)
     appName?: string;   // Display name (optional)
     source?: string;
+    practiceType?: 'breathing' | 'friction' | 'mirror' | 'ai';  // Practice mode override
   }>();
+  const { selectedInterventionType } = useAppStore();
+
+  // Determine which intervention to show:
+  // 1. If practiceType is specified (from practice selection), use that
+  // 2. Otherwise, use the selected intervention type from settings
+  const effectiveInterventionType = params.practiceType || selectedInterventionType;
 
   // Determine app name from params
   // Priority: appName > mapped package name > default
@@ -44,10 +57,10 @@ export default function UrgeSurfingPage() {
   const appName = getAppDisplayName();
 
   // Validate source parameter - only accept known values
-  const getValidSource = (): 'shield' | 'training' | 'manual' => {
-    const validSources = ['shield', 'training', 'manual'] as const;
+  const getValidSource = (): 'shield' | 'training' | 'manual' | 'shortcut' => {
+    const validSources = ['shield', 'training', 'manual', 'shortcut'] as const;
     if (params.source && validSources.includes(params.source as typeof validSources[number])) {
-      return params.source as 'shield' | 'training' | 'manual';
+      return params.source as 'shield' | 'training' | 'manual' | 'shortcut';
     }
     // If coming from deep link with 'app' param, it's from the shield overlay
     return params.app ? 'shield' : 'manual';
@@ -74,12 +87,42 @@ export default function UrgeSurfingPage() {
     }
   };
 
-  return (
-    <UrgeSurfingScreen
-      blockedAppName={appName}
-      onProceed={handleProceed}
-      onDismiss={handleDismiss}
-      source={source}
-    />
-  );
+  // Render intervention based on effective type (practice override or settings)
+  switch (effectiveInterventionType) {
+    case 'friction':
+      return (
+        <FrictionIntervention
+          blockedAppName={appName}
+          appPackage={params.app}
+          onProceed={handleProceed}
+          onDismiss={handleDismiss}
+        />
+      );
+    case 'mirror':
+      return (
+        <MirrorIntervention
+          blockedAppName={appName}
+          onProceed={handleProceed}
+          onDismiss={handleDismiss}
+        />
+      );
+    case 'ai':
+      return (
+        <AIIntervention
+          blockedAppName={appName}
+          onProceed={handleProceed}
+          onDismiss={handleDismiss}
+        />
+      );
+    case 'breathing':
+    default:
+      return (
+        <UrgeSurfingScreen
+          blockedAppName={appName}
+          onProceed={handleProceed}
+          onDismiss={handleDismiss}
+          source={source}
+        />
+      );
+  }
 }
