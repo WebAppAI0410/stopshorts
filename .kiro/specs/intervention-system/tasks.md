@@ -2,16 +2,14 @@
 
 ## フェーズ概要
 
-| フェーズ | 内容 | 優先度 | 推定規模 | 状態 | 完了率 |
-|---------|------|--------|---------|------|--------|
-| Phase 1 | フリクション/ナッジ介入 | P0 (MVP) | Medium | ✅ 完了 | 100% |
-| Phase 2 | ミラー介入 | P1 | Small | ✅ 完了 | 95% |
-| Phase 3 | 介入選択システム + オンボーディング + 課金 | P1 | Medium | ⚠️ 部分実装 | 80% |
-| Phase 4 | 心理トレーニング | P2 | Large | ❌ 未実装 | 5% |
-| Phase 5 | AIチャットボット | P2 | X-Large | ⚠️ Mock実装 | 40% |
-| Phase 6 | 非機能要件 (パフォーマンス/プライバシー/アクセシビリティ/E2Eテスト) | P1 | Medium | ⚠️ 部分実装 | 25% |
-
-### 最終更新: 2026-01-04 ギャップ分析結果
+| フェーズ | 内容 | 優先度 | 推定規模 |
+|---------|------|--------|---------|
+| Phase 1 | フリクション/ナッジ介入 | P0 (MVP) | Medium |
+| Phase 2 | ミラー介入 | P1 | Small |
+| Phase 3 | 介入選択システム + オンボーディング + 課金 | P1 | Medium |
+| Phase 4 | 心理トレーニング | P2 | Large |
+| Phase 5 | AIチャットボット | P2 | X-Large |
+| Phase 6 | 非機能要件 (パフォーマンス/プライバシー/アクセシビリティ/E2Eテスト) | P1 | Medium |
 
 ---
 
@@ -85,31 +83,26 @@
 
 ---
 
-## Phase 2: ミラー介入 ✅
+## Phase 2: ミラー介入
 
-### Task 2.1: カメラ機能の実装 ✅
-- [x] `expo-camera` のセットアップ
-- [x] カメラ権限リクエスト処理
-- [x] 前面カメラプレビュー表示
-> **実装ファイル**: `src/components/interventions/MirrorIntervention.tsx`
+### Task 2.1: カメラ機能の実装
+- [ ] `expo-camera` のセットアップ
+- [ ] カメラ権限リクエスト処理
+- [ ] 前面カメラプレビュー表示
 
-### Task 2.2: ミラー介入画面の実装 ✅
-- [x] `MirrorIntervention.tsx` を作成
-- [x] カメラ映像上に目標オーバーレイ
-- [x] 15秒カウントダウン（内省時間）
-- [x] 確認ダイアログ（開く/やめる）
-- [x] 権限なし時のフォールバックUI（目標テキスト表示）
-> **追加実装**: パルスアニメーション、スキップ機能
+### Task 2.2: ミラー介入画面の実装
+- [ ] `MirrorIntervention.tsx` を作成
+- [ ] カメラ映像上に目標オーバーレイ
+- [ ] 確認ダイアログ
+- [ ] 権限なし時のフォールバックUI
 
-### Task 2.3: Shield画面への統合 ✅
-- [x] 介入タイプに応じた分岐処理
-- [x] ミラー介入の呼び出し
-- [ ] OS設定画面へのディープリンク（権限再設定案内）→ **未実装**
-> **実装ファイル**: `app/(main)/urge-surfing.tsx`, `app/(main)/intervention-practice.tsx`
+### Task 2.3: Shield画面への統合
+- [ ] 介入タイプに応じた分岐処理
+- [ ] ミラー介入の呼び出し
 
 ---
 
-## Phase 3: 介入選択システム + オンボーディング ⚠️ 部分実装
+## Phase 3: 介入選択システム + オンボーディング
 
 ### Task 3.1: 介入タイプの管理 ✅
 - [x] `InterventionType` 型定義 (`src/types/intervention.ts`)
@@ -118,41 +111,38 @@
 
 > **注記**: Phase 3時点では `InterventionType` に `'ai'` を追加するが「準備中」として無効化。Phase 5完了後に有効化する。
 
-### Task 3.2: オンボーディングフロー変更 ⚠️ 部分実装
+### Task 3.2: オンボーディングフロー変更 ✅
 - [x] `intervention-select.tsx` 新規作成
 - [x] `intervention-experience.tsx` 新規作成
-- [ ] **既存の `if-then.tsx` を削除または無効化** → ⚠️ **両方存在中（移行未完了）**
-- [ ] ルーティング更新（新旧フローの統合確認が必要）
-> **実装ファイル**: `app/(onboarding)/intervention-select.tsx`, `app/(onboarding)/intervention-experience.tsx`
-> **要対応**: `alternative.tsx` → `intervention-select.tsx` → `intervention-experience.tsx` → `how-it-works.tsx` のフロー確認
+- [ ] 既存の `if-then.tsx` を削除または無効化
+- [ ] ルーティング更新（if-then.tsx からの移行）
 
-### Task 3.3: 介入体験フローの実装 ✅
+### Task 3.3: 介入体験フローの実装（部分実装）
 - [x] 介入練習選択画面 (`intervention-practice.tsx`) を作成
-- [x] 選択した介入（呼吸ガイド / フリクション / ミラー）をフルで体験できる
-- [x] 「他の方法も試す」機能（オンボーディング体験後）
-- [x] 体験完了後の次画面遷移
-> **実装ファイル**: `app/(onboarding)/intervention-experience.tsx`, `app/(main)/intervention-practice.tsx`
+- [x] 選択した介入（呼吸ガイド / フリクション）をフルで体験できる
+- [ ] 「他の方法も試す」機能（オンボーディング用、未実装）
+- [ ] 体験完了後の次画面遷移（オンボーディング用、未実装）
 
-### Task 3.4: 課金前プレビュー ✅
+### Task 3.4: 課金前プレビュー（部分実装）
 - [x] `ai-preview.tsx` 新規作成
-- [x] AI・トレーニングのモックアップ表示
-- [x] プレミアム機能バッジ表示
-- [x] 課金フローへの遷移（→ `start.tsx`）
-> **実装ファイル**: `app/(onboarding)/ai-preview.tsx`
+- [ ] AI・トレーニングのモックアップ表示（改善が必要）
+- [ ] 課金フローへの遷移
 
-### Task 3.5: アクセス制御の実装 ✅
+### Task 3.5: アクセス制御の実装 (→ design.md Section 10)（部分実装）
 **依存**: Task 1.3, Task 2.2 完了後に実施
 
 - [x] `useSubscriptionAccess()` フック作成 (→ design.md 10.2)
   - `hasFullAccess`, `isTrialing`, `isPaid`, `isExpired` の判定
+  - 実装: `src/hooks/useSubscriptionAccess.ts`
 - [x] `InterventionGate` コンポーネント作成 (→ design.md 10.3)
   - トライアル or 有料でのみ介入機能を表示
   - 期限切れ時は課金画面へリダイレクト
-- [x] `ExpiredSubscriptionScreen` コンポーネント作成
-- [x] 期限切れUIの実装
-- [ ] 各介入画面でアクセス制御を適用（全画面への統合は一部未実装）
-- [x] トライアル中の全機能アクセス確認
-> **実装ファイル**: `src/hooks/useSubscriptionAccess.ts`, `src/components/interventions/InterventionGate.tsx`, `src/components/interventions/ExpiredSubscriptionScreen.tsx`
+  - 実装: `src/components/interventions/InterventionGate.tsx`
+- [ ] 各介入画面でアクセス制御を適用
+  - Shield, Training, AI タブ
+- [x] 期限切れUIの実装 (→ design.md 10.4)
+  - 実装: `src/components/interventions/ExpiredSubscriptionScreen.tsx`
+- [ ] トライアル中の全機能アクセス確認
 
 ---
 
@@ -332,17 +322,14 @@
 - [ ] カメラ不使用時の代替手段確認
 - [ ] フォントサイズ・コントラスト確認
 
-### Task 6.4: 多言語対応 (NFR-4) - P0 ✅
-- [x] `src/i18n/locales/ja.json` に介入関連キーを追加
-  - [x] `intervention.friction.*` (待機、意図確認、確認ダイアログ)
-  - [x] `intervention.mirror.*` (カメラUI、目標表示)
-  - [x] `intervention.practice.*` (介入練習選択)
-  - [x] `intervention.settings.*` (介入設定画面)
-  - [x] `intervention.ai.*` (チャットUI)
-  - [x] `onboarding.interventionSelect.*`, `onboarding.interventionExperience.*`
-  - [x] `onboarding.aiPreview.*`
-  - [ ] `training.*` (トピック、クイズ、ワークシート) → Phase 4で実装
-- [x] ハードコード文字列の検出・置換（主要コンポーネント完了）
+### Task 6.4: 多言語対応 (NFR-4) - P0
+- [ ] `src/i18n/locales/ja.json` に介入関連キーを追加
+  - `intervention.friction.*` (待機、意図確認、確認ダイアログ)
+  - `intervention.mirror.*` (カメラUI、目標表示)
+  - `intervention.selection.*` (介入方法選択)
+  - `intervention.ai.*` (チャットUI、クイックアクション)
+  - `training.*` (トピック、クイズ、ワークシート)
+- [ ] ハードコード文字列の検出・置換
 - [ ] i18nキーの命名規則ドキュメント化
 
 ### Task 6.5: E2Eテスト (→ design.md 8.3) - P2 ⚠️ 優先度低
