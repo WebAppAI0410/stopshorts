@@ -12,9 +12,17 @@ import { Platform } from 'react-native';
 import type { StateStorage } from 'zustand/middleware';
 
 // SecureStore has a 2KB limit per item on iOS
-// We use a conservative chunk size to account for encoding overhead
-const CHUNK_SIZE = 1800;
+// We use byte-based chunking to handle UTF-8 multi-byte characters correctly
+const MAX_CHUNK_BYTES = 1800; // Conservative limit under 2KB
 const CHUNK_COUNT_SUFFIX = '_chunk_count';
+
+/**
+ * Get byte length of a string (UTF-8)
+ */
+function getByteLength(str: string): number {
+  // TextEncoder is available in React Native
+  return new TextEncoder().encode(str).length;
+}
 
 /**
  * Error types for secure storage operations
@@ -55,12 +63,32 @@ export async function isSecureStorageAvailable(): Promise<boolean> {
 
 /**
  * Split data into chunks for storage (handles iOS 2KB limit)
+ * Uses byte-based splitting to correctly handle UTF-8 multi-byte characters
  */
 function splitIntoChunks(data: string): string[] {
   const chunks: string[] = [];
-  for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-    chunks.push(data.slice(i, i + CHUNK_SIZE));
+  let currentChunk = '';
+  let currentByteLength = 0;
+
+  for (const char of data) {
+    const charByteLength = getByteLength(char);
+
+    if (currentByteLength + charByteLength > MAX_CHUNK_BYTES) {
+      // Start a new chunk
+      chunks.push(currentChunk);
+      currentChunk = char;
+      currentByteLength = charByteLength;
+    } else {
+      currentChunk += char;
+      currentByteLength += charByteLength;
+    }
   }
+
+  // Don't forget the last chunk
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+
   return chunks;
 }
 
@@ -120,7 +148,7 @@ export const secureStorage = {
       // First, clean up any existing chunks
       await this.removeItem(key);
 
-      if (value.length <= CHUNK_SIZE) {
+      if (getByteLength(value) <= MAX_CHUNK_BYTES) {
         // Small data - store directly
         await SecureStore.setItemAsync(key, value);
       } else {

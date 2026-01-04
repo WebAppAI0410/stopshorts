@@ -293,11 +293,19 @@ export const useAIStore = create<AIStore>()(
       loadMemory: async () => {
         try {
           // Migrate from AsyncStorage to SecureStorage if needed
-          await migrateToSecureStorage(AI_MEMORY_KEY);
-          await migrateToSecureStorage(AI_SESSIONS_KEY);
+          const memoryMigrated = await migrateToSecureStorage(AI_MEMORY_KEY);
+          const sessionsMigrated = await migrateToSecureStorage(AI_SESSIONS_KEY);
 
-          // Load long-term memory from secure storage
-          const memoryJson = await secureStorage.getItem(AI_MEMORY_KEY);
+          // Load long-term memory
+          let memoryJson: string | null = null;
+          if (memoryMigrated) {
+            memoryJson = await secureStorage.getItem(AI_MEMORY_KEY);
+          }
+          // Fallback to AsyncStorage if SecureStorage failed or returned null
+          if (!memoryJson) {
+            memoryJson = await AsyncStorage.getItem(AI_MEMORY_KEY);
+          }
+
           if (memoryJson) {
             const memory: LongTermMemory = JSON.parse(memoryJson);
             set({ longTermMemory: memory });
@@ -305,8 +313,16 @@ export const useAIStore = create<AIStore>()(
             set({ longTermMemory: DEFAULT_LONG_TERM_MEMORY });
           }
 
-          // Load session summaries from secure storage
-          const sessionsJson = await secureStorage.getItem(AI_SESSIONS_KEY);
+          // Load session summaries
+          let sessionsJson: string | null = null;
+          if (sessionsMigrated) {
+            sessionsJson = await secureStorage.getItem(AI_SESSIONS_KEY);
+          }
+          // Fallback to AsyncStorage if SecureStorage failed or returned null
+          if (!sessionsJson) {
+            sessionsJson = await AsyncStorage.getItem(AI_SESSIONS_KEY);
+          }
+
           if (sessionsJson) {
             const summaries: SessionSummary[] = JSON.parse(sessionsJson);
             set({ sessionSummaries: summaries });
