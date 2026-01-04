@@ -778,9 +778,17 @@
   "tabs": {
     "home": "ホーム",
     "stats": "統計",
+    "ai": "AIコーチ",
     "training": "学習",
     "settings": "設定",
     "profile": "プロフィール"
+  },
+  "ai": {
+    "screenTitle": "AIコーチ",
+    "subtitle": "何でも相談してください",
+    "greeting": "こんにちは！今日はどんなことを話しましょうか？",
+    "emptyMessage": "何でも話してください。一緒に考えましょう。",
+    "inputPlaceholder": "メッセージを入力..."
   },
   "statistics": {
     "title": "統計",
