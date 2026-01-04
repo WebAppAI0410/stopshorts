@@ -272,7 +272,8 @@
         "subtitle": "TikTok、YouTube Shorts、Instagram Reels。\n気づいたら1時間。その習慣を、終わりにします。",
         "appDescription": "StopShortsは、ショート動画アプリの使用を5分で強制的に意識させるアプリです。",
         "philosophy": "「習慣そのものを断ち切る」",
-        "startButton": "始める"
+        "startButton": "始める",
+        "demoSkip": "デモモードでスキップ →"
       },
       "motivation": {
         "title": "何を取り戻したいですか？",
@@ -421,6 +422,11 @@
         },
         "note": "強制ではありません。「気づき」を与えるだけ。\n選ぶのは、いつもあなたです。",
         "understandButton": "理解しました",
+        "nextPreview": {
+          "title": "次は実際に体験してみましょう",
+          "description": "アプリの介入と衝動サーフィングを\nシミュレーターで体験できます"
+        },
+        "experienceButton": "体験してみる",
         "demo": {
           "title": "体験してみましょう",
           "subtitle": "下のボタンをタップすると、シールド画面が表示されます",
@@ -452,6 +458,7 @@
           "snapchat": "Snapchat Spotlight"
         },
         "addMore": "他のアプリを追加",
+        "addedApps": "追加したアプリ",
         "validation": "少なくとも1つのアプリを選択してください"
       }
     },

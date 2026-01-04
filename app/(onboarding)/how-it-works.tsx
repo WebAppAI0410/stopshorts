@@ -168,7 +168,7 @@ export default function HowItWorksScreen() {
                             marginTop: spacing.md,
                         }
                     ]}>
-                        次は実際に体験してみましょう
+                        {t('onboarding.v3.howItWorks.nextPreview.title')}
                     </Text>
                     <Text style={[
                         typography.bodySmall,
@@ -178,7 +178,7 @@ export default function HowItWorksScreen() {
                             marginTop: spacing.xs,
                         }
                     ]}>
-                        アプリの介入と衝動サーフィングを{'\n'}シミュレーターで体験できます
+                        {t('onboarding.v3.howItWorks.nextPreview.description')}
                     </Text>
                 </Animated.View>
             </ScrollView>
@@ -189,7 +189,7 @@ export default function HowItWorksScreen() {
                 style={[styles.footer, { paddingHorizontal: spacing.gutter }]}
             >
                 <Button
-                    title="体験してみる"
+                    title={t('onboarding.v3.howItWorks.experienceButton')}
                     onPress={handleContinue}
                     size="lg"
                 />
