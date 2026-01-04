@@ -246,9 +246,6 @@ export function AIIntervention({
 
         {/* Messages List */}
         <View
-          accessible={true}
-          accessibilityRole="list"
-          accessibilityLabel={t('intervention.ai.accessibility.conversationList')}
           accessibilityLiveRegion="polite"
           style={{ flex: 1 }}
         >

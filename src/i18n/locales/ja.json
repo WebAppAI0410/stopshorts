@@ -898,7 +898,6 @@
       "modelError": "AIの読み込みに失敗しました",
       "retry": "再試行",
       "accessibility": {
-        "conversationList": "AIコーチとの会話履歴",
         "userMessage": "あなたのメッセージ: {{content}}",
         "aiMessage": "AIコーチ: {{content}}",
         "inputLabel": "メッセージ入力欄",
