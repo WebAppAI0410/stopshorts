@@ -1,7 +1,5 @@
-appId: com.stopshorts.app
----
-# Intervention Selection Test
-# Tests that intervention settings can be accessed from the settings tab
+# Intervention Settings E2E Test
+# Tests accessing intervention settings and changing intervention type
 #
 # Prerequisites: None - uses demo mode skip if onboarding is shown
 
@@ -11,39 +9,109 @@ appId: com.stopshorts.app
 # Wait for app to fully load
 - waitForAnimationToEnd
 
-# Skip onboarding using demo mode if on welcome screen
+# ============================================
+# Skip onboarding using demo mode
+# ============================================
 - runFlow:
     when:
       visible: "始める"
     commands:
       - waitForAnimationToEnd
-      # Tap on "デモモードでスキップ →" to skip entire onboarding
       - tapOn:
           text: ".*デモモードでスキップ.*"
       - waitForAnimationToEnd:
           timeout: 3000
 
-# Now we should be on the main screen (Dashboard)
-# Wait for the screen to settle
+# ============================================
+# Navigate to Settings Tab
+# ============================================
 - waitForAnimationToEnd:
     timeout: 3000
 
-# Tap on settings tab using text
 - tapOn: "設定"
-
 - waitForAnimationToEnd
 
-# Look for intervention settings and tap it
+# ============================================
+# Access Intervention Settings
+# ============================================
 - scrollUntilVisible:
     element: "介入設定"
     direction: DOWN
     timeout: 15000
-    speed: 30
+    speed: 40
 
 - tapOn: "介入設定"
-
-# Verify we reached the Intervention Settings screen
 - waitForAnimationToEnd
 
-# Assert that we can see intervention type options
+# ============================================
+# Verify Intervention Settings Screen
+# ============================================
 - assertVisible: "介入タイプ"
+
+# Verify all intervention type options are visible
+- assertVisible: "呼吸法"
+- assertVisible: "フリクション"
+- assertVisible: "ミラー"
+- assertVisible: "AIと対話"
+
+# ============================================
+# Test: Select Friction Intervention
+# ============================================
+- tapOn: "フリクション"
+- waitForAnimationToEnd
+
+# Verify friction is now selected (description should be visible)
+- assertVisible: "待機時間と意図確認"
+
+# ============================================
+# Test: Select Mirror Intervention
+# ============================================
+- scrollUntilVisible:
+    element: "ミラー"
+    direction: UP
+    timeout: 5000
+
+- tapOn: "ミラー"
+- waitForAnimationToEnd
+
+# Verify mirror description
+- assertVisible: "自分の顔を見て"
+
+# ============================================
+# Test: Select Breathing Intervention
+# ============================================
+- tapOn: "呼吸法"
+- waitForAnimationToEnd
+
+# Verify breathing description
+- assertVisible: "衝動を落ち着かせる"
+
+# ============================================
+# Test: Timing Settings
+# ============================================
+- scrollUntilVisible:
+    element: "タイミング"
+    direction: DOWN
+    timeout: 10000
+
+- assertVisible: "即時"
+
+# ============================================
+# Save Settings
+# ============================================
+- scrollUntilVisible:
+    element: "保存"
+    direction: DOWN
+    timeout: 10000
+
+- tapOn: "保存"
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# ============================================
+# Verify return to Settings screen
+# ============================================
+- assertVisible: "設定"
+
+# Take screenshot for verification
+- takeScreenshot: "intervention_settings_complete"

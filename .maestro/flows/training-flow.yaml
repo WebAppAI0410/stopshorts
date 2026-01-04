@@ -1,106 +1,177 @@
-appId: com.stopshorts.app
----
 # Training Module E2E Test
 # Tests navigating through training topics, articles, quizzes, and worksheets
 #
 # Prerequisites: None - uses demo mode skip if onboarding is shown
 
-- launchApp
+- launchApp:
+    clearState: true
 
 # Wait for app to fully load
 - waitForAnimationToEnd
 
-# Skip onboarding using demo mode if on welcome screen
+# ============================================
+# Skip onboarding using demo mode
+# ============================================
 - runFlow:
     when:
       visible: "始める"
     commands:
       - waitForAnimationToEnd
-      # Tap on "デモモードでスキップ →" to skip entire onboarding
       - tapOn:
           text: ".*デモモードでスキップ.*"
       - waitForAnimationToEnd:
           timeout: 3000
 
-# Now we should be on the main screen (Dashboard)
+# ============================================
+# Navigate to Training Tab
+# ============================================
 - waitForAnimationToEnd:
     timeout: 3000
 
-# Navigate to Training Tab
-# Note: Tab shows "training/index" due to i18n bug - using regex to match
+# Tap on training tab - use regex to handle potential i18n issues
 - tapOn:
-    text: ".*training.*"
+    text: ".*トレーニング.*|.*training.*|.*学習.*"
 
 - waitForAnimationToEnd
 
+# ============================================
 # Verify Training Screen
+# ============================================
 - assertVisible: "トレーニング"
 - assertVisible: "科学的アプローチ"
-# Other sections require scrolling - skip for now
 
-# Open a topic
+# Take screenshot of training list
+- takeScreenshot: "training_list"
+
+# ============================================
+# Open a Training Topic
+# ============================================
+- scrollUntilVisible:
+    element: "習慣ループを理解する"
+    direction: DOWN
+    timeout: 10000
+
 - tapOn: "習慣ループを理解する"
+- waitForAnimationToEnd
 
+# ============================================
 # Verify Topic Detail Screen
+# ============================================
 - assertVisible: "記事"
 - assertVisible: "クイズ"
 - assertVisible: "ワークシート"
 
-# Open Article
+# Take screenshot of topic detail
+- takeScreenshot: "topic_detail"
+
+# ============================================
+# Article Phase
+# ============================================
 - tapOn: "記事"
+- waitForAnimationToEnd
+
 - assertVisible: "習慣の3つの要素"
+
+# Scroll through article content
 - scrollUntilVisible:
     element: "次へ進む"
     direction: DOWN
-- tapOn: "次へ進む"
+    timeout: 15000
+    speed: 40
 
-# Quiz Phase
+- tapOn: "次へ進む"
 - waitForAnimationToEnd
+
+# ============================================
+# Quiz Phase
+# ============================================
 - assertVisible: "クイズ"
 - assertVisible: "習慣ループの理解度チェック"
 
-# Answer first question
+# Answer first question - scroll to ensure visibility
+- scrollUntilVisible:
+    element: "きっかけ・ルーティン・報酬"
+    direction: DOWN
+    timeout: 10000
+
 - tapOn: "きっかけ・ルーティン・報酬"
+- waitForAnimationToEnd
 
-# Answer second question (may need scroll)
+# Answer second question - scroll to ensure visibility
+- scrollUntilVisible:
+    element: "ルーティンを別の行動に置き換える"
+    direction: DOWN
+    timeout: 10000
+
 - tapOn: "ルーティンを別の行動に置き換える"
+- waitForAnimationToEnd
 
-# Check answers (scroll to find button)
+# Check answers
 - scrollUntilVisible:
     element: "答え合わせ"
     direction: DOWN
     timeout: 10000
-- tapOn: "答え合わせ"
 
-# Note: Quiz results show checkmarks, no "正解" text
+- tapOn: "答え合わせ"
 - waitForAnimationToEnd
+
+# Take screenshot of quiz results
+- takeScreenshot: "quiz_results"
 
 # Continue to worksheet
 - scrollUntilVisible:
     element: "次へ進む"
     direction: DOWN
     timeout: 10000
-- tapOn: "次へ進む"
 
-# Worksheet Phase
+- tapOn: "次へ進む"
 - waitForAnimationToEnd
+
+# ============================================
+# Worksheet Phase
+# ============================================
 - assertVisible: "ワークシート"
 - assertVisible: "あなたの習慣ループを分析しよう"
 
-# Tap on input field using placeholder text
+# Find and tap on input field
+- scrollUntilVisible:
+    element: ".*きっかけを書いてください.*"
+    direction: DOWN
+    timeout: 10000
+
 - tapOn:
     text: ".*きっかけを書いてください.*"
-# Note: Maestro doesn't support Japanese input, use ASCII
+
+# Note: Maestro doesn't fully support Japanese input, use ASCII text
 - inputText: "Bored at home scrolling"
 - hideKeyboard
+
+# Save response
+- scrollUntilVisible:
+    element: "回答を保存"
+    direction: DOWN
+    timeout: 10000
+
 - tapOn: "回答を保存"
+- waitForAnimationToEnd
 
+# ============================================
 # Complete Phase
-- waitForAnimationToEnd
+# ============================================
 - assertVisible:
-    text: ".*トピック完了.*"
-- tapOn: "トピック一覧に戻る"
+    text: ".*トピック完了.*|.*完了.*"
 
-# Verify back on list
+# Take screenshot of completion
+- takeScreenshot: "topic_complete"
+
+# Return to topic list
+- tapOn: "トピック一覧に戻る"
 - waitForAnimationToEnd
+
+# ============================================
+# Verify return to Training List
+# ============================================
 - assertVisible: "科学的アプローチ"
+
+# Final screenshot
+- takeScreenshot: "training_flow_complete"

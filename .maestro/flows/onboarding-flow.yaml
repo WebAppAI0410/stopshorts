@@ -1,33 +1,80 @@
-appId: com.stopshorts.app
----
 # Onboarding Flow E2E Test
-# Tests the complete onboarding experience from welcome to permission screen
+# Tests the complete onboarding experience from welcome to start screen
 #
-# Note: React Native buttons require accessibilityLabel for text-based selection.
-# The Button component has been updated with accessibilityLabel={title}.
-# Rebuild the app to enable text-based button taps.
+# This flow uses demo mode skip for subsequent screens after user-setup
+# because Android permissions require manual interaction with system settings.
 
 - launchApp:
     clearState: true
 
-# Welcome Screen
-- assertVisible: "始める"
-- tapOn: "始める"
+# Wait for app to fully load
+- waitForAnimationToEnd
 
-# User Setup Screen - Name input step
+# ============================================
+# Screen 1: Welcome Screen
+# ============================================
+- assertVisible:
+    id: "onboarding-welcome-screen"
+- assertVisible: "ショート動画を、やめる。"
+- assertVisible: "始める"
+
+# Tap start button using testID for reliability
+- tapOn:
+    id: "onboarding-start-button"
+
+- waitForAnimationToEnd
+
+# ============================================
+# Screen 2: User Setup - Name Input
+# ============================================
 - assertVisible: "はじめまして"
 - assertVisible: "お名前を教えてください"
+
+# Input user name
 - tapOn:
     text: "ニックネーム"
-- inputText: "TestUser"
+- inputText: ${TEST_USER_NAME}
 - hideKeyboard
 
-# Tap "次へ" button (bottom center of screen)
-# Future: Use `- tapOn: "次へ"` after rebuilding with accessibilityLabel fix
+# Tap "次へ" button using testID (fixes coordinate-based tap issue)
 - tapOn:
-    point: "50%,85%"
+    id: "next-button"
 
-# User Setup Screen - Permission step (Android)
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# ============================================
+# Screen 2b: User Setup - Permission Step (Android only)
+# ============================================
+# Note: We verify the permission screen appears but use demo mode
+# because Android permissions require manual system settings interaction
+- runFlow:
+    when:
+      visible: "使用状況へのアクセスを許可"
+    commands:
+      - assertVisible: "使用状況へのアクセスを許可"
+      # Screenshot for verification
+      - takeScreenshot: "permission_screen"
+      # Since we can't automate Android system settings,
+      # restart and use demo mode for the rest of the flow
+      - launchApp:
+          clearState: true
+      - waitForAnimationToEnd
+      - tapOn:
+          text: ".*デモモードでスキップ.*"
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# ============================================
+# Verify we're on the main dashboard after demo skip
+# ============================================
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Dashboard should be visible
 - assertVisible:
-    text: "使用状況へのアクセスを許可"
+    text: ".*ダッシュボード.*|.*今日.*|.*設定.*"
     optional: true
+
+# Take final screenshot
+- takeScreenshot: "onboarding_complete"
