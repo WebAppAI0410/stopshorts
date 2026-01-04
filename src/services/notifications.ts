@@ -221,10 +221,10 @@ export function handleNotificationResponse(
     // Navigate to the appropriate screen
     switch (data.screen) {
       case 'ai':
-        router.push('/(main)/intervention/ai');
+        router.push('/(main)/ai');
         break;
       case 'stats':
-        router.push('/(main)/stats');
+        router.push('/(main)/statistics');
         break;
       default:
         if (__DEV__) {
