@@ -13,6 +13,7 @@ import {
   DEFAULT_LONG_TERM_MEMORY,
   LONG_TERM_LIMITS,
 } from '../types/ai';
+import { secureStorage, migrateToSecureStorage } from '../utils/secureStorage';
 
 // Utility to generate unique IDs
 function generateId(): string {
@@ -291,8 +292,12 @@ export const useAIStore = create<AIStore>()(
 
       loadMemory: async () => {
         try {
-          // Load long-term memory
-          const memoryJson = await AsyncStorage.getItem(AI_MEMORY_KEY);
+          // Migrate from AsyncStorage to SecureStorage if needed
+          await migrateToSecureStorage(AI_MEMORY_KEY);
+          await migrateToSecureStorage(AI_SESSIONS_KEY);
+
+          // Load long-term memory from secure storage
+          const memoryJson = await secureStorage.getItem(AI_MEMORY_KEY);
           if (memoryJson) {
             const memory: LongTermMemory = JSON.parse(memoryJson);
             set({ longTermMemory: memory });
@@ -300,8 +305,8 @@ export const useAIStore = create<AIStore>()(
             set({ longTermMemory: DEFAULT_LONG_TERM_MEMORY });
           }
 
-          // Load session summaries
-          const sessionsJson = await AsyncStorage.getItem(AI_SESSIONS_KEY);
+          // Load session summaries from secure storage
+          const sessionsJson = await secureStorage.getItem(AI_SESSIONS_KEY);
           if (sessionsJson) {
             const summaries: SessionSummary[] = JSON.parse(sessionsJson);
             set({ sessionSummaries: summaries });
@@ -319,13 +324,13 @@ export const useAIStore = create<AIStore>()(
 
         try {
           if (longTermMemory) {
-            await AsyncStorage.setItem(
+            await secureStorage.setItem(
               AI_MEMORY_KEY,
               JSON.stringify(longTermMemory)
             );
           }
 
-          await AsyncStorage.setItem(
+          await secureStorage.setItem(
             AI_SESSIONS_KEY,
             JSON.stringify(sessionSummaries)
           );
@@ -338,6 +343,10 @@ export const useAIStore = create<AIStore>()(
 
       clearMemory: async () => {
         try {
+          // Remove from both secure storage and AsyncStorage (for migration cleanup)
+          await secureStorage.removeItem(AI_MEMORY_KEY);
+          await secureStorage.removeItem(AI_SESSIONS_KEY);
+          // Also clean up any remaining AsyncStorage data from before migration
           await AsyncStorage.removeItem(AI_MEMORY_KEY);
           await AsyncStorage.removeItem(AI_SESSIONS_KEY);
           set({
