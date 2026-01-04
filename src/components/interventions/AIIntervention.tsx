@@ -37,6 +37,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAIStore, selectMessages } from '../../stores/useAIStore';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
 import { performanceMonitor } from '../../utils/performanceMonitor';
+import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import { t } from '../../i18n';
 import { Button } from '../ui';
 import type { Message } from '../../types/ai';
@@ -48,6 +49,8 @@ interface AIInterventionProps {
   onProceed: () => void;
   /** Callback when user dismisses (goes home) */
   onDismiss: () => void;
+  /** Callback when user chooses friction intervention as fallback (offline) */
+  onFallbackToFriction?: () => void;
   /** Minimum messages before showing decision buttons (default: 2) */
   minMessages?: number;
 }
@@ -56,12 +59,14 @@ export function AIIntervention({
   blockedAppName,
   onProceed,
   onDismiss,
+  onFallbackToFriction,
   minMessages = 2,
 }: AIInterventionProps) {
   const { colors, typography, spacing, borderRadius } = useTheme();
   const flatListRef = useRef<FlatList>(null);
   const mountMeasuredRef = useRef(false);
   const llmResponsePendingRef = useRef(false);
+  const { isOffline } = useNetworkStatus();
 
   const [inputText, setInputText] = useState('');
   const [showButtons, setShowButtons] = useState(false);
@@ -247,6 +252,50 @@ export function AIIntervention({
       </View>
     </Animated.View>
   );
+
+  // Render offline fallback UI
+  if (isOffline) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <Animated.View
+          entering={FadeIn.duration(400)}
+          style={[styles.offlineContainer, { paddingHorizontal: spacing.gutter }]}
+        >
+          <View style={[styles.offlineIcon, { backgroundColor: colors.textMuted + '20', borderRadius: borderRadius.full }]}>
+            <Ionicons name="cloud-offline-outline" size={48} color={colors.textMuted} />
+          </View>
+          <Text style={[typography.h2, { color: colors.textPrimary, textAlign: 'center', marginTop: spacing.lg }]}>
+            {t('intervention.ai.offline.title')}
+          </Text>
+          <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.sm }]}>
+            {t('intervention.ai.offline.message')}
+          </Text>
+          <View style={[styles.offlineButtons, { marginTop: spacing.xl }]}>
+            {onFallbackToFriction && (
+              <Button
+                title={t('intervention.ai.offline.useFriction')}
+                onPress={onFallbackToFriction}
+                variant="primary"
+                style={{ marginBottom: spacing.sm }}
+              />
+            )}
+            <Button
+              title={t('intervention.ai.quit')}
+              onPress={handleDismiss}
+              variant={onFallbackToFriction ? 'secondary' : 'primary'}
+              style={{ marginBottom: spacing.sm }}
+            />
+            <Button
+              title={t('intervention.ai.proceed')}
+              onPress={handleProceed}
+              variant="ghost"
+              size="sm"
+            />
+          </View>
+        </Animated.View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -481,5 +530,19 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  offlineContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  offlineIcon: {
+    width: 96,
+    height: 96,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  offlineButtons: {
+    width: '100%',
   },
 });
