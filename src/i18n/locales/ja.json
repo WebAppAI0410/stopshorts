@@ -936,6 +936,11 @@
         "quitButton": "アプリを閉じる",
         "proceedButton": "アプリを開く",
         "aiTyping": "AIコーチが返答を作成中"
+      },
+      "offline": {
+        "title": "オフラインです",
+        "message": "AIコーチはインターネット接続が必要です。",
+        "useFriction": "フリクション介入を使う"
       }
     },
     "settings": {
