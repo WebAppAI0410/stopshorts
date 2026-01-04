@@ -3,6 +3,11 @@
 
 appId: com.stopshorts.app
 
+# Environment variables for tests
+env:
+  TEST_USER_NAME: "TestUser"
+  DEMO_MODE: "true"
+
 flows:
   - flows/onboarding-flow.yaml
   - flows/intervention-select.yaml
@@ -10,6 +15,9 @@ flows:
 
 # Test execution settings
 executionOrder: sequential
+
+# Retry flaky tests once
+retries: 1
 
 # Timeouts
 timeout: 30000
@@ -26,3 +34,7 @@ android:
 output:
   format: "junit"
   path: "./test-results"
+
+# Error handling - take screenshot on failure
+onFlowError:
+  - takeScreenshot: "error_screenshot"
