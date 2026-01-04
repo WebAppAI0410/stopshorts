@@ -34,10 +34,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useAIStore, selectMessages } from '../../stores/useAIStore';
+import { useAIStore, selectMessages, selectModelReady } from '../../stores/useAIStore';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
 import { t } from '../../i18n';
 import { Button } from '../ui';
+import { ModelDownloadCard } from '../ai';
 import type { Message } from '../../types/ai';
 
 interface AIInterventionProps {
@@ -69,7 +70,10 @@ export function AIIntervention({
   const sendMessage = useAIStore((state) => state.sendMessage);
   const addAIGreeting = useAIStore((state) => state.addAIGreeting);
   const isGenerating = useAIStore((state) => state.isGenerating);
+  const checkModelStatus = useAIStore((state) => state.checkModelStatus);
+  const modelStatus = useAIStore((state) => state.modelStatus);
   const messages = useAIStore(selectMessages);
+  const isModelReady = useAIStore(selectModelReady);
 
   // Statistics
   const { recordIntervention } = useStatisticsStore();
@@ -85,8 +89,15 @@ export function AIIntervention({
     typingOpacity.value = withTiming(isGenerating ? 1 : 0, { duration: 200 });
   }, [isGenerating, typingOpacity]);
 
-  // Start session on mount with initial AI greeting
+  // Check model status on mount
   useEffect(() => {
+    checkModelStatus();
+  }, [checkModelStatus]);
+
+  // Start session on mount with initial AI greeting (only when model is ready)
+  useEffect(() => {
+    if (!isModelReady) return;
+
     startSession();
 
     // AI initiates the conversation with a greeting
@@ -101,7 +112,7 @@ export function AIIntervention({
       // End session on unmount
       endSession('navigation_away');
     };
-  }, [startSession, endSession, addAIGreeting, blockedAppName]);
+  }, [startSession, endSession, addAIGreeting, blockedAppName, isModelReady]);
 
   // Show decision buttons after minimum exchanges (excluding initial greeting)
   useEffect(() => {
@@ -201,6 +212,52 @@ export function AIIntervention({
       </View>
     </Animated.View>
   );
+
+  // If model is not ready, show download card
+  if (!isModelReady) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header */}
+        <Animated.View
+          entering={FadeInDown.duration(400)}
+          style={[styles.header, { paddingHorizontal: spacing.gutter, borderBottomColor: colors.border }]}
+        >
+          <View style={[styles.headerIcon, { backgroundColor: colors.primary + '15', borderRadius: borderRadius.full }]}>
+            <Ionicons name="chatbubbles-outline" size={24} color={colors.primary} />
+          </View>
+          <View style={styles.headerText}>
+            <Text style={[typography.h3, { color: colors.textPrimary }]}>
+              {t('intervention.ai.title')}
+            </Text>
+            <Text style={[typography.caption, { color: colors.textMuted }]}>
+              {modelStatus === 'downloading'
+                ? t('intervention.ai.modelDownloading')
+                : modelStatus === 'unavailable'
+                  ? t('intervention.ai.modelUnavailable')
+                  : t('intervention.ai.subtitle', { app: blockedAppName })}
+            </Text>
+          </View>
+        </Animated.View>
+
+        {/* Model Download Card */}
+        <View style={[styles.modelContainer, { paddingHorizontal: spacing.gutter }]}>
+          <ModelDownloadCard />
+        </View>
+
+        {/* Dismiss button for unavailable model */}
+        <Animated.View
+          entering={FadeInUp.duration(400)}
+          style={[styles.buttonsContainer, { paddingHorizontal: spacing.gutter, paddingBottom: spacing.lg }]}
+        >
+          <Button
+            title={t('intervention.ai.quit')}
+            onPress={onDismiss}
+            variant="primary"
+          />
+        </Animated.View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -399,6 +456,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
+  },
+  modelContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 20,
   },
   buttonsContainer: {
     paddingTop: 8,

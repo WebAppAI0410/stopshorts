@@ -6,6 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { Button, SelectionCard } from '../../src/components/ui';
+import { ModelDownloadCard } from '../../src/components/ai';
 import { screenTimeService } from '../../src/native/ScreenTimeModule';
 import { t } from '../../src/i18n';
 import type { InterventionTiming, InterventionDelayMinutes, InterventionType } from '../../src/types';
@@ -142,6 +143,13 @@ export default function InterventionSettingsScreen() {
                         onPress={() => setInterventionType('ai')}
                         icon="sparkles"
                     />
+
+                    {/* AI Model Download Card (shown when AI is selected) */}
+                    {interventionType === 'ai' && (
+                        <View style={{ marginTop: spacing.md }}>
+                            <ModelDownloadCard />
+                        </View>
+                    )}
                 </Animated.View>
 
                 {/* Timing Selection */}
@@ -265,9 +273,11 @@ export default function InterventionSettingsScreen() {
                             ? t('intervention.settings.howItWorks.friction')
                             : interventionType === 'mirror'
                                 ? t('intervention.settings.howItWorks.mirror')
-                                : timing === 'immediate'
-                                    ? t('intervention.settings.howItWorks.breathingImmediate')
-                                    : t('intervention.settings.howItWorks.breathingDelayed', { minutes: delayMinutes })}
+                                : interventionType === 'ai'
+                                    ? t('intervention.settings.howItWorks.ai')
+                                    : timing === 'immediate'
+                                        ? t('intervention.settings.howItWorks.breathingImmediate')
+                                        : t('intervention.settings.howItWorks.breathingDelayed', { minutes: delayMinutes })}
                     </Text>
                 </Animated.View>
             </ScrollView>

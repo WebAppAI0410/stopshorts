@@ -415,37 +415,110 @@ export const useAIStore = create<AIStore>()(
 // Helper Functions
 // ============================================
 
+// Import other stores for context building
+// Note: We use dynamic imports to avoid circular dependencies
+const getAppStoreState = () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useAppStore } = require('./useAppStore');
+  return useAppStore.getState();
+};
+
+const getStatisticsStoreState = () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useStatisticsStore } = require('./useStatisticsStore');
+  return useStatisticsStore.getState();
+};
+
 /**
- * Default user stats for context building
- * In production, these should come from the actual app state
+ * Get user stats from actual app state
  */
-function getDefaultUserStats(): UserStats {
-  return {
-    todayOpens: 0,
-    todayBlocked: 0,
-    weeklyTrend: 'stable',
-    streakDays: 0,
-  };
+function getUserStats(): UserStats {
+  try {
+    const statisticsState = getStatisticsStoreState();
+    const todayStats = statisticsState.getTodayStats();
+    const streak = statisticsState.getStreak();
+
+    // Calculate weekly trend
+    const weeklyTrend = statisticsState.getWeeklyTrend?.() || [];
+    let trend: 'improving' | 'stable' | 'declining' = 'stable';
+    if (weeklyTrend.length >= 2) {
+      const recent = weeklyTrend[weeklyTrend.length - 1] || 0;
+      const previous = weeklyTrend[weeklyTrend.length - 2] || 0;
+      if (recent < previous * 0.9) {
+        trend = 'improving';
+      } else if (recent > previous * 1.1) {
+        trend = 'declining';
+      }
+    }
+
+    return {
+      todayOpens: todayStats?.interventions?.triggered || 0,
+      todayBlocked: todayStats?.interventions?.dismissed || 0,
+      weeklyTrend: trend,
+      streakDays: streak || 0,
+    };
+  } catch {
+    // Fallback to defaults if stores are not available
+    return {
+      todayOpens: 0,
+      todayBlocked: 0,
+      weeklyTrend: 'stable',
+      streakDays: 0,
+    };
+  }
 }
 
 /**
- * Default user goals for context building
+ * Get user goals from actual app state
  */
-function getDefaultUserGoals(): UserGoals {
-  return {
-    primary: 'ショート動画の使用時間を減らす',
-    purpose: 'より有意義な時間の使い方をするため',
-  };
+function getUserGoals(): UserGoals {
+  try {
+    const appState = getAppStoreState();
+
+    // Map purpose to display text
+    const purposeMap: Record<string, string> = {
+      time_reclaim: '時間を取り戻す',
+      productivity: '生産性を向上する',
+      mental_health: 'メンタルヘルスを改善する',
+      sleep: '睡眠を改善する',
+      focus: '集中力を高める',
+    };
+
+    const purpose = appState.purpose
+      ? purposeMap[appState.purpose] || 'より良い習慣を身につける'
+      : 'より有意義な時間の使い方をする';
+
+    return {
+      primary: 'ショート動画の使用時間を減らす',
+      purpose,
+    };
+  } catch {
+    // Fallback to defaults
+    return {
+      primary: 'ショート動画の使用時間を減らす',
+      purpose: 'より有意義な時間の使い方をするため',
+    };
+  }
 }
 
 /**
- * Default training progress
+ * Get training progress from actual app state
  */
-function getDefaultTrainingProgress(): TrainingProgress {
-  return {
-    completedTopics: [],
-    currentLevel: 1,
-  };
+function getTrainingProgress(): TrainingProgress {
+  try {
+    const appState = getAppStoreState();
+
+    return {
+      completedTopics: appState.trainingProgress?.completedTopics || [],
+      currentLevel: appState.trainingProgress?.currentLevel || 1,
+    };
+  } catch {
+    // Fallback to defaults
+    return {
+      completedTopics: [],
+      currentLevel: 1,
+    };
+  }
 }
 
 /**
@@ -461,11 +534,10 @@ async function generateAIResponse(
   // Build prompts using the prompt builder
   const systemPrompt = buildSystemPrompt(personaId);
 
-  // Get user stats from app state (for now, use defaults)
-  // TODO: Connect to actual app state for real stats
-  const stats = getDefaultUserStats();
-  const goals = getDefaultUserGoals();
-  const training = getDefaultTrainingProgress();
+  // Get user stats from actual app state
+  const stats = getUserStats();
+  const goals = getUserGoals();
+  const training = getTrainingProgress();
 
   const userContext = buildUserContext(stats, goals, training, longTermMemory);
   const longTermSummary = buildLongTermSummary(longTermMemory);

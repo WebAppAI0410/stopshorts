@@ -191,17 +191,25 @@
   - ⚠️ Gemma 3n E2Bは.task形式のため非採用（react-native-executorchは.pte必須）
   - Qwen 3 0.6Bは公式.pteファイル提供済み
 
-### Task 5.2: LLMエンジン実装
-- [ ] react-native-executorch セットアップ
-  - `npm install react-native-executorch`
-  - `npx expo prebuild`
-- [ ] Qwen 3 0.6B モデル統合
+### Task 5.2: LLMエンジン実装 ✅
+- [x] react-native-executorch セットアップ
+  - `npm install react-native-executorch` (v0.6.0)
+  - `npx expo prebuild` (Development Build必須)
+- [x] Qwen 3 0.6B モデル統合
   - モデル: [software-mansion/react-native-executorch-qwen-3](https://huggingface.co/software-mansion/react-native-executorch-qwen-3)
-  - `useLLM({ model: QWEN_3_0_6B })` フック使用
-- [ ] デバイス互換性チェック（RAM ≥ 2GB, Storage ≥ 500MB）
-- [ ] 推論ラッパー作成（ExecutorchLLMService）
-- [ ] 非対応時のUI（タブ非表示/無効化）
-> **注記**: 現在はMock LLMで動作。本番LLM実装は後続で対応。
+  - `ExecutorchLLMService` で統合 (`src/services/ai/executorchLLM.ts`)
+- [x] デバイス互換性チェック（RAM ≥ 2GB, Storage ≥ 500MB）
+  - `checkAvailability()` メソッドで実装
+- [x] 推論ラッパー作成（ExecutorchLLMService）
+  - `src/services/ai/executorchLLM.ts` で実装
+  - `getLLMService()` ファクトリーパターンで取得
+- [x] useAIStore統合
+  - `downloadModel()`, `checkModelStatus()`, `generateAIResponse()` を実LLM対応
+- [x] モデルダウンロードUI
+  - `ModelDownloadCard` コンポーネント (`src/components/ai/ModelDownloadCard.tsx`)
+  - コンパクト版とフルカード版を提供
+- [ ] 非対応時のUI（タブ非表示/無効化）→ 画面統合時に対応
+> **完了日**: 2026-01-04
 
 ### Task 5.3: システムプロンプト設計 ✅
 - [x] 固定システムプロンプト作成（動的要素なし）
