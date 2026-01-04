@@ -171,7 +171,7 @@ export default function AppSelectionScreen() {
                                 marginBottom: spacing.md,
                             }
                         ]}>
-                            追加したアプリ
+                            {t('onboarding.v3.appSelection.addedApps')}
                         </Text>
                         <View style={styles.optionsContainer}>
                             {customApps.map((app, index) => (

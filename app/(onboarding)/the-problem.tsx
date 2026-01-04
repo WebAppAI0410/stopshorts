@@ -1,10 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRouter, Href } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, ProgressIndicator, Header } from '../../src/components/ui';
+import { OnboardingScreenTemplate } from '../../src/components/templates';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { t } from '../../src/i18n';
 
@@ -41,163 +40,115 @@ export default function TheProblemScreen() {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <Header showBack />
-
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.gutter }]}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* Title and Subtitle */}
-                <Animated.View entering={FadeInUp.duration(600).delay(100)}>
-                    <Text style={[
-                        typography.h1,
-                        {
-                            color: colors.textPrimary,
-                            marginBottom: spacing.sm,
-                        }
-                    ]}>
-                        {t('onboarding.v3.theProblem.title')}
-                    </Text>
-                    <Text style={[
-                        typography.bodyLarge,
-                        {
-                            color: colors.textSecondary,
-                            marginBottom: spacing.xl,
-                        }
-                    ]}>
-                        {t('onboarding.v3.theProblem.subtitle')}
-                    </Text>
-                </Animated.View>
-
-                {/* Problem Cards */}
-                <View style={styles.cardsContainer}>
-                    {problemCards.map((card, index) => (
-                        <Animated.View
-                            key={card.titleKey}
-                            entering={FadeInRight.duration(600).delay(200 + index * 100)}
+        <OnboardingScreenTemplate
+            title={t('onboarding.v3.theProblem.title')}
+            subtitle={t('onboarding.v3.theProblem.subtitle')}
+            currentStep={3}
+            buttonText={t('common.next')}
+            onButtonPress={handleContinue}
+            scrollContentPaddingBottom={120}
+        >
+            {/* Problem Cards */}
+            <View style={styles.cardsContainer}>
+                {problemCards.map((card, index) => (
+                    <Animated.View
+                        key={card.titleKey}
+                        entering={FadeInRight.duration(600).delay(200 + index * 100)}
+                    >
+                        <View
+                            style={[
+                                styles.card,
+                                {
+                                    backgroundColor: colors.backgroundCard,
+                                    borderRadius: borderRadius.lg,
+                                    padding: spacing.lg,
+                                    borderWidth: 1,
+                                    borderColor: colors.border,
+                                }
+                            ]}
                         >
-                            <View
-                                style={[
-                                    styles.card,
-                                    {
-                                        backgroundColor: colors.backgroundCard,
-                                        borderRadius: borderRadius.lg,
-                                        padding: spacing.lg,
-                                        borderWidth: 1,
-                                        borderColor: colors.border,
-                                    }
-                                ]}
-                            >
-                                <View style={styles.cardHeader}>
-                                    <View
-                                        style={[
-                                            styles.iconContainer,
-                                            {
-                                                backgroundColor: colors.accentMuted,
-                                                borderRadius: borderRadius.md,
-                                            }
-                                        ]}
-                                    >
-                                        <Ionicons name={card.icon} size={24} color={colors.accent} />
-                                    </View>
-                                    <Text style={[
-                                        typography.h3,
+                            <View style={styles.cardHeader}>
+                                <View
+                                    style={[
+                                        styles.iconContainer,
                                         {
-                                            color: colors.textPrimary,
-                                            flex: 1,
-                                            marginLeft: spacing.md,
+                                            backgroundColor: colors.accentMuted,
+                                            borderRadius: borderRadius.md,
                                         }
-                                    ]}>
-                                        {t(card.titleKey)}
-                                    </Text>
+                                    ]}
+                                >
+                                    <Ionicons name={card.icon} size={24} color={colors.accent} />
                                 </View>
                                 <Text style={[
-                                    typography.body,
+                                    typography.h3,
                                     {
-                                        color: colors.textSecondary,
-                                        marginTop: spacing.sm,
-                                        lineHeight: 24,
+                                        color: colors.textPrimary,
+                                        flex: 1,
+                                        marginLeft: spacing.md,
                                     }
                                 ]}>
-                                    {t(card.descriptionKey)}
+                                    {t(card.titleKey)}
                                 </Text>
                             </View>
-                        </Animated.View>
-                    ))}
-                </View>
+                            <Text style={[
+                                typography.body,
+                                {
+                                    color: colors.textSecondary,
+                                    marginTop: spacing.sm,
+                                    lineHeight: 24,
+                                }
+                            ]}>
+                                {t(card.descriptionKey)}
+                            </Text>
+                        </View>
+                    </Animated.View>
+                ))}
+            </View>
 
-                {/* Footnote */}
-                <Animated.View
-                    entering={FadeInUp.duration(600).delay(600)}
-                    style={[
-                        styles.footnoteContainer,
-                        {
-                            backgroundColor: colors.surface,
-                            borderRadius: borderRadius.lg,
-                            padding: spacing.lg,
-                            marginTop: spacing.xl,
-                            borderLeftWidth: 4,
-                            borderLeftColor: colors.accent,
-                        }
-                    ]}
-                >
-                    <View style={styles.footnoteHeader}>
-                        <Ionicons name="information-circle" size={20} color={colors.accent} />
-                        <Text style={[
-                            typography.caption,
-                            {
-                                color: colors.accent,
-                                fontWeight: '600',
-                                marginLeft: spacing.xs,
-                            }
-                        ]}>
-                            {t('onboarding.v3.theProblem.footnoteLabel')}
-                        </Text>
-                    </View>
+            {/* Footnote */}
+            <Animated.View
+                entering={FadeInUp.duration(600).delay(600)}
+                style={[
+                    styles.footnoteContainer,
+                    {
+                        backgroundColor: colors.surface,
+                        borderRadius: borderRadius.lg,
+                        padding: spacing.lg,
+                        marginTop: spacing.xl,
+                        borderLeftWidth: 4,
+                        borderLeftColor: colors.accent,
+                    }
+                ]}
+            >
+                <View style={styles.footnoteHeader}>
+                    <Ionicons name="information-circle" size={20} color={colors.accent} />
                     <Text style={[
-                        typography.body,
+                        typography.caption,
                         {
-                            color: colors.textSecondary,
-                            marginTop: spacing.sm,
-                            lineHeight: 22,
+                            color: colors.accent,
+                            fontWeight: '600',
+                            marginLeft: spacing.xs,
                         }
                     ]}>
-                        {t('onboarding.v3.theProblem.footnote')}
+                        {t('onboarding.v3.theProblem.footnoteLabel')}
                     </Text>
-                </Animated.View>
-            </ScrollView>
-
-            {/* Footer */}
-            <Animated.View
-                entering={FadeInUp.duration(600).delay(800)}
-                style={[styles.footer, { paddingHorizontal: spacing.gutter }]}
-            >
-                <Button
-                    title={t('common.next')}
-                    onPress={handleContinue}
-                    size="lg"
-                />
-                <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={11} currentStep={3} />
                 </View>
+                <Text style={[
+                    typography.body,
+                    {
+                        color: colors.textSecondary,
+                        marginTop: spacing.sm,
+                        lineHeight: 22,
+                    }
+                ]}>
+                    {t('onboarding.v3.theProblem.footnote')}
+                </Text>
             </Animated.View>
-        </SafeAreaView>
+        </OnboardingScreenTemplate>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingTop: 8,
-        paddingBottom: 120,
-    },
     cardsContainer: {
         gap: 16,
     },
@@ -228,9 +179,5 @@ const styles = StyleSheet.create({
     footnoteHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-    },
-    footer: {
-        paddingTop: 20,
-        paddingBottom: 40,
     },
 });
