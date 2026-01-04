@@ -210,6 +210,8 @@ export function MirrorIntervention({
                 styles.permissionButton,
                 { backgroundColor: colors.primary + '20', borderRadius: borderRadius.lg },
               ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('intervention.mirror.enableCamera')}
             >
               <Text style={[typography.body, { color: colors.primary }]}>
                 {t('intervention.mirror.enableCamera')}
@@ -326,6 +328,8 @@ export function MirrorIntervention({
               styles.skipButton,
               { opacity: pressed ? 0.7 : 1 },
             ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('intervention.mirror.skip')}
           >
             <Text style={[typography.caption, { color: colors.textMuted }]}>
               {t('intervention.mirror.skip')}

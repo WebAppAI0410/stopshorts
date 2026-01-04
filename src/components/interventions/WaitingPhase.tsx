@@ -83,6 +83,9 @@ export function WaitingPhase({ waitSeconds, onComplete }: WaitingPhaseProps) {
               backgroundColor: colors.backgroundCard,
             },
           ]}
+          accessible={true}
+          accessibilityRole="timer"
+          accessibilityLabel={t('intervention.friction.waiting.countdownLabel', { seconds: remaining })}
         >
           {/* Progress ring effect using border */}
           <View
@@ -98,10 +101,10 @@ export function WaitingPhase({ waitSeconds, onComplete }: WaitingPhaseProps) {
               },
             ]}
           />
-          <Text style={[styles.countdownText, { color: colors.textPrimary }]}>
+          <Text style={[styles.countdownText, { color: colors.textPrimary }]} importantForAccessibility="no">
             {remaining}
           </Text>
-          <Text style={[typography.caption, { color: colors.textSecondary }]}>
+          <Text style={[typography.caption, { color: colors.textSecondary }]} importantForAccessibility="no">
             {t('intervention.friction.waiting.seconds', { seconds: remaining })}
           </Text>
         </View>

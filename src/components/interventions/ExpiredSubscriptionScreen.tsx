@@ -60,8 +60,13 @@ export function ExpiredSubscriptionScreen({
             {t('subscription.expired.featuresTitle')}
           </Text>
 
-          {['interventions', 'training', 'statistics'].map((feature, index) => (
-            <View key={feature} style={styles.featureRow}>
+          {['interventions', 'training', 'statistics'].map((feature) => (
+            <View
+              key={feature}
+              style={styles.featureRow}
+              accessible={true}
+              accessibilityLabel={t(`subscription.expired.features.${feature}`)}
+            >
               <Ionicons name="checkmark-circle" size={20} color={colors.success} />
               <Text style={[typography.body, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
                 {t(`subscription.expired.features.${feature}`)}

@@ -64,6 +64,9 @@ export function ConfirmPhase({
             borderRadius: borderRadius.lg,
           },
         ]}
+        accessible={true}
+        accessibilityRole="summary"
+        accessibilityLabel={intentionLabel}
       >
         <View style={styles.summaryRow}>
           <Ionicons
@@ -93,6 +96,9 @@ export function ConfirmPhase({
               borderRadius: borderRadius.md,
             },
           ]}
+          accessible={true}
+          accessibilityRole="alert"
+          accessibilityLabel={t('intervention.friction.confirm.warning', { count: dailyOpenCount })}
         >
           <Ionicons name="alert-circle-outline" size={20} color={colors.warning} />
           <Text
