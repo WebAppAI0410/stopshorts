@@ -115,4 +115,29 @@ export function addInterventionListener(listener: (event: InterventionEvent) => 
   return eventEmitter.addListener('onIntervention', listener);
 }
 
+/**
+ * Check if ScreenTimeAndroid native module is available.
+ * Use this before calling module methods to ensure null safety.
+ * @returns true if on Android and module loaded successfully
+ */
+export function isScreenTimeAndroidAvailable(): boolean {
+  return Platform.OS === 'android' && ScreenTimeAndroidModule !== null;
+}
+
+/**
+ * Get the ScreenTimeAndroid module with type narrowing.
+ * Throws an error if module is not available.
+ * Use isScreenTimeAndroidAvailable() first to check availability.
+ * @throws Error if not on Android or module failed to load
+ */
+export function getScreenTimeAndroidModule(): ScreenTimeAndroidModuleType {
+  if (!ScreenTimeAndroidModule) {
+    throw new Error(
+      '[ScreenTimeAndroid] Module not available. ' +
+      'Ensure you are on Android and the module is properly linked.'
+    );
+  }
+  return ScreenTimeAndroidModule;
+}
+
 export default ScreenTimeAndroidModule;
