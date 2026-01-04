@@ -592,6 +592,12 @@
   },
   "home": {
     "greeting": "おかえりなさい",
+    "training": {
+      "title": "心理トレーニング",
+      "completed": "トピック完了",
+      "viewAll": "すべて見る",
+      "progress": "{{completed}}/{{total}}"
+    },
     "greetings": {
       "morning": "おはようございます",
       "afternoon": "こんにちは",
