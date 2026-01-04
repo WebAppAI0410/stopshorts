@@ -11,8 +11,19 @@ import {
   type LongTermMemory,
   type SessionSummary,
   DEFAULT_LONG_TERM_MEMORY,
+  DEFAULT_GENERATION_CONFIG,
   LONG_TERM_LIMITS,
 } from '../types/ai';
+import {
+  getLLMService,
+  buildSystemPrompt,
+  buildUserContext,
+  buildLongTermSummary,
+  formatConversationHistory,
+  type UserStats,
+  type UserGoals,
+  type TrainingProgress,
+} from '../services/ai';
 
 // Utility to generate unique IDs
 function generateId(): string {
@@ -245,12 +256,15 @@ export const useAIStore = create<AIStore>()(
         set({ modelStatus: 'downloading', downloadProgress: 0 });
 
         try {
-          // Placeholder - actual implementation will use react-native-executorch
-          // Simulate download progress
-          for (let i = 0; i <= 100; i += 10) {
-            await new Promise((resolve) => setTimeout(resolve, 100));
-            set({ downloadProgress: i });
-          }
+          const llmService = getLLMService();
+
+          await llmService.downloadModel((progress) => {
+            set({ downloadProgress: Math.round(progress * 100) });
+          });
+
+          // Load model after download
+          set({ modelStatus: 'loading' });
+          await llmService.loadModel();
 
           set({ modelStatus: 'ready', downloadProgress: 100 });
         } catch (error) {
@@ -266,16 +280,24 @@ export const useAIStore = create<AIStore>()(
 
       checkModelStatus: async () => {
         try {
-          // Placeholder - actual implementation will check ExecuTorch model status
-          const isDownloaded = false; // Will check actual file existence
-          const isSupported = true; // Will check device capabilities
+          const llmService = getLLMService();
+          const availability = await llmService.checkAvailability();
 
-          if (!isSupported) {
-            set({ modelStatus: 'unavailable' });
-          } else if (isDownloaded) {
-            set({ modelStatus: 'ready' });
+          if (!availability.available) {
+            if (availability.reason === 'not_downloaded') {
+              set({ modelStatus: 'not_downloaded' });
+            } else if (availability.reason === 'unsupported_device') {
+              set({ modelStatus: 'unavailable' });
+            } else if (availability.reason === 'insufficient_memory') {
+              set({
+                modelStatus: 'error',
+                modelError: `メモリ不足: ${availability.availableMemoryMB}MB利用可能 / ${availability.requiredMemoryMB}MB必要`,
+              });
+            } else {
+              set({ modelStatus: 'not_downloaded' });
+            }
           } else {
-            set({ modelStatus: 'not_downloaded' });
+            set({ modelStatus: 'ready' });
           }
         } catch (error) {
           if (__DEV__) {
@@ -394,40 +416,86 @@ export const useAIStore = create<AIStore>()(
 // ============================================
 
 /**
- * Generate AI response (placeholder - will be replaced with actual LLM integration)
+ * Default user stats for context building
+ * In production, these should come from the actual app state
+ */
+function getDefaultUserStats(): UserStats {
+  return {
+    todayOpens: 0,
+    todayBlocked: 0,
+    weeklyTrend: 'stable',
+    streakDays: 0,
+  };
+}
+
+/**
+ * Default user goals for context building
+ */
+function getDefaultUserGoals(): UserGoals {
+  return {
+    primary: 'ショート動画の使用時間を減らす',
+    purpose: 'より有意義な時間の使い方をするため',
+  };
+}
+
+/**
+ * Default training progress
+ */
+function getDefaultTrainingProgress(): TrainingProgress {
+  return {
+    completedTopics: [],
+    currentLevel: 1,
+  };
+}
+
+/**
+ * Generate AI response using LLM service
  */
 async function generateAIResponse(
   messages: Message[],
-  _personaId: PersonaId,
-  _longTermMemory: LongTermMemory | null
+  personaId: PersonaId,
+  longTermMemory: LongTermMemory | null
 ): Promise<string> {
-  // Placeholder responses based on message content
-  // This will be replaced with actual LLM integration via react-native-executorch
-  const lastMessage = messages[messages.length - 1];
-  const content = lastMessage?.content.toLowerCase() || '';
+  const llmService = getLLMService();
 
-  // Simple pattern matching for demo purposes
-  if (content.includes('つらい') || content.includes('難しい')) {
-    return 'その気持ち、よく分かります。少しずつでいいんですよ。今日、何か小さな一歩を踏み出せたことはありますか？';
+  // Build prompts using the prompt builder
+  const systemPrompt = buildSystemPrompt(personaId);
+
+  // Get user stats from app state (for now, use defaults)
+  // TODO: Connect to actual app state for real stats
+  const stats = getDefaultUserStats();
+  const goals = getDefaultUserGoals();
+  const training = getDefaultTrainingProgress();
+
+  const userContext = buildUserContext(stats, goals, training, longTermMemory);
+  const longTermSummary = buildLongTermSummary(longTermMemory);
+  const conversationHistory = formatConversationHistory(messages);
+
+  // Combine context into a single user context string
+  const fullContext = [
+    userContext,
+    longTermSummary ? `\n## 過去の記録\n${longTermSummary}` : '',
+    conversationHistory ? `\n## 会話履歴\n${conversationHistory}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  try {
+    const response = await llmService.generate({
+      messages,
+      systemPrompt,
+      userContext: fullContext,
+      config: DEFAULT_GENERATION_CONFIG,
+    });
+
+    return response.content;
+  } catch (error) {
+    if (__DEV__) {
+      console.error('[AIStore] LLM generation error:', error);
+    }
+    // Fallback to a default response on error
+    throw error;
   }
-
-  if (content.includes('開いて') || content.includes('見てしまった')) {
-    return 'なるほど、開いてしまったんですね。でも、こうして話してくれていること自体が大きな一歩です。何がきっかけで開きたくなりましたか？';
-  }
-
-  if (content.includes('できた') || content.includes('成功')) {
-    return 'すごい！その調子です。小さな成功を積み重ねることが大切ですね。どんな気持ちですか？';
-  }
-
-  // Default supportive response
-  const supportiveResponses = [
-    'もう少し教えてもらえますか？',
-    'その気持ち、大切にしてくださいね。',
-    '一緒に考えていきましょう。',
-    'それは大変でしたね。どうしたいですか？',
-  ];
-
-  return supportiveResponses[Math.floor(Math.random() * supportiveResponses.length)];
 }
 
 /**
