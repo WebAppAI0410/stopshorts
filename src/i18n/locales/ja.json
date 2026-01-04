@@ -622,7 +622,15 @@
     "demoMode": "デモモード",
     "demoModeDescription": "スクリーンタイム権限が有効になると、実際の保護が開始されます",
     "mockDataMode": "サンプルデータ表示中",
-    "mockDataDescription": "iOSでは実際のスクリーンタイムデータは取得できません。表示されているのはサンプルデータです。"
+    "mockDataDescription": "iOSでは実際のスクリーンタイムデータは取得できません。表示されているのはサンプルデータです。",
+    "todayUsage": "今日の使用時間",
+    "minutes": "{{value}} 分",
+    "interventionCount": "介入回数",
+    "count": "{{value}} 回",
+    "practiceIntervention": "介入を練習",
+    "practiceDescription": "呼吸ガイド・フリクションを体験",
+    "practice": "練習する",
+    "newBadge": "🎉 新しいバッジを獲得！"
   },
   "shield": {
     "title": "{{minutes}}分が経過しました",
@@ -684,7 +692,9 @@
       "urgeSurfingDuration": "衝動サーフィン時間",
       "urgeSurfingDurationDescription": "衝動サーフィンのガイド時間を選択してください。",
       "minutesValue": "{{minutes}}分",
-      "secondsValue": "{{seconds}}秒"
+      "secondsValue": "{{seconds}}秒",
+      "immediate": "即時",
+      "delayed": "遅延 {{minutes}}分"
     },
     "sleepProfile": {
       "title": "睡眠プロファイル",
@@ -697,7 +707,14 @@
       "alternative": "代替活動",
       "ifThen": "If-Thenプラン",
       "targetApps": "対象アプリ",
-      "appsCount": "{{count}}個のアプリ"
+      "appsCount": "{{count}}個のアプリ",
+      "targetAppsDescription": "トラッキング・介入対象のアプリを選択します。",
+      "addedApps": "追加したアプリ",
+      "addMoreApps": "追加のアプリを選ぶ",
+      "selectAtLeastOne": "少なくとも1つのアプリを選択してください。",
+      "saving": "保存中...",
+      "saveError": "保存エラー",
+      "saveErrorMessage": "設定の保存に失敗しました。もう一度お試しください。"
     },
     "comingSoon": {
       "title": "準備中",
@@ -761,11 +778,20 @@
   "statistics": {
     "title": "統計",
     "savedThisWeek": "今週の節約時間",
+    "weeklyUsageTime": "今週の使用時間",
     "streak": "連続日数",
     "days": "日",
     "keepMomentum": "この調子で続けましょう！",
     "interventions": "介入回数",
     "times": "回",
+    "surfing": "サーフィング",
+    "successRate": "成功率 {{percent}}%",
+    "earnedBadges": "獲得バッジ",
+    "noBadgesYet": "衝動サーフィングを完了してバッジを獲得しよう",
+    "surfingStats": "🌊 サーフィング統計",
+    "completedCount": "完了回数",
+    "savedTime": "節約時間",
+    "longestStreak": "最長連続",
     "mindfulPauses": "意識的な休憩を取りました。",
     "demoMode": "デモモード",
     "demoModeDescription": "スクリーンタイム機能が有効になると、実際のデータが表示されます"
@@ -780,6 +806,8 @@
     "yourGoal": "あなたの目標",
     "setYourGoal": "目標を設定",
     "achievements": "実績",
+    "enterNickname": "ニックネームを入力",
+    "selectIcon": "アイコンを選択",
     "goals": {
       "sleep": "睡眠改善",
       "study": "学習に集中",

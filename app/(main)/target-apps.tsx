@@ -129,7 +129,7 @@ export default function TargetAppsScreen() {
       handleBack();
     } catch (error) {
       console.error('[TargetApps] Failed to save:', error);
-      Alert.alert('保存エラー', '設定の保存に失敗しました。もう一度お試しください。');
+      Alert.alert(t('settings.yourSettings.saveError'), t('settings.yourSettings.saveErrorMessage'));
     } finally {
       setIsSaving(false);
     }
@@ -157,7 +157,7 @@ export default function TargetAppsScreen() {
             typography.body,
             { color: colors.textSecondary, marginBottom: spacing.xl }
           ]}>
-            トラッキング・介入対象のアプリを選択します。
+            {t('settings.yourSettings.targetAppsDescription')}
           </Text>
         </Animated.View>
 
@@ -189,7 +189,7 @@ export default function TargetAppsScreen() {
                 marginBottom: spacing.md,
               }
             ]}>
-              追加したアプリ
+              {t('settings.yourSettings.addedApps')}
             </Text>
             <View style={styles.optionsContainer}>
               {customApps.map((app, index) => (
@@ -266,7 +266,7 @@ export default function TargetAppsScreen() {
 
         <Animated.View entering={FadeInDown.duration(500).delay(650)} style={{ marginTop: spacing.lg }}>
           <Button
-            title="追加のアプリを選ぶ"
+            title={t('settings.yourSettings.addMoreApps')}
             onPress={handleAddMore}
             variant="outline"
           />
@@ -275,7 +275,7 @@ export default function TargetAppsScreen() {
         {showError && (
           <Animated.View entering={FadeInDown.duration(400)} style={{ marginTop: spacing.md }}>
             <Text style={[typography.caption, { color: colors.error, textAlign: 'center' }]}>
-              少なくとも1つのアプリを選択してください。
+              {t('settings.yourSettings.selectAtLeastOne')}
             </Text>
           </Animated.View>
         )}
@@ -286,7 +286,7 @@ export default function TargetAppsScreen() {
         style={[styles.footer, { paddingHorizontal: spacing.gutter, backgroundColor: colors.background }]}
       >
         <Button
-          title={isSaving ? '保存中...' : '保存'}
+          title={isSaving ? t('settings.yourSettings.saving') : t('common.save')}
           onPress={handleSave}
           disabled={isSaving}
           size="lg"

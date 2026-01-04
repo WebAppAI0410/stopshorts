@@ -60,8 +60,8 @@ export default function SettingsScreen() {
     const { reset, urgeSurfingDurationSeconds, goal, alternativeActivity, customAlternativeActivity, ifThenPlan, selectedApps, customApps, interventionSettings } = useAppStore();
     const selectedCustomCount = customApps.filter((app) => app.isSelected !== false).length;
     const interventionLabel = interventionSettings.timing === 'immediate'
-        ? '即時'
-        : `遅延 ${interventionSettings.delayMinutes}分`;
+        ? t('settings.limits.immediate')
+        : t('settings.limits.delayed', { minutes: interventionSettings.delayMinutes });
 
     // Display custom text if available, otherwise show the translated option
     const getAlternativeLabel = () => {
