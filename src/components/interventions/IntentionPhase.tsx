@@ -70,7 +70,7 @@ export function IntentionPhase({ onSelect }: IntentionPhaseProps) {
               activeOpacity={0.7}
               onPress={() => handleOptionPress(option.id)}
               accessibilityRole="radio"
-              accessibilityState={{ selected: isSelected }}
+              accessibilityState={{ checked: isSelected }}
               accessibilityLabel={t(option.labelKey)}
               style={[
                 styles.optionCard,
