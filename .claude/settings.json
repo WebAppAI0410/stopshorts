@@ -13,8 +13,7 @@
       "Write",
       "Edit",
       "Glob",
-      "Grep",
-      "mcp__maestro__*"
+      "Grep"
     ],
     "deny": [
       "Read(.env)",
