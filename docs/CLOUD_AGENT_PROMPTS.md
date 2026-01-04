@@ -46,7 +46,7 @@ Requirements → Design → Tasks → Implementation → Review
 ### Phase 3 残タスク
 - Task 3.2: if-then.tsx の無効化・ルーティング更新
 - Task 3.4: AI・トレーニングのモックアップ改善、課金フロー連携
-- Task 3.5: InterventionGate コンポーネント、期限切れUI実装
+- Task 3.5: 各介入画面でのアクセス制御適用（InterventionGate使用）
 
 ### Phase 5 残タスク
 - Task 5.2: ExecuTorch/Gemma統合（ネイティブモジュール必要）

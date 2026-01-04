@@ -134,12 +134,14 @@
 - [x] `useSubscriptionAccess()` フック作成 (→ design.md 10.2)
   - `hasFullAccess`, `isTrialing`, `isPaid`, `isExpired` の判定
   - 実装: `src/hooks/useSubscriptionAccess.ts`
-- [ ] `InterventionGate` コンポーネント作成 (→ design.md 10.3)
+- [x] `InterventionGate` コンポーネント作成 (→ design.md 10.3)
   - トライアル or 有料でのみ介入機能を表示
   - 期限切れ時は課金画面へリダイレクト
+  - 実装: `src/components/interventions/InterventionGate.tsx`
 - [ ] 各介入画面でアクセス制御を適用
   - Shield, Training, AI タブ
-- [ ] 期限切れUIの実装 (→ design.md 10.4)
+- [x] 期限切れUIの実装 (→ design.md 10.4)
+  - 実装: `src/components/interventions/ExpiredSubscriptionScreen.tsx`
 - [ ] トライアル中の全機能アクセス確認
 
 ---
