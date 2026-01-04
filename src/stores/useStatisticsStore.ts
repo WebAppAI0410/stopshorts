@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {
   DailyStatistics,
@@ -171,8 +171,9 @@ function getMondayWeekStart(date: Date): Date {
 }
 
 export const useStatisticsStore = create<StatisticsState>()(
-  persist(
-    (set, get) => ({
+  devtools(
+    persist(
+      (set, get) => ({
       dailyStats: {},
       lifetime: createEmptyLifetime(),
       interventionHistory: [],
@@ -347,7 +348,9 @@ export const useStatisticsStore = create<StatisticsState>()(
             },
           },
         });
-        console.log(`[StatisticsStore] Recorded ${totalMinutes} minutes for ${dateKey}`);
+        if (__DEV__) {
+          console.log(`[StatisticsStore] Recorded ${totalMinutes} minutes for ${dateKey}`);
+        }
       },
 
       recordTrainingSession: (minutes) => {
@@ -622,10 +625,12 @@ export const useStatisticsStore = create<StatisticsState>()(
           intentionHistory: [],
         });
       },
-    }),
-    {
-      name: 'stopshorts-statistics',
-      storage: createJSONStorage(() => AsyncStorage),
-    }
+      }),
+      {
+        name: 'stopshorts-statistics',
+        storage: createJSONStorage(() => AsyncStorage),
+      }
+    ),
+    { name: 'StatisticsStore', enabled: __DEV__ }
   )
 );

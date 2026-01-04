@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   type UserPurpose,
@@ -215,9 +215,10 @@ const initialState = {
 };
 
 export const useAppStore = create<AppState>()(
-  persist(
-    (set, get) => ({
-      ...initialState,
+  devtools(
+    persist(
+      (set, get) => ({
+        ...initialState,
 
       setUserName: (name) =>
         set({ userName: name }),
@@ -588,10 +589,12 @@ export const useAppStore = create<AppState>()(
           onboardingCommitment: null,
         });
       },
-    }),
-    {
-      name: 'stopshorts-storage',
-      storage: createJSONStorage(() => AsyncStorage),
-    }
+      }),
+      {
+        name: 'stopshorts-storage',
+        storage: createJSONStorage(() => AsyncStorage),
+      }
+    ),
+    { name: 'AppStore', enabled: __DEV__ }
   )
 );
