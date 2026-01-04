@@ -272,7 +272,8 @@
         "subtitle": "TikTok、YouTube Shorts、Instagram Reels。\n気づいたら1時間。その習慣を、終わりにします。",
         "appDescription": "StopShortsは、ショート動画アプリの使用を5分で強制的に意識させるアプリです。",
         "philosophy": "「習慣そのものを断ち切る」",
-        "startButton": "始める"
+        "startButton": "始める",
+        "demoSkip": "デモモードでスキップ →"
       },
       "motivation": {
         "title": "何を取り戻したいですか？",

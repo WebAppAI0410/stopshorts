@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
@@ -7,7 +7,7 @@ import { ShieldIcon } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
-import { getPersonalizedMessage, getCoachingContext } from '../../src/services/personalization';
+import { usePersonalizedMessage, useCoachingContext } from '../../src/hooks/usePersonalization';
 
 interface ShieldScreenProps {
     onClose?: () => void;
@@ -16,29 +16,13 @@ interface ShieldScreenProps {
 
 export default function ShieldScreen({ onClose, onExtend }: ShieldScreenProps) {
     const { colors, typography, spacing, borderRadius } = useTheme();
-    const {
-        interventionSettings,
-        purpose,
-        sleepProfile,
-        addictionAssessment,
-        implementationIntent,
-    } = useAppStore();
+    const interventionSettings = useAppStore((state) => state.interventionSettings);
 
     const thresholdMinutes = interventionSettings.delayMinutes;
 
-    // Get personalized message and coaching context
-    const personalizedData = useMemo(() => {
-        return getPersonalizedMessage(
-            purpose,
-            sleepProfile,
-            addictionAssessment,
-            implementationIntent
-        );
-    }, [purpose, sleepProfile, addictionAssessment, implementationIntent]);
-
-    const coachingContext = useMemo(() => {
-        return getCoachingContext(purpose, sleepProfile);
-    }, [purpose, sleepProfile]);
+    // Get personalized message and coaching context via hooks
+    const personalizedData = usePersonalizedMessage();
+    const coachingContext = useCoachingContext();
 
     const { message, warningLevel, implementationIntentText } = personalizedData;
     const { uiHints } = coachingContext;

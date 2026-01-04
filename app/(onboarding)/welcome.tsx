@@ -132,7 +132,7 @@ export default function WelcomeScreen() {
                     activeOpacity={0.7}
                 >
                     <Text style={[typography.caption, { color: colors.textMuted }]}>
-                        デモモードでスキップ →
+                        {t('onboarding.v3.welcome.demoSkip')}
                     </Text>
                 </TouchableOpacity>
             </Animated.View>

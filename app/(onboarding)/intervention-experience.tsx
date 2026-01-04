@@ -19,13 +19,27 @@ import type { InterventionType } from '../../src/types';
 
 type ExperiencePhase = 'intro' | 'experience' | 'complete';
 
+// Valid intervention types that can be experienced in onboarding
+const VALID_INTERVENTION_TYPES: InterventionType[] = ['breathing', 'friction', 'mirror', 'ai'];
+
+/**
+ * Validate intervention type from URL params
+ * Returns valid type or 'breathing' as default
+ */
+function validateInterventionType(value: string | undefined): InterventionType {
+  if (value && VALID_INTERVENTION_TYPES.includes(value as InterventionType)) {
+    return value as InterventionType;
+  }
+  return 'breathing';
+}
+
 export default function InterventionExperienceScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ type?: string }>();
   const { colors, typography, spacing, borderRadius } = useTheme();
   const { goal } = useAppStore();
 
-  const interventionType = (params.type as InterventionType) || 'breathing';
+  const interventionType = validateInterventionType(params.type);
   const [phase, setPhase] = useState<ExperiencePhase>('intro');
 
   const handleStartExperience = useCallback(() => {

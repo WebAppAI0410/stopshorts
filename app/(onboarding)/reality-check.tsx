@@ -41,10 +41,10 @@ export default function RealityCheckScreen() {
         setError(null);
         try {
             if (Platform.OS === 'android') {
-                console.log('[RealityCheck] Fetching Android usage data...');
+                if (__DEV__) console.log('[RealityCheck] Fetching Android usage data...');
 
                 const permissionStatus = await nativeScreenTime.getPermissionStatus();
-                console.log('[RealityCheck] Permission status:', JSON.stringify(permissionStatus));
+                if (__DEV__) console.log('[RealityCheck] Permission status:', JSON.stringify(permissionStatus));
 
                 if (!permissionStatus.usageStats) {
                     // No permission - show error, NOT mock
@@ -55,13 +55,13 @@ export default function RealityCheckScreen() {
 
                 // Get custom app packages from store
                 const customPackages = getCustomAppPackages();
-                console.log('[RealityCheck] Selected apps:', selectedApps);
-                console.log('[RealityCheck] Custom app packages:', customPackages);
+                if (__DEV__) console.log('[RealityCheck] Selected apps:', selectedApps);
+                if (__DEV__) console.log('[RealityCheck] Custom app packages:', customPackages);
 
                 // Fetch REAL monthly usage data with per-app breakdown from native
-                console.log('[RealityCheck] Fetching monthly usage with apps...');
+                if (__DEV__) console.log('[RealityCheck] Fetching monthly usage with apps...');
                 const monthlyUsageData = await nativeScreenTime.getMonthlyUsageWithApps(selectedApps, customPackages);
-                console.log('[RealityCheck] Monthly data:', JSON.stringify(monthlyUsageData));
+                if (__DEV__) console.log('[RealityCheck] Monthly data:', JSON.stringify(monthlyUsageData));
                 setMonthlyData({
                     monthlyTotal: monthlyUsageData.monthlyTotal,
                     dailyAverage: monthlyUsageData.dailyAverage,
@@ -80,18 +80,18 @@ export default function RealityCheckScreen() {
                 const customAppTotals: Record<string, { name: string; monthly: number; count: number }> = {};
 
                 // Aggregate by app ID using packageName from MONTHLY data
-                console.log('[RealityCheck] Processing monthly apps:', monthlyUsageData.apps.length, 'apps found');
-                console.log('[RealityCheck] Custom packages to match:', customPackages);
+                if (__DEV__) console.log('[RealityCheck] Processing monthly apps:', monthlyUsageData.apps.length, 'apps found');
+                if (__DEV__) console.log('[RealityCheck] Custom packages to match:', customPackages);
                 for (const app of monthlyUsageData.apps) {
-                    console.log('[RealityCheck] App:', app.bundleId, 'monthly minutes:', app.minutes);
+                    if (__DEV__) console.log('[RealityCheck] App:', app.bundleId, 'monthly minutes:', app.minutes);
                     const appId = PACKAGE_TO_APP_ID[app.bundleId];
                     if (appId) {
-                        console.log('[RealityCheck] Matched to default app:', appId);
+                        if (__DEV__) console.log('[RealityCheck] Matched to default app:', appId);
                         // Known target app - use monthly data
                         appTotals[appId].monthly += app.minutes;
                         appTotals[appId].count += app.openCount;
                     } else if (customPackages.includes(app.bundleId)) {
-                        console.log('[RealityCheck] Matched to custom app:', app.bundleId, 'name:', app.appName);
+                        if (__DEV__) console.log('[RealityCheck] Matched to custom app:', app.bundleId, 'name:', app.appName);
                         // Custom app - track separately
                         if (!customAppTotals[app.bundleId]) {
                             customAppTotals[app.bundleId] = { name: app.appName, monthly: 0, count: 0 };
@@ -99,7 +99,7 @@ export default function RealityCheckScreen() {
                         customAppTotals[app.bundleId].monthly += app.minutes;
                         customAppTotals[app.bundleId].count += app.openCount;
                     } else {
-                        console.log('[RealityCheck] No match for bundleId:', app.bundleId);
+                        if (__DEV__) console.log('[RealityCheck] No match for bundleId:', app.bundleId);
                     }
                 }
 
@@ -132,7 +132,7 @@ export default function RealityCheckScreen() {
                         });
                     }
                 }
-                console.log('[RealityCheck] Custom app usage:', customUsage);
+                if (__DEV__) console.log('[RealityCheck] Custom app usage:', customUsage);
 
                 // Fetch icons for custom apps
                 const customUsageWithIcons = await Promise.all(
@@ -145,7 +145,7 @@ export default function RealityCheckScreen() {
                         }
                     })
                 );
-                console.log('[RealityCheck] Custom app usage with icons:', customUsageWithIcons.length);
+                if (__DEV__) console.log('[RealityCheck] Custom app usage with icons:', customUsageWithIcons.length);
 
                 // Use real monthly data
                 const data: ScreenTimeData = {
@@ -157,20 +157,20 @@ export default function RealityCheckScreen() {
                     lastUpdated: new Date().toISOString(),
                 };
 
-                console.log('[RealityCheck] Final data - monthlyTotal:', data.weeklyTotal, 'appBreakdown:', data.appBreakdown.length, 'customApps:', customUsageWithIcons.length);
+                if (__DEV__) console.log('[RealityCheck] Final data - monthlyTotal:', data.weeklyTotal, 'appBreakdown:', data.appBreakdown.length, 'customApps:', customUsageWithIcons.length);
 
                 // Check if we have any usage (default apps OR custom apps)
                 const hasAnyUsage = monthlyUsageData.monthlyTotal > 0 || data.appBreakdown.length > 0 || customUsageWithIcons.length > 0;
                 if (!hasAnyUsage) {
                     // No usage data found
-                    console.log('[RealityCheck] ERROR: No data found, showing error UI');
+                    if (__DEV__) console.log('[RealityCheck] ERROR: No data found, showing error UI');
                     setError('使用データが見つかりませんでした。対象アプリを使用してから再度お試しください。');
                     setScreenTimeData(null);
                     setCustomAppUsage([]);
                     return;
                 }
 
-                console.log('[RealityCheck] SUCCESS: Data found, showing results');
+                if (__DEV__) console.log('[RealityCheck] SUCCESS: Data found, showing results');
 
                 setScreenTimeData(data);
                 // Persist for later onboarding steps
