@@ -15,32 +15,30 @@
 | **必要形式** | react-native-executorchは`.pte`形式が必要 |
 | **変換課題** | ExecuTorch形式への変換に技術的問題あり ([Issue #16411](https://github.com/pytorch/executorch/issues/16411)) |
 
-### 修正後の推奨
+### 最終決定（2026-01-04 確定）
 
 | 優先度 | モデル | 理由 |
 |--------|--------|------|
-| **1位** | Llama 3.2 1B | react-native-executorchで公式.pteファイル提供 |
-| **2位** | Qwen 3 | 119言語対応（日本語含む）、ExecuTorch対応 |
-| **3位** | Gemma 3n GGUF + llama.rn | 日本語優秀だが別ライブラリが必要 |
+| **採用** | **Qwen 3 0.6B** | 119言語対応、公式.pte提供、最軽量（70-80%対応） |
 
 **詳細な実装計画**: [llm-integration-plan.md](./llm-integration-plan.md)
 
 ---
 
-## 🎯 採用決定 (改訂)
+## 🎯 採用決定（最終）
 
 | 項目 | 決定内容 |
 |------|---------|
-| **採用モデル** | **Llama 3.2 1B** (Phase 1) → Qwen 3 (Phase 2検討) |
+| **採用モデル** | **Qwen 3 0.6B** |
 | **統合方法** | react-native-executorch |
 | **ダウンロード** | オンボーディング後、オンデマンド |
-| **決定日** | 2026年1月4日（改訂） |
+| **決定日** | 2026年1月4日（最終確定） |
 
 ### 選定理由
-1. **公式サポート** → react-native-executorchで.pteファイル提供済み
-2. **Expo SDK 54互換** → StopShortsの現環境と完全互換
-3. **軽量** → 500MB程度、2GB RAMで動作可能
-4. **日本語** → 限定的だが、必要に応じてQwen 3へ移行可能
+1. **公式サポート** → [react-native-executorch-qwen-3](https://huggingface.co/software-mansion/react-native-executorch-qwen-3)で.pte提供
+2. **119言語対応** → 日本語サポート良好
+3. **最軽量** → 0.5GB VRAM、70-80%のデバイスで動作
+4. **Expo SDK 54互換** → StopShortsの現環境と完全互換
 
 ---
 
@@ -48,11 +46,11 @@
 
 | プラットフォーム | 対応状況 | 推奨アプローチ | 対応デバイス率 |
 |-----------------|---------|---------------|---------------|
-| **iOS** | ✅ 対応可能 | react-native-executorch + Llama 3.2 | RAM ≥ 2GB のデバイス |
-| **Android** | ✅ 対応可能 | react-native-executorch + Llama 3.2 | RAM ≥ 2GB のデバイス |
+| **iOS** | ✅ 対応可能 | react-native-executorch + Qwen 3 0.6B | 70-80% |
+| **Android** | ✅ 対応可能 | react-native-executorch + Qwen 3 0.6B | 70-80% |
 | **React Native** | ✅ 採用決定 | react-native-executorch | - |
 
-**結論**: Llama 3.2 1Bで実装開始。日本語品質が不十分な場合はQwen 3へ移行。
+**結論**: Qwen 3 0.6Bを採用。119言語対応で日本語サポート良好、最軽量で幅広いデバイス対応。
 
 ---
 

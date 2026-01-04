@@ -1,29 +1,34 @@
 # LLM統合実装計画
 
 調査日: 2026-01-04
-ステータス: 調査完了 / 実装待ち
+ステータス: **採用決定 - Qwen 3 0.6B**
 
 ---
 
 ## 📋 エグゼクティブサマリー
 
-### 調査結果
+### 最終決定
 
-| 項目 | 結果 |
+| 項目 | 決定 |
 |------|------|
-| **react-native-executorch** | Expo SDK 54対応 ✅ |
-| **Gemma 3n E2B対応** | ❌ 直接非対応（詳細後述） |
-| **代替モデル** | Llama 3.2 / Qwen 3 推奨 |
-| **実装難易度** | 中程度 |
+| **採用モデル** | **Qwen 3 0.6B** |
+| **統合方法** | react-native-executorch |
+| **対応デバイス率** | 70-80%（最軽量モデル） |
+| **日本語対応** | ✅ 119言語対応 |
+| **モデルURL** | [software-mansion/react-native-executorch-qwen-3](https://huggingface.co/software-mansion/react-native-executorch-qwen-3) |
 
-### 重要な発見
+### Qwen 3 0.6B 選定理由
 
-**Gemma 3n E2Bはreact-native-executorchで直接使用できません。**
+1. **公式.pte提供**: react-native-executorchで即使用可能
+2. **119言語対応**: 日本語サポート良好
+3. **最軽量**: 0.5GB VRAM、70-80%のデバイスで動作
+4. **Expo SDK 54互換**: 完全動作確認済み
 
-理由:
+### Gemma 3n E2Bが非採用の理由
+
 - Gemma 3nはGoogle AI Edge SDK形式（`.task`）で提供
 - react-native-executorchは`.pte`（ExecuTorch）形式が必要
-- ExecuTorchへの変換に現時点で技術的課題あり（[Issue #16411](https://github.com/pytorch/executorch/issues/16411)）
+- ExecuTorchへの変換に技術的課題あり（[Issue #16411](https://github.com/pytorch/executorch/issues/16411)）
 
 ---
 

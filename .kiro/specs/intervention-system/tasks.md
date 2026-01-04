@@ -187,13 +187,19 @@
 - [x] React Native統合ライブラリ調査
 - [x] 対応デバイス要件の確定
 - [x] **調査結果ドキュメント作成** → `research-local-llm.md`
-- [x] **採用モデル決定**: Gemma 3n E2B
+- [x] **採用モデル決定**: Qwen 3 0.6B（2026-01-04 改訂）
+  - ⚠️ Gemma 3n E2Bは.task形式のため非採用（react-native-executorchは.pte必須）
+  - Qwen 3 0.6Bは公式.pteファイル提供済み
 
 ### Task 5.2: LLMエンジン実装
 - [ ] react-native-executorch セットアップ
-- [ ] Gemma 3n E2B モデルダウンロード機能
-- [ ] デバイス互換性チェック（RAM ≥ 2GB, Storage ≥ 2GB）
-- [ ] 推論ラッパー作成
+  - `npm install react-native-executorch`
+  - `npx expo prebuild`
+- [ ] Qwen 3 0.6B モデル統合
+  - モデル: [software-mansion/react-native-executorch-qwen-3](https://huggingface.co/software-mansion/react-native-executorch-qwen-3)
+  - `useLLM({ model: QWEN_3_0_6B })` フック使用
+- [ ] デバイス互換性チェック（RAM ≥ 2GB, Storage ≥ 500MB）
+- [ ] 推論ラッパー作成（ExecutorchLLMService）
 - [ ] 非対応時のUI（タブ非表示/無効化）
 > **注記**: 現在はMock LLMで動作。本番LLM実装は後続で対応。
 
@@ -376,7 +382,9 @@
 - [x] 必要なモデルサイズ
 - [x] メモリ/ストレージ要件
 - [x] 応答速度ベンチマーク
-- [x] **結果**: Gemma 3n E2B 採用
+- [x] **結果**: Qwen 3 0.6B 採用（2026-01-04 改訂）
+  - Gemma 3n E2Bは.task形式で提供されており、react-native-executorchでは使用不可
+  - Qwen 3 0.6Bは公式.pte提供、119言語対応、70-80%のデバイスで動作
 
 ### Research 2: AIペルソナ 🔄 (基本設計済み)
 - [x] 基本ペルソナ定義（励まし型 / ストレート型）→ design.md 4.5
