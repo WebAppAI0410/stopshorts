@@ -142,7 +142,11 @@ export interface DailyStats {
   apps: Partial<Record<ManagedApp, AppStats>>;
 }
 
-// Coaching Context
+/**
+ * Coaching Context for personalized warnings and suggestions
+ * Used by personalization service to provide context-aware coaching
+ * @see src/services/personalization.ts for usage
+ */
 export interface CoachingContext {
   warningLevel: WarningLevel;
   message: string;
@@ -228,11 +232,18 @@ export function purposeToGoalType(purpose: UserPurpose): GoalType {
   return mapping[purpose];
 }
 
-// Legacy: Usage Assessment (kept for migration)
+/**
+ * @deprecated Legacy types - kept for migration compatibility only
+ * These types were part of the original onboarding flow and may be
+ * removed in a future version after migration period ends.
+ */
 export type UsageDuration = '1month' | '6months' | '1year' | '2years' | '3years+';
+/** @deprecated Use AddictionAssessment.peakUsageTime instead */
 export type PeakUsageTime = 'morning' | 'afternoon' | 'evening' | 'night' | 'random';
+/** @deprecated Use AddictionAssessment.difficultyLevel instead */
 export type QuitAttempts = 'never' | 'once' | 'few' | 'many';
 
+/** @deprecated Use AddictionAssessment instead */
 export interface UsageAssessment {
   dailyUsageHours: number;
   dailyOpenCount: number;
@@ -241,7 +252,11 @@ export interface UsageAssessment {
   usageDuration: UsageDuration;
 }
 
-// Lifetime Impact Calculation
+/**
+ * Lifetime Impact Calculation
+ * Used for reality check visualization showing long-term screen time impact
+ * @see app/(onboarding)/reality-check.tsx for usage
+ */
 export interface LifetimeImpact {
   yearlyLostHours: number;
   lifetimeLostYears: number;
@@ -312,6 +327,12 @@ export type {
   FrictionPhase,
 } from './intervention';
 
+export {
+  isValidInterventionType,
+  isValidIntentionId,
+  isValidFrictionPhase,
+} from './intervention';
+
 // Re-export training types from training.ts
 export type {
   ContentType,
@@ -355,4 +376,7 @@ export {
   LONG_TERM_LIMITS,
   DEFAULT_GENERATION_CONFIG,
   DEFAULT_LONG_TERM_MEMORY,
+  isValidModelStatus,
+  isValidPersonaId,
+  isValidMessage,
 } from './ai';
