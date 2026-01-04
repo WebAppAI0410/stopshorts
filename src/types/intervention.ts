@@ -68,3 +68,49 @@ export function getIntentionLabel(
   const option = INTENTION_OPTIONS.find((opt) => opt.id === intentionId);
   return option ? t(option.labelKey) : intentionId;
 }
+
+// ============================================
+// Type Guards
+// ============================================
+
+const INTERVENTION_TYPE_VALUES: readonly InterventionType[] = [
+  'breathing',
+  'friction',
+  'mirror',
+  'ai',
+] as const;
+
+const INTENTION_ID_VALUES: readonly IntentionId[] = [
+  'dm',
+  'specific',
+  'bored',
+  'random',
+  'other',
+] as const;
+
+const FRICTION_PHASE_VALUES: readonly FrictionPhase[] = [
+  'waiting',
+  'intention',
+  'confirm',
+] as const;
+
+/**
+ * Type guard for InterventionType
+ */
+export function isValidInterventionType(value: unknown): value is InterventionType {
+  return typeof value === 'string' && INTERVENTION_TYPE_VALUES.includes(value as InterventionType);
+}
+
+/**
+ * Type guard for IntentionId
+ */
+export function isValidIntentionId(value: unknown): value is IntentionId {
+  return typeof value === 'string' && INTENTION_ID_VALUES.includes(value as IntentionId);
+}
+
+/**
+ * Type guard for FrictionPhase
+ */
+export function isValidFrictionPhase(value: unknown): value is FrictionPhase {
+  return typeof value === 'string' && FRICTION_PHASE_VALUES.includes(value as FrictionPhase);
+}

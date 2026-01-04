@@ -253,3 +253,47 @@ export interface StorageCheckResult {
   available: boolean;
   reason?: 'quota_exceeded' | 'storage_error';
 }
+
+// ============================================
+// Type Guards
+// ============================================
+
+const MODEL_STATUS_VALUES: readonly ModelStatus[] = [
+  'not_downloaded',
+  'downloading',
+  'ready',
+  'loading',
+  'error',
+  'unavailable',
+] as const;
+
+const PERSONA_ID_VALUES: readonly PersonaId[] = ['supportive', 'direct'] as const;
+
+/**
+ * Type guard for ModelStatus
+ */
+export function isValidModelStatus(value: unknown): value is ModelStatus {
+  return typeof value === 'string' && MODEL_STATUS_VALUES.includes(value as ModelStatus);
+}
+
+/**
+ * Type guard for PersonaId
+ */
+export function isValidPersonaId(value: unknown): value is PersonaId {
+  return typeof value === 'string' && PERSONA_ID_VALUES.includes(value as PersonaId);
+}
+
+/**
+ * Type guard for Message
+ */
+export function isValidMessage(value: unknown): value is Message {
+  if (typeof value !== 'object' || value === null) return false;
+  const msg = value as Record<string, unknown>;
+  return (
+    typeof msg.id === 'string' &&
+    (msg.role === 'user' || msg.role === 'assistant') &&
+    typeof msg.content === 'string' &&
+    typeof msg.timestamp === 'number' &&
+    typeof msg.tokenEstimate === 'number'
+  );
+}
