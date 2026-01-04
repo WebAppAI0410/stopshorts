@@ -133,11 +133,11 @@ export default function DashboardScreen() {
                         <View style={styles.statLabel}>
                             <Ionicons name="phone-portrait-outline" size={18} color={colors.accent} />
                             <Text style={[typography.body, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
-                                今日の使用時間
+                                {t('home.stats.todayUsage')}
                             </Text>
                         </View>
                         <Text style={[typography.body, { color: colors.textPrimary, fontWeight: '600' }]}>
-                            {screenTimeLoading ? '...' : `${todayStats.totalUsageMinutes} 分`}
+                            {screenTimeLoading ? '...' : `${todayStats.totalUsageMinutes} ${t('home.units.minutes')}`}
                         </Text>
                     </View>
                     <ProgressBar progress={Math.min(todayStats.totalUsageMinutes, 100)} variant="primary" />
@@ -147,11 +147,11 @@ export default function DashboardScreen() {
                         <View style={styles.statLabel}>
                             <Ionicons name="hand-left-outline" size={18} color={colors.accent} />
                             <Text style={[typography.body, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
-                                介入回数
+                                {t('home.stats.interventionCount')}
                             </Text>
                         </View>
                         <Text style={[typography.body, { color: colors.textPrimary, fontWeight: '600' }]}>
-                            {todayStats.interventionCount} 回
+                            {todayStats.interventionCount} {t('home.units.times')}
                         </Text>
                     </View>
                     <ProgressBar progress={Math.min(todayStats.interventionCount * 20, 100)} variant="secondary" />
@@ -184,15 +184,15 @@ export default function DashboardScreen() {
                         </View>
                         <View style={styles.surfingInfo}>
                             <Text style={[typography.h3, { color: colors.textPrimary }]}>
-                                介入を練習
+                                {t('home.practice.title')}
                             </Text>
                             <Text style={[typography.bodySmall, { color: colors.textSecondary, marginTop: spacing.xs }]}>
-                                呼吸ガイド・フリクションを体験
+                                {t('home.practice.description')}
                             </Text>
                         </View>
                     </View>
                     <Button
-                        title="練習する"
+                        title={t('home.practice.button')}
                         onPress={handleStartPractice}
                         variant="outline"
                         size="sm"
@@ -216,7 +216,7 @@ export default function DashboardScreen() {
                         ]}
                     >
                         <Text style={[typography.label, { color: colors.warning }]}>
-                            🎉 新しいバッジを獲得！
+                            🎉 {t('home.badges.newBadge')}
                         </Text>
                         <View style={styles.badgeRow}>
                             {newBadges.map((badge) => (
