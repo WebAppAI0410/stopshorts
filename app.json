@@ -46,7 +46,8 @@
         }
       ],
       "./modules/screen-time/plugin/withScreenTime",
-      "./modules/detox/plugin/withDetox"
+      "./modules/detox/plugin/withDetox",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
