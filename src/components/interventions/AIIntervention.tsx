@@ -148,6 +148,9 @@ export function AIIntervention({
     ({ item, index }: { item: Message; index: number }) => {
       const isUser = item.role === 'user';
       const EnterAnimation = isUser ? SlideInRight : SlideInLeft;
+      const accessibilityLabel = isUser
+        ? t('intervention.ai.accessibility.userMessage', { content: item.content })
+        : t('intervention.ai.accessibility.aiMessage', { content: item.content });
 
       return (
         <Animated.View
@@ -162,9 +165,15 @@ export function AIIntervention({
               marginRight: isUser ? 0 : spacing.xl,
             },
           ]}
+          accessible={true}
+          accessibilityRole="text"
+          accessibilityLabel={accessibilityLabel}
         >
           {!isUser && (
-            <View style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full }]}>
+            <View
+              style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full }]}
+              importantForAccessibility="no-hide-descendants"
+            >
               <Ionicons name="sparkles" size={16} color={colors.primary} />
             </View>
           )}
@@ -173,6 +182,7 @@ export function AIIntervention({
               typography.body,
               { color: isUser ? '#FFFFFF' : colors.textPrimary, flex: 1 },
             ]}
+            importantForAccessibility="no"
           >
             {item.content}
           </Text>
@@ -190,11 +200,18 @@ export function AIIntervention({
         { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg },
         typingStyle,
       ]}
+      accessible={true}
+      accessibilityRole="alert"
+      accessibilityLabel={t('intervention.ai.accessibility.aiTyping')}
+      accessibilityLiveRegion="assertive"
     >
-      <View style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full }]}>
+      <View
+        style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full }]}
+        importantForAccessibility="no-hide-descendants"
+      >
         <Ionicons name="sparkles" size={16} color={colors.primary} />
       </View>
-      <View style={styles.typingDots}>
+      <View style={styles.typingDots} importantForAccessibility="no-hide-descendants">
         <View style={[styles.dot, { backgroundColor: colors.textMuted }]} />
         <View style={[styles.dot, { backgroundColor: colors.textMuted, marginHorizontal: 4 }]} />
         <View style={[styles.dot, { backgroundColor: colors.textMuted }]} />
@@ -228,28 +245,36 @@ export function AIIntervention({
         </Animated.View>
 
         {/* Messages List */}
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={[
-            styles.messagesList,
-            { paddingHorizontal: spacing.gutter, paddingBottom: spacing.lg },
-          ]}
-          showsVerticalScrollIndicator={false}
-          ListFooterComponent={isGenerating ? renderTypingIndicator : null}
-          ListEmptyComponent={
-            <Animated.View
-              entering={FadeIn.duration(400).delay(200)}
-              style={styles.emptyContainer}
-            >
-              <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center' }]}>
-                {t('intervention.ai.emptyMessage')}
-              </Text>
-            </Animated.View>
-          }
-        />
+        <View
+          accessible={true}
+          accessibilityRole="list"
+          accessibilityLabel={t('intervention.ai.accessibility.conversationList')}
+          accessibilityLiveRegion="polite"
+          style={{ flex: 1 }}
+        >
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={[
+              styles.messagesList,
+              { paddingHorizontal: spacing.gutter, paddingBottom: spacing.lg },
+            ]}
+            showsVerticalScrollIndicator={false}
+            ListFooterComponent={isGenerating ? renderTypingIndicator : null}
+            ListEmptyComponent={
+              <Animated.View
+                entering={FadeIn.duration(400).delay(200)}
+                style={styles.emptyContainer}
+              >
+                <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center' }]}>
+                  {t('intervention.ai.emptyMessage')}
+                </Text>
+              </Animated.View>
+            }
+          />
+        </View>
 
         {/* Decision Buttons (shown after minimum exchanges) */}
         {showButtons && (
@@ -262,12 +287,14 @@ export function AIIntervention({
               onPress={handleDismiss}
               variant="primary"
               style={{ marginBottom: spacing.sm }}
+              accessibilityLabel={t('intervention.ai.accessibility.quitButton')}
             />
             <Button
               title={t('intervention.ai.proceed')}
               onPress={handleProceed}
               variant="ghost"
               size="sm"
+              accessibilityLabel={t('intervention.ai.accessibility.proceedButton')}
             />
           </Animated.View>
         )}
@@ -306,10 +333,19 @@ export function AIIntervention({
             editable={!isGenerating}
             returnKeyType="send"
             onSubmitEditing={handleSend}
+            accessibilityLabel={t('intervention.ai.accessibility.inputLabel')}
+            accessibilityHint={t('intervention.ai.accessibility.inputHint')}
           />
           <Pressable
             onPress={handleSend}
             disabled={!inputText.trim() || isGenerating}
+            accessibilityRole="button"
+            accessibilityLabel={
+              inputText.trim()
+                ? t('intervention.ai.accessibility.sendButton')
+                : t('intervention.ai.accessibility.sendButtonDisabled')
+            }
+            accessibilityState={{ disabled: !inputText.trim() || isGenerating }}
             style={({ pressed }) => [
               styles.sendButton,
               {
