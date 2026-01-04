@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.os.Build
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -18,6 +19,10 @@ import android.widget.TextView
  * Shows a full-screen check-in overlay with action buttons.
  */
 class OverlayController(private val context: Context) {
+
+    companion object {
+        private const val TAG = "OverlayController"
+    }
 
     private val windowManager: WindowManager =
         context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -50,32 +55,53 @@ class OverlayController(private val context: Context) {
 
     /**
      * Show the full-screen overlay
+     * @return true if overlay was shown successfully, false otherwise
      */
-    fun showOverlay() {
+    fun showOverlay(): Boolean {
         if (isOverlayShowing()) {
-            return
+            Log.d(TAG, "Overlay already showing, skipping")
+            return true
         }
 
-        try {
+        return try {
             overlayView = createOverlayView()
             windowManager.addView(overlayView, createLayoutParams())
-        } catch (e: Exception) {
-            e.printStackTrace()
+            Log.d(TAG, "Overlay shown successfully")
+            true
+        } catch (e: WindowManager.BadTokenException) {
+            // Usually means overlay permission not granted
+            Log.e(TAG, "Failed to show overlay: BadTokenException - overlay permission may not be granted", e)
             overlayView = null
+            false
+        } catch (e: WindowManager.InvalidDisplayException) {
+            Log.e(TAG, "Failed to show overlay: InvalidDisplayException", e)
+            overlayView = null
+            false
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to show overlay: ${e.javaClass.simpleName}", e)
+            overlayView = null
+            false
         }
     }
 
     /**
      * Hide the overlay
+     * Safe to call even if overlay is not showing
      */
     fun hideOverlay() {
+        val view = overlayView ?: return
+
         try {
-            overlayView?.let {
-                windowManager.removeView(it)
-                overlayView = null
-            }
+            windowManager.removeView(view)
+            Log.d(TAG, "Overlay hidden successfully")
+        } catch (e: IllegalArgumentException) {
+            // View not attached - this can happen if overlay was already removed
+            Log.w(TAG, "Overlay view was not attached to window manager")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error hiding overlay: ${e.javaClass.simpleName}", e)
+        } finally {
+            // Always clear the reference
+            overlayView = null
         }
     }
 

@@ -3,8 +3,10 @@ package com.stopshorts.screentime
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.os.Build
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
@@ -22,13 +24,6 @@ class CheckinForegroundService : Service() {
 
     companion object {
         private const val TAG = "CheckinForegroundService"
-
-        // Debug logging helper - only logs in debug builds
-        private fun logDebug(message: String) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, message)
-            }
-        }
         private const val NOTIFICATION_ID = 1001
         private const val INTERVENTION_NOTIFICATION_ID = 1002
         private const val CHANNEL_ID = "checkin_monitoring_channel"
@@ -53,6 +48,16 @@ class CheckinForegroundService : Service() {
         private const val PREFS_NAME = "checkin_settings"
         private const val PREF_TIMING = "intervention_timing"
         private const val PREF_DELAY = "intervention_delay"
+
+        // Static flag to track if service is running
+        // This is more reliable than getRunningServices() which is deprecated
+        @Volatile
+        private var isServiceRunning = false
+
+        /**
+         * Check if the monitoring service is currently running
+         */
+        fun isRunning(): Boolean = isServiceRunning
 
         /**
          * Start the monitoring service
@@ -113,7 +118,24 @@ class CheckinForegroundService : Service() {
         }
     }
 
-    private val handler = Handler(Looper.getMainLooper())
+    // Check if app is debuggable at runtime (works correctly for library modules)
+    private val isDebuggable: Boolean by lazy {
+        (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    }
+
+    // Debug logging helper - only logs in debug builds
+    private fun logDebug(message: String) {
+        if (isDebuggable) {
+            Log.d(TAG, message)
+        }
+    }
+
+    // Worker thread for UsageStats API calls (avoid ANR on main thread)
+    private var workerThread: HandlerThread? = null
+    private var workerHandler: Handler? = null
+    // Main thread handler for UI operations (overlay)
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     private lateinit var usageStatsTracker: UsageStatsTracker
     private lateinit var overlayController: OverlayController
     private var targetPackages: MutableSet<String> = mutableSetOf()
@@ -134,8 +156,8 @@ class CheckinForegroundService : Service() {
 
             checkForegroundApp()
 
-            // Schedule next check
-            handler.postDelayed(this, CHECK_INTERVAL_MS)
+            // Schedule next check on worker thread
+            workerHandler?.postDelayed(this, CHECK_INTERVAL_MS)
         }
     }
 
@@ -144,6 +166,11 @@ class CheckinForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Initialize worker thread for UsageStats API calls
+        workerThread = HandlerThread("UsageStatsWorker").apply { start() }
+        workerHandler = Handler(workerThread!!.looper)
+
         usageStatsTracker = UsageStatsTracker(applicationContext)
         overlayController = OverlayController(applicationContext)
         createNotificationChannel()
@@ -217,30 +244,50 @@ class CheckinForegroundService : Service() {
 
     /**
      * Launch urge surfing screen via deep link
-     * @return true if launch succeeded, false otherwise
+     *
+     * Note: Android 10+ restricts background activity starts. This method attempts to launch
+     * the activity but may fail silently on some devices. The caller should always have a
+     * fallback (notification or overlay).
+     *
+     * @return true if launch was attempted without exception, false otherwise
      */
     private fun launchUrgeSurfing(appPackage: String): Boolean {
+        // On Android 10+, background activity starts are restricted.
+        // Foreground services can still start activities in most cases,
+        // but we should be prepared for failures.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            logDebug("Android 10+: Background activity start may be restricted")
+        }
+
         val deepLinkUri = android.net.Uri.parse("stopshorts://urge-surfing?app=$appPackage")
         val deepLinkIntent = Intent(Intent.ACTION_VIEW, deepLinkUri).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             setPackage(applicationContext.packageName)
+            // Add category to help with activity resolution
+            addCategory(Intent.CATEGORY_DEFAULT)
         }
 
         return try {
             applicationContext.startActivity(deepLinkIntent)
-            logDebug("Launching urge surfing with deep link: $deepLinkUri")
+            logDebug("Launched urge surfing with deep link: $deepLinkUri")
             true
         } catch (e: Exception) {
-            logDebug("Deep link failed, opening app normally")
+            Log.w(TAG, "Deep link failed: ${e.message}")
+
+            // Fallback: try launching the main app
             val launchIntent = packageManager.getLaunchIntentForPackage(applicationContext.packageName)
-            launchIntent?.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            return try {
-                launchIntent?.let { applicationContext.startActivity(it) }
-                true
-            } catch (fallbackError: Exception) {
-                logDebug("Failed to launch app normally: ${fallbackError.message}")
-                false
+            if (launchIntent != null) {
+                launchIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                return try {
+                    applicationContext.startActivity(launchIntent)
+                    logDebug("Launched app via main intent")
+                    true
+                } catch (fallbackError: Exception) {
+                    Log.w(TAG, "Main intent launch also failed: ${fallbackError.message}")
+                    false
+                }
             }
+            false
         }
     }
 
@@ -288,6 +335,11 @@ class CheckinForegroundService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         stopMonitoring()
+
+        // Clean up worker thread
+        workerThread?.quitSafely()
+        workerThread = null
+        workerHandler = null
     }
 
     /**
@@ -306,6 +358,7 @@ class CheckinForegroundService : Service() {
         targetPackages.clear()
         targetPackages.addAll(packageNames)
         isMonitoring = true
+        isServiceRunning = true  // Update static flag
 
         Log.i(TAG, "Monitoring started with ${targetPackages.size} target packages: $targetPackages")
         Log.i(TAG, "Intervention settings: timing=$interventionTiming, delay=$interventionDelayMinutes min")
@@ -314,8 +367,8 @@ class CheckinForegroundService : Service() {
         val notification = createNotification()
         startForeground(NOTIFICATION_ID, notification)
 
-        // Start monitoring loop
-        handler.post(monitoringRunnable)
+        // Start monitoring loop on worker thread (avoid ANR)
+        workerHandler?.post(monitoringRunnable)
     }
 
     /**
@@ -323,7 +376,8 @@ class CheckinForegroundService : Service() {
      */
     private fun stopMonitoring() {
         isMonitoring = false
-        handler.removeCallbacks(monitoringRunnable)
+        isServiceRunning = false  // Update static flag
+        workerHandler?.removeCallbacks(monitoringRunnable)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -487,14 +541,13 @@ class CheckinForegroundService : Service() {
         // Store the current app for intervention event
         currentDetectedApp = packageName
 
-        // Show overlay on main thread
-        handler.post {
+        // Show overlay on main thread (UI operation)
+        mainHandler.post {
             try {
                 overlayController.showOverlay()
                 logDebug("Showing overlay for $appName ($packageName)")
             } catch (e: Exception) {
-                e.printStackTrace()
-                logDebug("Failed to show overlay - ${e.message}")
+                Log.e(TAG, "Failed to show overlay", e)
             }
         }
     }
@@ -541,7 +594,9 @@ class CheckinForegroundService : Service() {
     }
 
     /**
-     * Send high-priority notification when intervention is triggered
+     * Send high-priority notification when intervention is triggered.
+     * Uses fullScreenIntent on Android 10+ to ensure the notification can interrupt
+     * even when background activity starts are restricted.
      */
     private fun sendInterventionNotification(packageName: String) {
         val appName = UsageStatsTracker.APP_DISPLAY_NAMES[packageName] ?: packageName
@@ -553,15 +608,25 @@ class CheckinForegroundService : Service() {
             setPackage(applicationContext.packageName)
         }
 
+        val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+
         val pendingIntent = PendingIntent.getActivity(
             this,
             0,
             deepLinkIntent,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            } else {
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
+            pendingIntentFlags
+        )
+
+        // Create a separate pending intent for fullScreenIntent (use different request code)
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            this,
+            1,
+            deepLinkIntent,
+            pendingIntentFlags
         )
 
         val iconResId = applicationContext.resources.getIdentifier(
@@ -576,9 +641,12 @@ class CheckinForegroundService : Service() {
             .setSmallIcon(iconResId)
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)  // Use ALARM for higher priority
             .setAutoCancel(true)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
+            // fullScreenIntent allows activity to start even on Android 10+ when device is locked
+            // or when background activity starts are restricted
+            .setFullScreenIntent(fullScreenPendingIntent, true)
             .addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
                 "衝動サーフィングを開始",
@@ -588,7 +656,7 @@ class CheckinForegroundService : Service() {
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(INTERVENTION_NOTIFICATION_ID, notification)
-        logDebug("Sent intervention notification for $appName")
+        logDebug("Sent intervention notification with fullScreenIntent for $appName")
     }
 
     /**
