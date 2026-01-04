@@ -11,6 +11,9 @@ interface StatCardProps {
     unit: string;
     subtitle: string;
     progressColor?: string;
+    /** Progress value between 0 and 100 (default: 0, hides progress bar when 0) */
+    progress?: number;
+    testID?: string;
 }
 
 export function StatCard({
@@ -21,13 +24,20 @@ export function StatCard({
     unit,
     subtitle,
     progressColor,
+    progress = 0,
+    testID,
 }: StatCardProps) {
     const { colors, typography, spacing, borderRadius } = useTheme();
     const displayIconColor = iconColor || colors.accent;
     const displayProgressColor = progressColor || colors.accent;
 
+    const clampedProgress = Math.max(0, Math.min(100, progress));
+
     return (
         <View
+            testID={testID}
+            accessibilityRole="summary"
+            accessibilityLabel={`${title}: ${value}${unit}, ${subtitle}`}
             style={[
                 styles.container,
                 {
@@ -56,17 +66,19 @@ export function StatCard({
                 {subtitle}
             </Text>
 
-            <View style={[styles.progressBar, { backgroundColor: colors.surface, marginTop: spacing.md }]}>
-                <View
-                    style={[
-                        styles.progressFill,
-                        {
-                            backgroundColor: displayProgressColor,
-                            width: '70%',
-                        },
-                    ]}
-                />
-            </View>
+            {clampedProgress > 0 && (
+                <View style={[styles.progressBar, { backgroundColor: colors.surface, marginTop: spacing.md }]}>
+                    <View
+                        style={[
+                            styles.progressFill,
+                            {
+                                backgroundColor: displayProgressColor,
+                                width: `${clampedProgress}%`,
+                            },
+                        ]}
+                    />
+                </View>
+            )}
         </View>
     );
 }

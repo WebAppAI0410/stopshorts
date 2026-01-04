@@ -17,6 +17,7 @@ export type SelectionCardProps = {
     imageSource?: ImageSourcePropType; // Static asset or require() for app icons
     imageUri?: string; // Base64 image URI for dynamic app icons (custom apps)
     compact?: boolean;
+    testID?: string;
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -30,6 +31,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
     imageSource,
     imageUri,
     compact = false,
+    testID,
 }) => {
     const { colors, typography, spacing, borderRadius } = useTheme();
     const scale = useSharedValue(1);
@@ -51,9 +53,13 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
 
     return (
         <AnimatedPressable
+            testID={testID}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
             onPress={onPress}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: selected }}
+            accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
             style={[
                 styles.container,
                 {

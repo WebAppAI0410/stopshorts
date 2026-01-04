@@ -5,16 +5,28 @@ import { useTheme } from '../../contexts/ThemeContext';
 type ProgressIndicatorProps = {
     totalSteps: number;
     currentStep: number;
+    testID?: string;
 };
 
 export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
     totalSteps,
     currentStep,
+    testID,
 }) => {
     const { colors, spacing, borderRadius } = useTheme();
 
     return (
-        <View style={styles.container}>
+        <View
+            testID={testID}
+            style={styles.container}
+            accessibilityRole="progressbar"
+            accessibilityLabel={`ステップ ${currentStep} / ${totalSteps}`}
+            accessibilityValue={{
+                min: 1,
+                max: totalSteps,
+                now: currentStep,
+            }}
+        >
             {Array.from({ length: totalSteps }).map((_, index) => {
                 const step = index + 1;
                 const isActive = step === currentStep;
