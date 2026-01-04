@@ -69,6 +69,9 @@ export function IntentionPhase({ onSelect }: IntentionPhaseProps) {
               key={option.id}
               activeOpacity={0.7}
               onPress={() => handleOptionPress(option.id)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: isSelected }}
+              accessibilityLabel={t(option.labelKey)}
               style={[
                 styles.optionCard,
                 {
@@ -129,6 +132,8 @@ export function IntentionPhase({ onSelect }: IntentionPhaseProps) {
               multiline
               numberOfLines={2}
               maxLength={100}
+              accessibilityLabel={t('intervention.friction.intention.customPlaceholder')}
+              accessibilityHint={t('common.continue')}
             />
             <Button
               title={t('common.continue')}
