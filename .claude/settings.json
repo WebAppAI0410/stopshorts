@@ -8,11 +8,13 @@
       "Bash(npx eas:*)",
       "Bash(adb:*)",
       "Bash(git:*)",
+      "Bash(maestro:*)",
       "Read",
       "Write",
       "Edit",
       "Glob",
-      "Grep"
+      "Grep",
+      "mcp__maestro__*"
     ],
     "deny": [
       "Read(.env)",
@@ -25,5 +27,18 @@
   },
   "env": {
     "EXPO_NO_TELEMETRY": "1"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ \"$CLAUDE_CODE_REMOTE\" = \"true\" ]; then npm install --prefer-offline; fi"
+          }
+        ]
+      }
+    ]
   }
 }

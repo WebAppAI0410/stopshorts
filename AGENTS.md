@@ -50,3 +50,104 @@ Project memory keeps persistent guidance (steering, specs notes, component docs)
 - Load entire `.kiro/steering/` as project memory
 - Default files: `product.md`, `tech.md`, `structure.md`
 - Custom files are supported (managed via `/prompts:kiro-steering-custom`)
+
+---
+
+## Cloud Claude Code Configuration
+
+This repository is configured for cloud Claude Code (claude.ai/code) usage.
+
+### Environment Detection
+```bash
+# Check if running in cloud
+if [ "$CLAUDE_CODE_REMOTE" = "true" ]; then
+  echo "Running in cloud environment"
+fi
+```
+
+### SessionStart Hook
+Dependencies are automatically installed when sessions start in cloud via `.claude/settings.json`.
+
+### Parallel Agent Tasks
+
+Cloud Claude Code can run parallel review and implementation tasks. Use these prompts:
+
+#### Code Review Agent
+```
+Review the codebase for:
+1. TypeScript type errors (`npx tsc --noEmit`)
+2. Unused imports and dead code
+3. React Hooks violations
+4. i18n key usage (hardcoded Japanese text)
+5. Theme compliance (hardcoded colors)
+
+Report format:
+- File: path/to/file.tsx
+- Line: XX
+- Issue: description
+- Severity: error|warning|info
+- Fix: suggested fix
+```
+
+#### UI Consistency Agent
+```
+Review UI components against StopShorts design system:
+1. Check color usage matches ThemeContext colors
+2. Verify typography uses theme.typography
+3. Confirm spacing uses theme.spacing
+4. Validate borderRadius uses theme.borderRadius
+5. Check icon consistency (Ionicons with -outline suffix)
+
+Reference: src/design/theme.ts
+```
+
+#### Architecture Review Agent
+```
+Review codebase architecture:
+1. Verify expo-router file structure
+2. Check Zustand store patterns
+3. Validate component composition
+4. Review state management boundaries
+5. Check for circular dependencies
+
+Reference: .kiro/steering/structure.md
+```
+
+#### Security Review Agent
+```
+Scan for security issues:
+1. No hardcoded secrets or API keys
+2. No sensitive data in logs (console.log)
+3. Proper input validation
+4. Safe navigation patterns
+5. No vulnerable dependencies
+
+Run: npm audit
+```
+
+#### Test Coverage Agent
+```
+Analyze test coverage:
+1. Run existing tests: npm test
+2. Identify untested critical paths
+3. Check E2E test coverage: .maestro/flows/
+4. Report coverage gaps
+
+Focus areas: stores/, components/interventions/, services/
+```
+
+### Recommended Parallel Workflows
+
+**Pre-PR Review (run in parallel):**
+1. Code Review Agent - type errors, lint issues
+2. UI Consistency Agent - design system compliance
+3. Security Review Agent - vulnerability scan
+
+**Post-Implementation Review:**
+1. Architecture Review Agent - structural issues
+2. Test Coverage Agent - testing gaps
+
+**Continuous Improvement:**
+1. `npx tsc --noEmit` - TypeScript check
+2. `npm test` - Unit tests
+3. `maestro test .maestro/flows/` - E2E tests (requires device)
