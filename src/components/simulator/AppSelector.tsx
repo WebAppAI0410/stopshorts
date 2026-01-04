@@ -7,7 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { APP_THEMES, getAppDisplayName } from './appThemes';
+import { APP_THEMES } from './appThemes';
 import { getAppIcon } from '../../constants/appIcons';
 import type { TargetAppId } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';

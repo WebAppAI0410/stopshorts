@@ -34,7 +34,7 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['node_modules/', 'dist/', '.expo/', '*.config.js', '*.config.mjs'],
+    ignores: ['node_modules/', 'dist/', '.expo/', '*.config.js', '*.config.mjs', '.rnstorybook/', 'scripts/'],
   },
   {
     files: [
@@ -42,6 +42,8 @@ export default tseslint.config(
       'e2e/**/*.js',
       'modules/screen-time/plugin/withScreenTime.js',
       'modules/detox/plugin/withDetox.js',
+      'jest.setup.js',
+      'jest.expo-winter-mock.js',
     ],
     rules: {
       'no-undef': 'off',
@@ -49,7 +51,12 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/constants/appIcons.ts', 'modules/screen-time/index.ts'],
+    files: [
+      'src/constants/appIcons.ts',
+      'modules/screen-time/index.ts',
+      'app/storybook.tsx',
+      'src/components/interventions/MirrorIntervention.tsx',
+    ],
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
     },

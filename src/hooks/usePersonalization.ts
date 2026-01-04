@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useAppStore } from '../stores/useAppStore';
 import { getPersonalizedMessage, getCoachingContext } from '../services/personalization';
-import type { UserPurpose, SleepProfile, AddictionAssessment, ImplementationIntentConfig, CoachingContext, WarningLevel } from '../types';
+import type { CoachingContext, WarningLevel } from '../types';
 
 interface PersonalizedMessage {
   message: string;

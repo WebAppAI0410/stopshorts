@@ -9,7 +9,7 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
 import screenTimeService from '../../src/services/screenTime';
-import { screenTimeService as nativeScreenTime, TARGET_APPS } from '../../src/native/ScreenTimeModule';
+import { screenTimeService as nativeScreenTime } from '../../src/native/ScreenTimeModule';
 import type { ScreenTimeData } from '../../src/types';
 import { getAppIcon } from '../../src/constants/appIcons';
 

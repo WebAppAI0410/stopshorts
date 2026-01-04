@@ -53,7 +53,7 @@ function AndroidOverlaySettingsMockup({
 
             {/* Mock App List */}
             <View style={styles.mockupList}>
-                {mockApps.map((app, index) => (
+                {mockApps.map((app) => (
                     <View
                         key={app.name}
                         style={[
@@ -145,7 +145,7 @@ function AndroidSettingsMockup({
 
             {/* Mock App List */}
             <View style={styles.mockupList}>
-                {mockApps.map((app, index) => (
+                {mockApps.map((app) => (
                     <View
                         key={app.name}
                         style={[

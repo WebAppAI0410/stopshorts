@@ -4,22 +4,19 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
-import Animated, { FadeIn, FadeInUp, ZoomIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { SwipeSimulator, AppSelector, APP_THEMES } from '../../src/components/simulator';
 import { ShieldIcon, Button, Header, ProgressIndicator, GlowOrb } from '../../src/components/ui';
 import { BreathingGuide, WaveAnimation } from '../../src/components/urge-surfing';
-import { useSharedValue, withTiming, Easing, useDerivedValue } from 'react-native-reanimated';
+import { useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { useAppStore } from '../../src/stores/useAppStore';
 import type { TargetAppId } from '../../src/types';
-import { t } from '../../src/i18n';
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 type DemoPhase = 'select' | 'simulate' | 'intervention' | 'breathing' | 'complete';
 

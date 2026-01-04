@@ -75,12 +75,15 @@ export function UrgeSurfingScreen({
   const handleStartSurfing = useCallback(() => {
     setPhase('surfing');
     cancelAnimation(progress);
+    // Reanimated SharedValue mutation is valid pattern - disable React Compiler check
+    // eslint-disable-next-line react-hooks/immutability
     progress.value = 0;
+    // eslint-disable-next-line react-hooks/immutability
     progress.value = withTiming(1, {
       duration: cycleCount * 10000, // 10s per cycle
       easing: Easing.linear,
     });
-  }, [cycleCount]);
+  }, [cycleCount, progress]);
 
   const handleBreathingComplete = useCallback(() => {
     setPhase('complete');

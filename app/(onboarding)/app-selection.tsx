@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, Platform, TouchableOpacity, Image, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, Platform, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
