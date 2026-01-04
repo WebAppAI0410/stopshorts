@@ -775,12 +775,35 @@
     "network": "ネットワーク接続を確認してください",
     "permission": "必要な権限が付与されていません"
   },
+  "notifications": {
+    "aiProposal": {
+      "title": "AIコーチからの提案",
+      "body": "最近よく頑張っていますね。少し話しませんか？"
+    },
+    "successCelebration": {
+      "title": "素晴らしい！",
+      "body": "今日は{{minutes}}分の時間を取り戻しました。この調子で続けましょう！"
+    },
+    "dailyCheckin": {
+      "title": "今日の振り返り",
+      "body": "今日一日どうでしたか？AIコーチと話してみませんか？"
+    },
+    "channelName": "AIコーチ"
+  },
   "tabs": {
     "home": "ホーム",
     "stats": "統計",
+    "ai": "AIコーチ",
     "training": "学習",
     "settings": "設定",
     "profile": "プロフィール"
+  },
+  "ai": {
+    "screenTitle": "AIコーチ",
+    "subtitle": "何でも相談してください",
+    "greeting": "こんにちは！今日はどんなことを話しましょうか？",
+    "emptyMessage": "何でも話してください。一緒に考えましょう。",
+    "inputPlaceholder": "メッセージを入力..."
   },
   "statistics": {
     "title": "統計",
@@ -896,7 +919,18 @@
       "modelDownloading": "AIモデルをダウンロード中...",
       "modelUnavailable": "このデバイスではAI機能を利用できません",
       "modelError": "AIの読み込みに失敗しました",
-      "retry": "再試行"
+      "retry": "再試行",
+      "accessibility": {
+        "userMessage": "あなたのメッセージ: {{content}}",
+        "aiMessage": "AIコーチ: {{content}}",
+        "inputLabel": "メッセージ入力欄",
+        "inputHint": "AIコーチに送信するメッセージを入力",
+        "sendButton": "メッセージを送信",
+        "sendButtonDisabled": "メッセージを送信（入力してください）",
+        "quitButton": "アプリを閉じる",
+        "proceedButton": "アプリを開く",
+        "aiTyping": "AIコーチが返答を作成中"
+      }
     },
     "settings": {
       "title": "介入設定",

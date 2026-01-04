@@ -1,12 +1,12 @@
 /**
- * AIIntervention Component
- * Conversational AI chatbot for mindful intervention
+ * AI Coach Screen
+ * Standalone AI chatbot accessible from bottom navigation tab
  *
  * Features:
  * - Chat interface with AI assistant
- * - Pattern-based responses (placeholder for LLM)
  * - Session management with memory
- * - "Quit" (primary) and "Give in to temptation" (ghost) buttons
+ * - Quick action buttons (placeholder for future features)
+ * - No intervention buttons (unlike AIIntervention component)
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
@@ -33,35 +33,16 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useAIStore, selectMessages } from '../../stores/useAIStore';
-import { useStatisticsStore } from '../../stores/useStatisticsStore';
-import { t } from '../../i18n';
-import { Button } from '../ui';
-import type { Message } from '../../types/ai';
+import { useTheme } from '../../src/contexts/ThemeContext';
+import { useAIStore, selectMessages } from '../../src/stores/useAIStore';
+import { t } from '../../src/i18n';
+import type { Message } from '../../src/types/ai';
 
-interface AIInterventionProps {
-  /** Name of the blocked app */
-  blockedAppName: string;
-  /** Callback when user chooses to proceed */
-  onProceed: () => void;
-  /** Callback when user dismisses (goes home) */
-  onDismiss: () => void;
-  /** Minimum messages before showing decision buttons (default: 2) */
-  minMessages?: number;
-}
-
-export function AIIntervention({
-  blockedAppName,
-  onProceed,
-  onDismiss,
-  minMessages = 2,
-}: AIInterventionProps) {
+export default function AIScreen() {
   const { colors, typography, spacing, borderRadius } = useTheme();
   const flatListRef = useRef<FlatList>(null);
 
   const [inputText, setInputText] = useState('');
-  const [showButtons, setShowButtons] = useState(false);
 
   // AI Store
   const startSession = useAIStore((state) => state.startSession);
@@ -70,9 +51,6 @@ export function AIIntervention({
   const addAIGreeting = useAIStore((state) => state.addAIGreeting);
   const isGenerating = useAIStore((state) => state.isGenerating);
   const messages = useAIStore(selectMessages);
-
-  // Statistics
-  const { recordIntervention } = useStatisticsStore();
 
   // Animation for typing indicator
   const typingOpacity = useSharedValue(0);
@@ -90,26 +68,16 @@ export function AIIntervention({
     startSession();
 
     // AI initiates the conversation with a greeting
-    // Using a short delay for natural feel
     const timer = setTimeout(() => {
-      const greeting = t('intervention.ai.greeting', { app: blockedAppName });
+      const greeting = t('ai.greeting');
       addAIGreeting(greeting);
     }, 500);
 
     return () => {
       clearTimeout(timer);
-      // End session on unmount
       endSession('navigation_away');
     };
-  }, [startSession, endSession, addAIGreeting, blockedAppName]);
-
-  // Show decision buttons after minimum exchanges (excluding initial greeting)
-  useEffect(() => {
-    // minMessages * 2 for user + AI exchanges, +1 for initial AI greeting
-    if (messages.length >= minMessages * 2 + 1) {
-      setShowButtons(true);
-    }
-  }, [messages.length, minMessages]);
+  }, [startSession, endSession, addAIGreeting]);
 
   // Scroll to bottom when new message arrives
   useEffect(() => {
@@ -129,28 +97,11 @@ export function AIIntervention({
     Keyboard.dismiss();
   }, [inputText, isGenerating, sendMessage]);
 
-  // Handle proceed action
-  const handleProceed = useCallback(() => {
-    recordIntervention({ proceeded: true });
-    endSession('user_explicit');
-    onProceed();
-  }, [recordIntervention, endSession, onProceed]);
-
-  // Handle dismiss action
-  const handleDismiss = useCallback(() => {
-    recordIntervention({ proceeded: false });
-    endSession('user_explicit');
-    onDismiss();
-  }, [recordIntervention, endSession, onDismiss]);
-
   // Render message bubble
   const renderMessage = useCallback(
     ({ item, index }: { item: Message; index: number }) => {
       const isUser = item.role === 'user';
       const EnterAnimation = isUser ? SlideInRight : SlideInLeft;
-      const accessibilityLabel = isUser
-        ? t('intervention.ai.accessibility.userMessage', { content: item.content })
-        : t('intervention.ai.accessibility.aiMessage', { content: item.content });
 
       return (
         <Animated.View
@@ -165,15 +116,9 @@ export function AIIntervention({
               marginRight: isUser ? 0 : spacing.xl,
             },
           ]}
-          accessible={true}
-          accessibilityRole="text"
-          accessibilityLabel={accessibilityLabel}
         >
           {!isUser && (
-            <View
-              style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full }]}
-              importantForAccessibility="no-hide-descendants"
-            >
+            <View style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full }]}>
               <Ionicons name="sparkles" size={16} color={colors.primary} />
             </View>
           )}
@@ -182,7 +127,6 @@ export function AIIntervention({
               typography.body,
               { color: isUser ? '#FFFFFF' : colors.textPrimary, flex: 1 },
             ]}
-            importantForAccessibility="no"
           >
             {item.content}
           </Text>
@@ -200,18 +144,11 @@ export function AIIntervention({
         { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg },
         typingStyle,
       ]}
-      accessible={true}
-      accessibilityRole="alert"
-      accessibilityLabel={t('intervention.ai.accessibility.aiTyping')}
-      accessibilityLiveRegion="assertive"
     >
-      <View
-        style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full }]}
-        importantForAccessibility="no-hide-descendants"
-      >
+      <View style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full }]}>
         <Ionicons name="sparkles" size={16} color={colors.primary} />
       </View>
-      <View style={styles.typingDots} importantForAccessibility="no-hide-descendants">
+      <View style={styles.typingDots}>
         <View style={[styles.dot, { backgroundColor: colors.textMuted }]} />
         <View style={[styles.dot, { backgroundColor: colors.textMuted, marginHorizontal: 4 }]} />
         <View style={[styles.dot, { backgroundColor: colors.textMuted }]} />
@@ -236,65 +173,37 @@ export function AIIntervention({
           </View>
           <View style={styles.headerText}>
             <Text style={[typography.h3, { color: colors.textPrimary }]}>
-              {t('intervention.ai.title')}
+              {t('ai.screenTitle')}
             </Text>
             <Text style={[typography.caption, { color: colors.textMuted }]}>
-              {t('intervention.ai.subtitle', { app: blockedAppName })}
+              {t('ai.subtitle')}
             </Text>
           </View>
         </Animated.View>
 
         {/* Messages List */}
-        <View
-          accessibilityLiveRegion="polite"
-          style={{ flex: 1 }}
-        >
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            renderItem={renderMessage}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={[
-              styles.messagesList,
-              { paddingHorizontal: spacing.gutter, paddingBottom: spacing.lg },
-            ]}
-            showsVerticalScrollIndicator={false}
-            ListFooterComponent={isGenerating ? renderTypingIndicator : null}
-            ListEmptyComponent={
-              <Animated.View
-                entering={FadeIn.duration(400).delay(200)}
-                style={styles.emptyContainer}
-              >
-                <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center' }]}>
-                  {t('intervention.ai.emptyMessage')}
-                </Text>
-              </Animated.View>
-            }
-          />
-        </View>
-
-        {/* Decision Buttons (shown after minimum exchanges) */}
-        {showButtons && (
-          <Animated.View
-            entering={FadeInUp.duration(400)}
-            style={[styles.buttonsContainer, { paddingHorizontal: spacing.gutter, paddingBottom: spacing.sm }]}
-          >
-            <Button
-              title={t('intervention.ai.quit')}
-              onPress={handleDismiss}
-              variant="primary"
-              style={{ marginBottom: spacing.sm }}
-              accessibilityLabel={t('intervention.ai.accessibility.quitButton')}
-            />
-            <Button
-              title={t('intervention.ai.proceed')}
-              onPress={handleProceed}
-              variant="ghost"
-              size="sm"
-              accessibilityLabel={t('intervention.ai.accessibility.proceedButton')}
-            />
-          </Animated.View>
-        )}
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[
+            styles.messagesList,
+            { paddingHorizontal: spacing.gutter, paddingBottom: spacing.lg },
+          ]}
+          showsVerticalScrollIndicator={false}
+          ListFooterComponent={isGenerating ? renderTypingIndicator : null}
+          ListEmptyComponent={
+            <Animated.View
+              entering={FadeIn.duration(400).delay(200)}
+              style={styles.emptyContainer}
+            >
+              <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center' }]}>
+                {t('ai.emptyMessage')}
+              </Text>
+            </Animated.View>
+          }
+        />
 
         {/* Input Area */}
         <Animated.View
@@ -321,7 +230,7 @@ export function AIIntervention({
                 paddingVertical: spacing.sm,
               },
             ]}
-            placeholder={t('intervention.ai.inputPlaceholder')}
+            placeholder={t('ai.inputPlaceholder')}
             placeholderTextColor={colors.textMuted}
             value={inputText}
             onChangeText={setInputText}
@@ -330,19 +239,10 @@ export function AIIntervention({
             editable={!isGenerating}
             returnKeyType="send"
             onSubmitEditing={handleSend}
-            accessibilityLabel={t('intervention.ai.accessibility.inputLabel')}
-            accessibilityHint={t('intervention.ai.accessibility.inputHint')}
           />
           <Pressable
             onPress={handleSend}
             disabled={!inputText.trim() || isGenerating}
-            accessibilityRole="button"
-            accessibilityLabel={
-              inputText.trim()
-                ? t('intervention.ai.accessibility.sendButton')
-                : t('intervention.ai.accessibility.sendButtonDisabled')
-            }
-            accessibilityState={{ disabled: !inputText.trim() || isGenerating }}
             style={({ pressed }) => [
               styles.sendButton,
               {
@@ -432,9 +332,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
-  },
-  buttonsContainer: {
-    paddingTop: 8,
   },
   inputContainer: {
     flexDirection: 'row',

@@ -23,6 +23,8 @@ type ButtonProps = {
     fullWidth?: boolean;
     style?: ViewStyle;
     testID?: string;
+    /** Custom accessibility label (defaults to title if not provided) */
+    accessibilityLabel?: string;
 };
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
@@ -37,6 +39,7 @@ export const Button: React.FC<ButtonProps> = ({
     fullWidth = true,
     style,
     testID,
+    accessibilityLabel,
 }) => {
     const { colors, typography, spacing, borderRadius } = useTheme();
     const scale = useSharedValue(1);
@@ -118,7 +121,7 @@ export const Button: React.FC<ButtonProps> = ({
     return (
         <AnimatedTouchableOpacity
             testID={testID}
-            accessibilityLabel={title}
+            accessibilityLabel={accessibilityLabel ?? title}
             accessibilityRole="button"
             onPress={onPress}
             onPressIn={handlePressIn}
