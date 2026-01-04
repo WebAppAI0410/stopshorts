@@ -34,6 +34,7 @@ import {
   // Mapping functions
   goalTypeToPurpose,
 } from '../types';
+import type { TrainingProgress } from '../types/training';
 import { shouldResetDailyCount } from '../services/friction';
 
 interface AppState {
@@ -89,6 +90,9 @@ interface AppState {
   selectedInterventionType: InterventionType;
   dailyOpenCount: number;
   lastOpenDate: string | null;
+
+  // Training Progress State
+  trainingProgress: Record<string, TrainingProgress>;
 
   // NOTE: Legacy stats removed - use useStatisticsStore for all analytics
   // See: docs/reviews/2026-01-03_project_review.md
@@ -156,6 +160,15 @@ interface AppState {
   incrementOpenCount: () => void;
   resetOpenCountIfNeeded: () => void;
 
+  // Training Progress Actions
+  completeContent: (topicId: string, contentId: string) => void;
+  saveWorksheetAnswer: (topicId: string, promptId: string, answer: string) => void;
+  recordQuizScore: (topicId: string, contentId: string, score: number) => void;
+  markTopicCompleted: (topicId: string) => void;
+  getTopicProgress: (topicId: string) => TrainingProgress | undefined;
+  isContentCompleted: (topicId: string, contentId: string) => boolean;
+  getCompletedTopicIds: () => string[];
+
   // Onboarding Actions
   restartOnboarding: () => void;
 }
@@ -212,6 +225,8 @@ const initialState = {
   selectedInterventionType: 'breathing' as InterventionType,
   dailyOpenCount: 0,
   lastOpenDate: null as string | null,
+  // Training Progress state
+  trainingProgress: {} as Record<string, TrainingProgress>,
 };
 
 export const useAppStore = create<AppState>()(
@@ -578,6 +593,175 @@ export const useAppStore = create<AppState>()(
             lastOpenDate: null,
           });
         }
+      },
+
+      // Training Progress Actions
+      completeContent: (topicId, contentId) => {
+        const { trainingProgress } = get();
+        const existing = trainingProgress[topicId];
+        const now = new Date().toISOString();
+
+        if (existing) {
+          // Add contentId if not already completed
+          const completedContents = existing.completedContents.includes(contentId)
+            ? existing.completedContents
+            : [...existing.completedContents, contentId];
+
+          set({
+            trainingProgress: {
+              ...trainingProgress,
+              [topicId]: {
+                ...existing,
+                completedContents,
+                lastAccessedAt: now,
+              },
+            },
+          });
+        } else {
+          // Create new progress entry
+          const newProgress: TrainingProgress = {
+            topicId,
+            completedContents: [contentId],
+            quizScores: {},
+            worksheetAnswers: {},
+            lastAccessedAt: now,
+            isCompleted: false,
+          };
+          set({
+            trainingProgress: {
+              ...trainingProgress,
+              [topicId]: newProgress,
+            },
+          });
+        }
+      },
+
+      saveWorksheetAnswer: (topicId, promptId, answer) => {
+        const { trainingProgress } = get();
+        const existing = trainingProgress[topicId];
+        const now = new Date().toISOString();
+
+        if (existing) {
+          set({
+            trainingProgress: {
+              ...trainingProgress,
+              [topicId]: {
+                ...existing,
+                worksheetAnswers: {
+                  ...existing.worksheetAnswers,
+                  [promptId]: answer,
+                },
+                lastAccessedAt: now,
+              },
+            },
+          });
+        } else {
+          const newProgress: TrainingProgress = {
+            topicId,
+            completedContents: [],
+            quizScores: {},
+            worksheetAnswers: { [promptId]: answer },
+            lastAccessedAt: now,
+            isCompleted: false,
+          };
+          set({
+            trainingProgress: {
+              ...trainingProgress,
+              [topicId]: newProgress,
+            },
+          });
+        }
+      },
+
+      recordQuizScore: (topicId, contentId, score) => {
+        const { trainingProgress } = get();
+        const existing = trainingProgress[topicId];
+        const now = new Date().toISOString();
+
+        if (existing) {
+          set({
+            trainingProgress: {
+              ...trainingProgress,
+              [topicId]: {
+                ...existing,
+                quizScores: {
+                  ...existing.quizScores,
+                  [contentId]: score,
+                },
+                lastAccessedAt: now,
+              },
+            },
+          });
+        } else {
+          const newProgress: TrainingProgress = {
+            topicId,
+            completedContents: [],
+            quizScores: { [contentId]: score },
+            worksheetAnswers: {},
+            lastAccessedAt: now,
+            isCompleted: false,
+          };
+          set({
+            trainingProgress: {
+              ...trainingProgress,
+              [topicId]: newProgress,
+            },
+          });
+        }
+      },
+
+      markTopicCompleted: (topicId) => {
+        const { trainingProgress } = get();
+        const existing = trainingProgress[topicId];
+        const now = new Date().toISOString();
+
+        if (existing) {
+          set({
+            trainingProgress: {
+              ...trainingProgress,
+              [topicId]: {
+                ...existing,
+                isCompleted: true,
+                completedAt: now,
+                lastAccessedAt: now,
+              },
+            },
+          });
+        } else {
+          const newProgress: TrainingProgress = {
+            topicId,
+            completedContents: [],
+            quizScores: {},
+            worksheetAnswers: {},
+            lastAccessedAt: now,
+            isCompleted: true,
+            completedAt: now,
+          };
+          set({
+            trainingProgress: {
+              ...trainingProgress,
+              [topicId]: newProgress,
+            },
+          });
+        }
+      },
+
+      getTopicProgress: (topicId) => {
+        const { trainingProgress } = get();
+        return trainingProgress[topicId];
+      },
+
+      isContentCompleted: (topicId, contentId) => {
+        const { trainingProgress } = get();
+        const progress = trainingProgress[topicId];
+        return progress?.completedContents.includes(contentId) ?? false;
+      },
+
+      getCompletedTopicIds: () => {
+        const { trainingProgress } = get();
+        return Object.values(trainingProgress)
+          .filter((p) => p.isCompleted)
+          .map((p) => p.topicId);
       },
 
       // Onboarding Actions
