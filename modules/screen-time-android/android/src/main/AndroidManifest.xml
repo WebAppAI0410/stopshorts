@@ -16,6 +16,9 @@
     <!-- Post Notifications Permission (required for Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Full Screen Intent Permission (for high-priority notifications on Android 10+) -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
     <application>
         <!-- Foreground Service for app monitoring -->
         <service

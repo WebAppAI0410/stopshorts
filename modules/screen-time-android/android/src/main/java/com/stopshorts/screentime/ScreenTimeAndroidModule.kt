@@ -191,8 +191,9 @@ class ScreenTimeAndroidModule : Module() {
         }
 
         // Check if monitoring service is running
+        // Uses static flag instead of deprecated getRunningServices()
         AsyncFunction("isMonitoringActive") {
-            isServiceRunning(CheckinForegroundService::class.java)
+            CheckinForegroundService.isRunning()
         }
 
         // ============================================
@@ -215,17 +216,6 @@ class ScreenTimeAndroidModule : Module() {
                 "delayMinutes" to prefs.getInt("intervention_delay", 5)
             )
         }
-    }
-
-    private fun isServiceRunning(serviceClass: Class<*>): Boolean {
-        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
-        @Suppress("DEPRECATION")
-        for (service in manager.getRunningServices(Int.MAX_VALUE)) {
-            if (serviceClass.name == service.service.className) {
-                return true
-            }
-        }
-        return false
     }
 
     private fun hasUsageStatsPermission(): Boolean {
@@ -298,17 +288,21 @@ class ScreenTimeAndroidModule : Module() {
 
     /**
      * Unregister the broadcast receiver
+     * Safe to call even if receiver was never registered or already unregistered
      */
     private fun unregisterInterventionReceiver() {
-        interventionReceiver?.let {
-            try {
-                context.unregisterReceiver(it)
-                android.util.Log.d("ScreenTimeModule", "Intervention receiver unregistered")
-            } catch (e: Exception) {
-                // Receiver might not be registered
-                e.printStackTrace()
-            }
+        val receiver = interventionReceiver ?: return
+
+        try {
+            context.unregisterReceiver(receiver)
+            android.util.Log.d("ScreenTimeModule", "Intervention receiver unregistered")
+        } catch (e: IllegalArgumentException) {
+            // Receiver was not registered - this is expected in some lifecycle scenarios
+            android.util.Log.w("ScreenTimeModule", "Receiver was not registered, skipping unregister")
+        } catch (e: Exception) {
+            android.util.Log.e("ScreenTimeModule", "Error unregistering receiver: ${e.javaClass.simpleName}", e)
+        } finally {
+            interventionReceiver = null
         }
-        interventionReceiver = null
     }
 }

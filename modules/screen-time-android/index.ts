@@ -1,5 +1,5 @@
 import { NativeModule, requireNativeModule } from 'expo-modules-core';
-import { NativeEventEmitter, NativeModules, EmitterSubscription } from 'react-native';
+import { Platform, NativeEventEmitter, NativeModules, EmitterSubscription } from 'react-native';
 
 export interface PermissionStatus {
   usageStats: boolean;
@@ -66,26 +66,53 @@ interface ScreenTimeAndroidModuleType extends NativeModule {
 }
 
 // This call loads the native module object from the JSI.
-const ScreenTimeAndroidModule = requireNativeModule<ScreenTimeAndroidModuleType>('ScreenTimeAndroid');
+// Only available on Android - will throw on other platforms
+let ScreenTimeAndroidModule: ScreenTimeAndroidModuleType | null = null;
 
-// Create event emitter for the module (using React Native's NativeEventEmitter)
+if (Platform.OS === 'android') {
+  try {
+    ScreenTimeAndroidModule = requireNativeModule<ScreenTimeAndroidModuleType>('ScreenTimeAndroid');
+  } catch (e) {
+    console.warn('[ScreenTimeAndroid] Native module not available:', e);
+  }
+}
+
+// Create event emitter for the module
+// For Expo modules, we need to use NativeEventEmitter with the native module
 let emitter: NativeEventEmitter | null = null;
 
-function getEmitter(): NativeEventEmitter {
+function getEmitter(): NativeEventEmitter | null {
+  if (!ScreenTimeAndroidModule) {
+    return null;
+  }
   if (!emitter) {
-    // For Expo modules, use the module directly as the native module
-    emitter = new NativeEventEmitter(NativeModules.ScreenTimeAndroid || ScreenTimeAndroidModule as any);
+    // NativeEventEmitter requires a native module that implements addListener/removeListeners
+    // Expo modules expose this through NativeModules bridge
+    const nativeModule = NativeModules.ScreenTimeAndroid ?? ScreenTimeAndroidModule;
+    emitter = new NativeEventEmitter(nativeModule as any);
   }
   return emitter;
 }
 
 /**
+ * No-op subscription for non-Android platforms
+ */
+const noOpSubscription: EmitterSubscription = {
+  remove: () => {},
+} as EmitterSubscription;
+
+/**
  * Add listener for intervention events from the overlay
  * @param listener Callback function that receives InterventionEvent
- * @returns Subscription that can be used to remove the listener
+ * @returns Subscription that can be used to remove the listener, or a no-op subscription if not on Android
  */
 export function addInterventionListener(listener: (event: InterventionEvent) => void): EmitterSubscription {
-  return getEmitter().addListener('onIntervention', listener);
+  const eventEmitter = getEmitter();
+  if (!eventEmitter) {
+    // Return a no-op subscription for non-Android platforms
+    return noOpSubscription;
+  }
+  return eventEmitter.addListener('onIntervention', listener);
 }
 
 export default ScreenTimeAndroidModule;

@@ -147,6 +147,11 @@ class InstalledAppsHelper(private val context: Context) {
         }
     }
 
+    /**
+     * Convert drawable to Base64 encoded string.
+     * Uses WEBP format for better compression than PNG.
+     * WEBP provides ~30% smaller file size with similar quality.
+     */
     private fun drawableToBase64(drawable: Drawable): String {
         val bitmap = if (drawable is BitmapDrawable && drawable.bitmap != null) {
             drawable.bitmap
@@ -161,8 +166,17 @@ class InstalledAppsHelper(private val context: Context) {
         }
 
         val stream = ByteArrayOutputStream()
-        // Compress to reduce size - 80% quality is usually sufficient
-        bitmap.compress(Bitmap.CompressFormat.PNG, 80, stream)
+        // Use WEBP for better compression (API 14+, lossy compression API 18+)
+        // WEBP provides ~30% smaller file sizes than PNG with similar quality
+        // Quality 80 is a good balance between size and visual quality for icons
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // API 30+: Use WEBP_LOSSY for explicit lossy compression
+            bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 80, stream)
+        } else {
+            // API 18-29: Use WEBP (lossy by default with quality < 100)
+            @Suppress("DEPRECATION")
+            bitmap.compress(Bitmap.CompressFormat.WEBP, 80, stream)
+        }
         val byteArray = stream.toByteArray()
         return Base64.encodeToString(byteArray, Base64.NO_WRAP)
     }

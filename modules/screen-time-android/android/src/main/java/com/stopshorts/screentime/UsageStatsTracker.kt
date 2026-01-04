@@ -3,12 +3,19 @@ package com.stopshorts.screentime
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.util.Log
 
 class UsageStatsTracker(private val context: Context) {
 
     private val usageStatsManager: UsageStatsManager by lazy {
         context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+    }
+
+    // Check if app is debuggable at runtime (works correctly for library modules)
+    // Using lazy to avoid repeated flag checks
+    private val isDebuggable: Boolean by lazy {
+        (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
     }
 
     // Display names for target apps
@@ -28,18 +35,19 @@ class UsageStatsTracker(private val context: Context) {
             "com.google.android.youtube", // YouTube
             "com.instagram.android"       // Instagram
         )
+    }
 
-        // Debug logging helpers - only log in debug builds
-        private fun logDebug(message: String) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, message)
-            }
+    // Debug logging helpers - only log in debug builds
+    // Using instance method to access isDebuggable flag
+    private fun logDebug(message: String) {
+        if (isDebuggable) {
+            Log.d(TAG, message)
         }
+    }
 
-        private fun logWarning(message: String) {
-            if (BuildConfig.DEBUG) {
-                Log.w(TAG, message)
-            }
+    private fun logWarning(message: String) {
+        if (isDebuggable) {
+            Log.w(TAG, message)
         }
     }
 
