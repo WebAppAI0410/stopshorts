@@ -36,6 +36,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAIStore, selectMessages } from '../../stores/useAIStore';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
+import { performanceMonitor } from '../../utils/performanceMonitor';
 import { t } from '../../i18n';
 import { Button } from '../ui';
 import type { Message } from '../../types/ai';
@@ -51,6 +52,9 @@ interface AIInterventionProps {
   minMessages?: number;
 }
 
+// Start performance measurement before component renders
+performanceMonitor.start('ai_intervention_mount');
+
 export function AIIntervention({
   blockedAppName,
   onProceed,
@@ -59,6 +63,8 @@ export function AIIntervention({
 }: AIInterventionProps) {
   const { colors, typography, spacing, borderRadius } = useTheme();
   const flatListRef = useRef<FlatList>(null);
+  const mountMeasuredRef = useRef(false);
+  const llmResponsePendingRef = useRef(false);
 
   const [inputText, setInputText] = useState('');
   const [showButtons, setShowButtons] = useState(false);
@@ -84,6 +90,23 @@ export function AIIntervention({
     // eslint-disable-next-line react-hooks/immutability -- Reanimated shared values are designed to be mutable
     typingOpacity.value = withTiming(isGenerating ? 1 : 0, { duration: 200 });
   }, [isGenerating, typingOpacity]);
+
+  // Measure mount time
+  useEffect(() => {
+    if (!mountMeasuredRef.current) {
+      mountMeasuredRef.current = true;
+      performanceMonitor.end('ai_intervention_mount');
+    }
+  }, []);
+
+  // Track LLM response time
+  useEffect(() => {
+    if (!isGenerating && llmResponsePendingRef.current) {
+      // LLM finished generating
+      llmResponsePendingRef.current = false;
+      performanceMonitor.end('llm_response');
+    }
+  }, [isGenerating]);
 
   // Start session on mount with initial AI greeting
   useEffect(() => {
@@ -123,6 +146,10 @@ export function AIIntervention({
   // Handle send message
   const handleSend = useCallback(() => {
     if (!inputText.trim() || isGenerating) return;
+
+    // Start LLM response timing
+    performanceMonitor.start('llm_response');
+    llmResponsePendingRef.current = true;
 
     sendMessage(inputText.trim());
     setInputText('');

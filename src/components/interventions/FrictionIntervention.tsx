@@ -6,7 +6,7 @@
  * 3. Confirm (final decision)
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
@@ -14,6 +14,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAppStore } from '../../stores/useAppStore';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
 import { calculateWaitTime } from '../../services/friction';
+import { performanceMonitor } from '../../utils/performanceMonitor';
 import { WaitingPhase } from './WaitingPhase';
 import { IntentionPhase } from './IntentionPhase';
 import { ConfirmPhase } from './ConfirmPhase';
@@ -30,6 +31,9 @@ interface FrictionInterventionProps {
   onDismiss: () => void;
 }
 
+// Start performance measurement before component renders
+performanceMonitor.start('friction_intervention_mount');
+
 export function FrictionIntervention({
   blockedAppName = 'TikTok',
   appPackage,
@@ -40,6 +44,7 @@ export function FrictionIntervention({
   const [phase, setPhase] = useState<FrictionPhase>('waiting');
   const [selectedIntention, setSelectedIntention] = useState<IntentionId | null>(null);
   const [customText, setCustomText] = useState<string | undefined>();
+  const mountMeasuredRef = useRef(false);
 
   const {
     dailyOpenCount,
@@ -57,6 +62,14 @@ export function FrictionIntervention({
   useEffect(() => {
     resetOpenCountIfNeeded();
     incrementOpenCount();
+  }, []);
+
+  // Measure mount time
+  useEffect(() => {
+    if (!mountMeasuredRef.current) {
+      mountMeasuredRef.current = true;
+      performanceMonitor.end('friction_intervention_mount');
+    }
   }, []);
 
   // Reset intervention state when screen comes into focus

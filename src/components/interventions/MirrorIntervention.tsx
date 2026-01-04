@@ -12,7 +12,7 @@
  * In Expo Go or when native module is unavailable, fallback UI is shown.
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
@@ -30,6 +30,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAppStore } from '../../stores/useAppStore';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
+import { performanceMonitor } from '../../utils/performanceMonitor';
 import { t } from '../../i18n';
 import { Button } from '../ui';
 
@@ -73,6 +74,9 @@ function useFallbackPermissions(): [{ granted: boolean; canAskAgain: boolean } |
   return [{ granted: false, canAskAgain: false }, async () => {}];
 }
 
+// Start performance measurement before component renders
+performanceMonitor.start('mirror_intervention_mount');
+
 export function MirrorIntervention({
   blockedAppName,
   userGoal,
@@ -82,6 +86,8 @@ export function MirrorIntervention({
   showCountdown = true,
 }: MirrorInterventionProps) {
   const { colors, typography, spacing, borderRadius } = useTheme();
+  const mountMeasuredRef = useRef(false);
+  const cameraInitMeasuredRef = useRef(false);
 
   // Use real hook if available, otherwise fallback
   const permissionHook = useCameraPermissions || useFallbackPermissions;
@@ -107,6 +113,14 @@ export function MirrorIntervention({
   const pulseStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value,
   }));
+
+  // Measure mount time
+  useEffect(() => {
+    if (!mountMeasuredRef.current) {
+      mountMeasuredRef.current = true;
+      performanceMonitor.end('mirror_intervention_mount');
+    }
+  }, []);
 
   // Get user's goal from store or props
   const displayGoal = useMemo((): string => {
@@ -176,9 +190,20 @@ export function MirrorIntervention({
   // Auto-request camera permission on mount
   useEffect(() => {
     if (cameraAvailable && permission && !permission.granted && permission.canAskAgain) {
+      // Start camera init tracking before requesting permission
+      performanceMonitor.start('camera_init');
       requestPermission();
     }
   }, [permission, requestPermission]);
+
+  // Track camera initialization completion
+  useEffect(() => {
+    if (hasPermission && !cameraInitMeasuredRef.current) {
+      cameraInitMeasuredRef.current = true;
+      // End camera init tracking when permission is granted and camera is ready
+      performanceMonitor.end('camera_init');
+    }
+  }, [hasPermission]);
 
   // Render camera or fallback view
   const renderCameraView = () => {
