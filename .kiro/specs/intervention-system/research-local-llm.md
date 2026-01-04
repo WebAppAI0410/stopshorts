@@ -1,24 +1,46 @@
 # ローカルLLM技術調査レポート
 
 調査日: 2024-12-23
-最終更新: 2026-01-01
+最終更新: 2026-01-04
 
 ---
 
-## 🎯 採用決定
+## ⚠️ 重要な更新 (2026-01-04)
+
+**Gemma 3n E2Bはreact-native-executorchで直接使用できないことが判明**
+
+| 問題点 | 詳細 |
+|--------|------|
+| **モデル形式** | Gemma 3nは`.task`形式（Google AI Edge SDK）で提供 |
+| **必要形式** | react-native-executorchは`.pte`形式が必要 |
+| **変換課題** | ExecuTorch形式への変換に技術的問題あり ([Issue #16411](https://github.com/pytorch/executorch/issues/16411)) |
+
+### 修正後の推奨
+
+| 優先度 | モデル | 理由 |
+|--------|--------|------|
+| **1位** | Llama 3.2 1B | react-native-executorchで公式.pteファイル提供 |
+| **2位** | Qwen 3 | 119言語対応（日本語含む）、ExecuTorch対応 |
+| **3位** | Gemma 3n GGUF + llama.rn | 日本語優秀だが別ライブラリが必要 |
+
+**詳細な実装計画**: [llm-integration-plan.md](./llm-integration-plan.md)
+
+---
+
+## 🎯 採用決定 (改訂)
 
 | 項目 | 決定内容 |
 |------|---------|
-| **採用モデル** | **Gemma 3n E2B** |
+| **採用モデル** | **Llama 3.2 1B** (Phase 1) → Qwen 3 (Phase 2検討) |
 | **統合方法** | react-native-executorch |
 | **ダウンロード** | オンボーディング後、オンデマンド |
-| **決定日** | 2026年1月1日 |
+| **決定日** | 2026年1月4日（改訂） |
 
 ### 選定理由
-1. **2GB RAMで動作** → 幅広いデバイスで対応可能
-2. **日本語性能良好** → WMT24++ベンチマークで高評価
-3. **高速推論** → 60-70 tokens/秒、Time-to-first-token 0.3秒
-4. **Google製** → モバイル最適化済み、信頼性高い
+1. **公式サポート** → react-native-executorchで.pteファイル提供済み
+2. **Expo SDK 54互換** → StopShortsの現環境と完全互換
+3. **軽量** → 500MB程度、2GB RAMで動作可能
+4. **日本語** → 限定的だが、必要に応じてQwen 3へ移行可能
 
 ---
 
@@ -26,11 +48,11 @@
 
 | プラットフォーム | 対応状況 | 推奨アプローチ | 対応デバイス率 |
 |-----------------|---------|---------------|---------------|
-| **iOS** | ✅ 対応可能 | react-native-executorch + Gemma 3n | RAM ≥ 2GB のデバイス |
-| **Android** | ✅ 対応可能 | react-native-executorch + Gemma 3n | RAM ≥ 2GB のデバイス |
+| **iOS** | ✅ 対応可能 | react-native-executorch + Llama 3.2 | RAM ≥ 2GB のデバイス |
+| **Android** | ✅ 対応可能 | react-native-executorch + Llama 3.2 | RAM ≥ 2GB のデバイス |
 | **React Native** | ✅ 採用決定 | react-native-executorch | - |
 
-**結論**: Gemma 3n E2Bを採用。2GB RAMで動作可能なため、従来の推定より広いデバイス対応が期待できる。
+**結論**: Llama 3.2 1Bで実装開始。日本語品質が不十分な場合はQwen 3へ移行。
 
 ---
 
