@@ -86,7 +86,6 @@ export function WaitingPhase({ waitSeconds, onComplete }: WaitingPhaseProps) {
           accessible={true}
           accessibilityRole="timer"
           accessibilityLabel={t('intervention.friction.waiting.countdownLabel', { seconds: remaining })}
-          accessibilityLiveRegion="polite"
         >
           {/* Progress ring effect using border */}
           <View

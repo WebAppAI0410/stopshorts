@@ -133,7 +133,6 @@ export function IntentionPhase({ onSelect }: IntentionPhaseProps) {
               numberOfLines={2}
               maxLength={100}
               accessibilityLabel={t('intervention.friction.intention.customPlaceholder')}
-              accessibilityHint={t('common.continue')}
             />
             <Button
               title={t('common.continue')}
