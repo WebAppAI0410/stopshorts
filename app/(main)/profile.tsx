@@ -143,7 +143,7 @@ export default function ProfileScreen() {
                                 ]}
                                 value={editingName}
                                 onChangeText={setEditingName}
-                                placeholder="ニックネームを入力"
+                                placeholder={t('profile.enterNickname')}
                                 placeholderTextColor={colors.textMuted}
                                 returnKeyType="done"
                                 onSubmitEditing={handleSaveName}
@@ -179,7 +179,7 @@ export default function ProfileScreen() {
                             ]}
                         >
                             <Text style={[typography.label, { color: colors.textMuted, marginBottom: spacing.sm }]}>
-                                アイコンを選択
+                                {t('profile.selectIcon')}
                             </Text>
                             <View style={styles.avatarOptions}>
                                 {avatarOptions.map((avatar) => (

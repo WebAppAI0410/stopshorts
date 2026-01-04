@@ -139,7 +139,7 @@ export default function StatisticsScreen() {
                         </View>
                     </View>
                     <Text style={[typography.body, { color: colors.textSecondary }]}>
-                        {hasRealScreenTimeData ? '今週の使用時間' : t('statistics.savedThisWeek')}
+                        {hasRealScreenTimeData ? t('statistics.weeklyUsageTime') : t('statistics.savedThisWeek')}
                     </Text>
                 </Animated.View>
 
@@ -166,10 +166,10 @@ export default function StatisticsScreen() {
                     <StatCard
                         icon="water-outline"
                         iconColor={colors.primary}
-                        title="サーフィング"
+                        title={t('statistics.surfing')}
                         value={totalUrgeSurfing}
-                        unit="回"
-                        subtitle={`成功率 ${Math.round(successRate * 100)}%`}
+                        unit={t('statistics.times')}
+                        subtitle={t('statistics.successRate', { percent: Math.round(successRate * 100) })}
                         progressColor={colors.primary}
                     />
                 </Animated.View>
@@ -189,7 +189,7 @@ export default function StatisticsScreen() {
                     ]}
                 >
                     <Text style={[typography.h3, { color: colors.textPrimary, marginBottom: spacing.md }]}>
-                        獲得バッジ
+                        {t('statistics.earnedBadges')}
                     </Text>
                     {earnedBadges.length > 0 ? (
                         <View style={styles.badgesGrid}>
@@ -206,7 +206,7 @@ export default function StatisticsScreen() {
                         <View style={styles.emptyBadges}>
                             <Ionicons name="trophy-outline" size={32} color={colors.textMuted} />
                             <Text style={[typography.bodySmall, { color: colors.textMuted, marginTop: spacing.sm, textAlign: 'center' }]}>
-                                衝動サーフィングを完了してバッジを獲得しよう
+                                {t('statistics.noBadgesYet')}
                             </Text>
                         </View>
                     )}
@@ -228,7 +228,7 @@ export default function StatisticsScreen() {
                         ]}
                     >
                         <Text style={[typography.h3, { color: colors.textPrimary, marginBottom: spacing.md }]}>
-                            🌊 サーフィング統計
+                            {t('statistics.surfingStats')}
                         </Text>
                         <View style={styles.surfingStatsRow}>
                             <View style={styles.surfingStat}>
@@ -236,7 +236,7 @@ export default function StatisticsScreen() {
                                     {lifetime.totalUrgeSurfingCompleted}
                                 </Text>
                                 <Text style={[typography.caption, { color: colors.textSecondary }]}>
-                                    完了回数
+                                    {t('statistics.completedCount')}
                                 </Text>
                             </View>
                             <View style={styles.surfingStat}>
@@ -244,7 +244,7 @@ export default function StatisticsScreen() {
                                     {Math.round(lifetime.totalSavedHours * 10) / 10}h
                                 </Text>
                                 <Text style={[typography.caption, { color: colors.textSecondary }]}>
-                                    節約時間
+                                    {t('statistics.savedTime')}
                                 </Text>
                             </View>
                             <View style={styles.surfingStat}>
@@ -252,7 +252,7 @@ export default function StatisticsScreen() {
                                     {lifetime.longestStreak}
                                 </Text>
                                 <Text style={[typography.caption, { color: colors.textSecondary }]}>
-                                    最長連続
+                                    {t('statistics.longestStreak')}
                                 </Text>
                             </View>
                         </View>
