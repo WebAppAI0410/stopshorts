@@ -22,10 +22,10 @@ import { palette } from '../../design/theme';
 interface WaveAnimationProps {
   /** Current progress (0-1) */
   progress: SharedValue<number>;
-  /** Wave color (uses theme primary if not specified) */
-  waveColor?: string;
   /** Height of the wave container */
   height?: number;
+  /** Test ID for testing */
+  testID?: string;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -79,10 +79,10 @@ const getWavePath = (
 
 export function WaveAnimation({
   progress,
-  waveColor,
   height = 250,
+  testID,
 }: WaveAnimationProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   // Continuously incrementing time value for wave movement
   const time = useSharedValue(0);
@@ -154,9 +154,14 @@ export function WaveAnimation({
   }));
 
   return (
-    <View style={[styles.container, { height }]}>
+    <View
+      testID={testID}
+      style={[styles.container, { height, borderColor: colors.borderSubtle }]}
+      accessibilityElementsHidden={true}
+      importantForAccessibility="no-hide-descendants"
+    >
       {/* Background with slight glassmorphism */}
-      <View style={[styles.background, { backgroundColor: colors.backgroundCardGlass || 'rgba(22, 27, 34, 0.7)' }]} />
+      <View style={[styles.background, { backgroundColor: colors.backgroundCardGlass }]} />
 
       <Svg width={SCREEN_WIDTH} height={height} viewBox={`0 0 ${SCREEN_WIDTH} ${height}`}>
         <AnimatedPath animatedProps={wave1Props} fillOpacity={0.3} />
@@ -165,7 +170,10 @@ export function WaveAnimation({
       </Svg>
 
       {/* Progress shadow bar at the bottom */}
-      <View style={styles.progressShadow}>
+      <View style={[
+        styles.progressShadow,
+        { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }
+      ]}>
         <Animated.View
           style={[
             styles.progressFill,
@@ -185,7 +193,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     position: 'relative',
     borderWidth: 1,
-    borderColor: 'rgba(48, 54, 61, 0.6)',
   },
   background: {
     ...StyleSheet.absoluteFillObject,
@@ -196,7 +203,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   progressFill: {
     height: '100%',

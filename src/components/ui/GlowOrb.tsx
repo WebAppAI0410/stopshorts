@@ -15,6 +15,7 @@ type GlowOrbProps = {
     size: 'medium' | 'large' | 'xl';
     color: 'primary' | 'accent';
     intensity?: number;
+    testID?: string;
 };
 
 export const GlowOrb: React.FC<GlowOrbProps> = ({
@@ -22,6 +23,7 @@ export const GlowOrb: React.FC<GlowOrbProps> = ({
     size,
     color,
     intensity = 0.15,
+    testID,
 }) => {
     const { colors } = useTheme();
     const pulse = useSharedValue(0);
@@ -57,7 +59,10 @@ export const GlowOrb: React.FC<GlowOrbProps> = ({
 
     return (
         <View
+            testID={testID}
             pointerEvents="none"
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no-hide-descendants"
             style={[
                 {
                     position: 'absolute',
