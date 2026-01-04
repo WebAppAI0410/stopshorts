@@ -896,7 +896,18 @@
       "modelDownloading": "AIモデルをダウンロード中...",
       "modelUnavailable": "このデバイスではAI機能を利用できません",
       "modelError": "AIの読み込みに失敗しました",
-      "retry": "再試行"
+      "retry": "再試行",
+      "accessibility": {
+        "userMessage": "あなたのメッセージ: {{content}}",
+        "aiMessage": "AIコーチ: {{content}}",
+        "inputLabel": "メッセージ入力欄",
+        "inputHint": "AIコーチに送信するメッセージを入力",
+        "sendButton": "メッセージを送信",
+        "sendButtonDisabled": "メッセージを送信（入力してください）",
+        "quitButton": "アプリを閉じる",
+        "proceedButton": "アプリを開く",
+        "aiTyping": "AIコーチが返答を作成中"
+      }
     },
     "settings": {
       "title": "介入設定",
