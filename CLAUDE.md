@@ -46,7 +46,7 @@ docs/                   # 実装仕様書
 
 ## 実装ドキュメント
 - `docs/IMPLEMENTATION_SPEC.md` - 詳細な実装仕様
-- `docs/GEMINI_PROMPT.md` - Gemini向け実装プロンプト
+- `.kiro/specs/` - 機能別仕様書（SDD）
 
 ## 仕様駆動開発 (SDD)
 

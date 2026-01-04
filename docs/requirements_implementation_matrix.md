@@ -1,8 +1,8 @@
 # StopShorts 要件・実装 対応表（現行実装準拠）
 
-最終更新: 2025-12-19
+最終更新: 2026-01-04
 
-このドキュメントは **現行実装が正** という前提で、`docs/specs/01_requirements.md` との対応を整理したものです。  
+このドキュメントは **現行実装が正** という前提で、`.kiro/specs/intervention-system/requirements.md` との対応を整理したものです。
 また、**Screen Time / Family Controls 関連は Apple の entitlement 未取得のためモック実装**であることを前提にしています。
 
 ---

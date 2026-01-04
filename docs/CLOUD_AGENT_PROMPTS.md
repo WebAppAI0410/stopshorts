@@ -44,8 +44,9 @@ Requirements → Design → Tasks → Implementation → Review
 | Phase 6 | 非機能要件 | 🔄 進行中 |
 
 ### Phase 3 残タスク
-- Task 3.2: オンボーディングフロー変更 - 部分実装
-- Task 3.5: アクセス制御の完全実装
+- Task 3.2: if-then.tsx の無効化・ルーティング更新
+- Task 3.4: AI・トレーニングのモックアップ改善、課金フロー連携
+- Task 3.5: InterventionGate コンポーネント、期限切れUI実装
 
 ### Phase 5 残タスク
 - Task 5.2: ExecuTorch/Gemma統合（ネイティブモジュール必要）
