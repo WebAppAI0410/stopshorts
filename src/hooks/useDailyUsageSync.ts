@@ -14,6 +14,7 @@ import { Platform, AppState, AppStateStatus } from 'react-native';
 import { screenTimeService, getSelectedPackages } from '../native/ScreenTimeModule';
 import { useAppStore } from '../stores/useAppStore';
 import { useStatisticsStore } from '../stores/useStatisticsStore';
+import { debugLog } from '../utils/logger';
 
 // Get date key for a date (YYYY-MM-DD)
 function getDateKey(date?: Date): string {
@@ -73,14 +74,14 @@ export function useDailyUsageSync() {
 
     // Skip if already synced today
     if (lastSyncDateRef.current === today) {
-      console.log('[DailyUsageSync] Already synced today, skipping');
+      debugLog('[DailyUsageSync] Already synced today, skipping');
       return;
     }
 
     // Skip if we already have data for yesterday (use hasData flag)
     const dailyStats = dailyStatsRef.current;
     if (dailyStats[yesterdayKey]?.hasData) {
-      console.log('[DailyUsageSync] Already have data for yesterday, updating habit score only');
+      debugLog('[DailyUsageSync] Already have data for yesterday, updating habit score only');
       lastSyncDateRef.current = today;
       updateHabitScore(dailyGoalMinutes, selectedPackages);
       return;
@@ -89,12 +90,12 @@ export function useDailyUsageSync() {
     isSyncingRef.current = true;
 
     try {
-      console.log('[DailyUsageSync] Syncing yesterday usage...');
+      debugLog('[DailyUsageSync] Syncing yesterday usage...');
 
       // Check permissions
       const permissionStatus = await screenTimeService.getPermissionStatus();
       if (!permissionStatus.usageStats) {
-        console.log('[DailyUsageSync] No usage stats permission');
+        debugLog('[DailyUsageSync] No usage stats permission');
         isSyncingRef.current = false;
         return;
       }
@@ -126,7 +127,7 @@ export function useDailyUsageSync() {
       updateHabitScore(dailyGoalMinutes, selectedPackages);
 
       lastSyncDateRef.current = today;
-      console.log('[DailyUsageSync] Sync completed');
+      debugLog('[DailyUsageSync] Sync completed');
     } catch (error) {
       console.error('[DailyUsageSync] Error syncing:', error);
     } finally {

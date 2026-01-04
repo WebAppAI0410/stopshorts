@@ -16,6 +16,7 @@ import { useAppStore } from '../stores/useAppStore';
 import { useStatisticsStore } from '../stores/useStatisticsStore';
 import type { TargetAppId } from '../types';
 import type { EmitterSubscription } from 'react-native';
+import { debugLog, debugWarn } from '../utils/logger';
 
 // Map TargetAppId to Android package names
 const TARGET_APP_PACKAGES: Record<TargetAppId, string[]> = {
@@ -81,33 +82,33 @@ export function useMonitoringService() {
     try {
       // Check permissions first
       const permissionStatus = await screenTimeService.getPermissionStatus();
-      console.log('[MonitoringService] Permission status:', permissionStatus);
+      debugLog('[MonitoringService] Permission status:', permissionStatus);
 
       // Only usageStats is required - overlay is optional for deep-link intervention
       if (!permissionStatus.usageStats) {
-        console.log('[MonitoringService] Missing usageStats permission - not starting');
+        debugLog('[MonitoringService] Missing usageStats permission - not starting');
         return;
       }
 
       if (!permissionStatus.overlay) {
-        console.log('[MonitoringService] Overlay permission missing - will use deep-link only');
+        debugLog('[MonitoringService] Overlay permission missing - will use deep-link only');
       }
 
       const packages = getPackageNamesForSelectedApps(selectedApps, customAppPackages);
-      console.log('[MonitoringService] Selected apps:', selectedApps);
-      console.log('[MonitoringService] Custom app packages:', customAppPackages);
+      debugLog('[MonitoringService] Selected apps:', selectedApps);
+      debugLog('[MonitoringService] Custom app packages:', customAppPackages);
 
       if (packages.length === 0) {
-        console.log('[MonitoringService] No apps selected - not starting');
+        debugLog('[MonitoringService] No apps selected - not starting');
         return;
       }
 
-      console.log('[MonitoringService] Starting with packages:', packages);
+      debugLog('[MonitoringService] Starting with packages:', packages);
       const success = await screenTimeService.startMonitoring(packages);
 
       if (success) {
         isMonitoringRef.current = true;
-        console.log('[MonitoringService] Started successfully');
+        debugLog('[MonitoringService] Started successfully');
       } else {
         console.error('[MonitoringService] Failed to start');
       }
@@ -125,7 +126,7 @@ export function useMonitoringService() {
     try {
       await screenTimeService.stopMonitoring();
       isMonitoringRef.current = false;
-      console.log('[MonitoringService] Stopped');
+      debugLog('[MonitoringService] Stopped');
     } catch (error) {
       console.error('[MonitoringService] Error stopping:', error);
     }
@@ -142,12 +143,12 @@ export function useMonitoringService() {
       const packages = getPackageNamesForSelectedApps(selectedApps, customAppPackages);
 
       if (packages.length === 0) {
-        console.log('[MonitoringService] No apps selected - stopping');
+        debugLog('[MonitoringService] No apps selected - stopping');
         await stopMonitoring();
         return;
       }
 
-      console.log('[MonitoringService] Updating target apps:', packages);
+      debugLog('[MonitoringService] Updating target apps:', packages);
       await screenTimeService.updateTargetApps(packages);
     } catch (error) {
       console.error('[MonitoringService] Error updating target apps:', error);
@@ -227,7 +228,7 @@ export function useMonitoringService() {
           interventionSettings.delayMinutes
         );
         lastSyncedSettingsRef.current = settingsKey;
-        console.log('[MonitoringService] Synced intervention settings:', interventionSettings);
+        debugLog('[MonitoringService] Synced intervention settings:', interventionSettings);
       } catch (error) {
         console.error('[MonitoringService] Failed to sync intervention settings:', error);
       }
@@ -264,7 +265,7 @@ export function useMonitoringService() {
 
         // Add new listener
         interventionListenerRef.current = addInterventionListener((event) => {
-          console.log('[MonitoringService] Intervention event received:', event);
+          debugLog('[MonitoringService] Intervention event received:', event);
 
           // Validate event structure before using
           if (event && typeof event.proceeded === 'boolean') {
@@ -277,13 +278,13 @@ export function useMonitoringService() {
               timestamp: event.timestamp || Date.now(),
             });
           } else {
-            console.warn('[MonitoringService] Invalid intervention event:', event);
+            debugWarn('[MonitoringService] Invalid intervention event:', event);
           }
         });
 
-        console.log('[MonitoringService] Intervention listener set up');
+        debugLog('[MonitoringService] Intervention listener set up');
       } catch (error) {
-        console.warn('[MonitoringService] Failed to set up intervention listener:', error);
+        debugWarn('[MonitoringService] Failed to set up intervention listener:', error);
       }
     };
 

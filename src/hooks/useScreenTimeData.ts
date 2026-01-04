@@ -9,6 +9,7 @@ import { Platform } from 'react-native';
 import { screenTimeService, UsageData } from '../native/ScreenTimeModule';
 import { useAppStore } from '../stores/useAppStore';
 import type { TargetAppId } from '../types';
+import { debugLog } from '../utils/logger';
 
 interface ScreenTimeDataState {
   todayData: UsageData | null;
@@ -71,9 +72,14 @@ export function useScreenTimeData(): UseScreenTimeDataReturn {
     }
 
     try {
-      console.log('[useScreenTimeData] Fetching today usage - selectedApps:', memoizedSelectedApps, 'customPackages:', customPackages);
+      debugLog(
+        '[useScreenTimeData] Fetching today usage - selectedApps:',
+        memoizedSelectedApps,
+        'customPackages:',
+        customPackages
+      );
       const data = await screenTimeService.getTodayUsage(memoizedSelectedApps, customPackages);
-      console.log('[useScreenTimeData] Today data:', JSON.stringify(data));
+      debugLog('[useScreenTimeData] Today data:', JSON.stringify(data));
 
       setState((prev) => ({
         ...prev,
@@ -108,9 +114,14 @@ export function useScreenTimeData(): UseScreenTimeDataReturn {
     }
 
     try {
-      console.log('[useScreenTimeData] Fetching weekly usage - selectedApps:', memoizedSelectedApps, 'customPackages:', customPackages);
+      debugLog(
+        '[useScreenTimeData] Fetching weekly usage - selectedApps:',
+        memoizedSelectedApps,
+        'customPackages:',
+        customPackages
+      );
       const data = await screenTimeService.getWeeklyUsage(memoizedSelectedApps, customPackages);
-      console.log('[useScreenTimeData] Weekly data:', JSON.stringify(data));
+      debugLog('[useScreenTimeData] Weekly data:', JSON.stringify(data));
 
       setState((prev) => ({
         ...prev,
