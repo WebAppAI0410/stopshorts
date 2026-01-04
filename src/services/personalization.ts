@@ -9,7 +9,6 @@ import {
     IfThenPlan,
     goalTypeToPurpose,
 } from '../types';
-import { t } from '../i18n';
 
 // Time-based message selection
 function getTimeOfDay(hour: number): 'morning' | 'afternoon' | 'evening' | 'night' | 'lateNight' {

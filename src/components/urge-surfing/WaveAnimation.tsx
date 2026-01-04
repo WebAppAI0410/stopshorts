@@ -86,6 +86,8 @@ export function WaveAnimation({
 
   // Continuously incrementing time value for wave movement
   const time = useSharedValue(0);
+  // Date.now() in useRef is valid for animation timing - disable React Compiler purity check
+  // eslint-disable-next-line react-hooks/purity
   const startTime = useRef(Date.now());
 
   // Use frame callback for smooth 60fps animation

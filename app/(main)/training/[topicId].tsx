@@ -39,29 +39,18 @@ export default function TopicDetailScreen() {
   const [worksheetAnswers, setWorksheetAnswers] = useState<Record<string, string>>({});
   const [showQuizResult, setShowQuizResult] = useState(false);
 
-  // Load saved worksheet answers from store
+  // Load saved worksheet answers from store when topic changes
+  // This sync from store to local state is intentional for editing workflow
   useEffect(() => {
     if (topicProgress?.worksheetAnswers) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setWorksheetAnswers(topicProgress.worksheetAnswers);
     }
   }, [topicProgress?.worksheetAnswers]);
 
-  if (!topic) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title={t('common.error')} showBack />
-        <View style={styles.errorContainer}>
-          <Text style={[typography.body, { color: colors.textSecondary }]}>
-            {t('training.topicNotFound')}
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const currentContent = topic.contents[currentContentIndex];
-
+  // All useCallback hooks must be called before any early returns (React Hooks rules)
   const handleContentPress = useCallback((content: TrainingContent) => {
+    if (!topic) return;
     const index = topic.contents.findIndex((c) => c.id === content.id);
     setCurrentContentIndex(index);
     setPhase(content.type);
@@ -69,7 +58,7 @@ export default function TopicDetailScreen() {
   }, [topic]);
 
   const handleNextContent = useCallback(() => {
-    if (!topicId) return;
+    if (!topicId || !topic) return;
 
     // Mark current content as completed
     const currentContentItem = topic.contents[currentContentIndex];
@@ -107,7 +96,7 @@ export default function TopicDetailScreen() {
       markTopicCompleted(topicId);
       setPhase('complete');
     }
-  }, [currentContentIndex, topic.contents, topicId, quizAnswers, worksheetAnswers, completeContent, recordQuizScore, saveWorksheetAnswer, markTopicCompleted]);
+  }, [currentContentIndex, topic, topicId, quizAnswers, worksheetAnswers, completeContent, recordQuizScore, saveWorksheetAnswer, markTopicCompleted]);
 
   const handleQuizAnswer = useCallback((questionId: string, answerIndex: number) => {
     setQuizAnswers((prev) => ({ ...prev, [questionId]: answerIndex }));
@@ -124,6 +113,22 @@ export default function TopicDetailScreen() {
       setPhase('list');
     }
   }, [phase, router]);
+
+  // Early return for error state - must be after all hooks
+  if (!topic) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <Header title={t('common.error')} showBack />
+        <View style={styles.errorContainer}>
+          <Text style={[typography.body, { color: colors.textSecondary }]}>
+            {t('training.topicNotFound')}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const currentContent = topic.contents[currentContentIndex];
 
   // Content List Phase
   const renderContentList = () => (
@@ -247,7 +252,7 @@ export default function TopicDetailScreen() {
             {t(currentContent.titleKey)}
           </Text>
 
-          {currentContent.questions.map((question, qIndex) => (
+          {currentContent.questions.map((question) => (
             <View
               key={question.id}
               style={[
@@ -363,7 +368,7 @@ export default function TopicDetailScreen() {
             {t(currentContent.titleKey)}
           </Text>
 
-          {currentContent.prompts.map((prompt, pIndex) => (
+          {currentContent.prompts.map((prompt) => (
             <View
               key={prompt.id}
               style={[

@@ -22,7 +22,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { theme, lightTheme, Theme, Typography, Spacing, BorderRadius } from '../design/theme';
+import { theme, Theme, Typography, Spacing, BorderRadius } from '../design/theme';
 
 /** Theme mode options */
 export type ThemeMode = 'light' | 'dark' | 'system';

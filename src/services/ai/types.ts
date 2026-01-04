@@ -3,7 +3,7 @@
  * Abstraction layer for local LLM providers
  */
 
-import type { GenerationConfig, PersonaId, Message } from '../../types/ai';
+import type { GenerationConfig, Message } from '../../types/ai';
 
 /**
  * LLM Provider identifiers

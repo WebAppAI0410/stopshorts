@@ -6,7 +6,7 @@
  * - Android: Uses UsageStatsManager
  */
 import { Platform } from 'react-native';
-import iOSScreenTime, {
+import {
     isAvailable as isIOSAvailable,
     getAuthorizationStatus as getIOSAuthorizationStatus,
     requestAuthorization as requestIOSAuthorization,

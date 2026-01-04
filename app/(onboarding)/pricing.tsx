@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, ProgressIndicator, Header, GlowOrb } from '../../src/components/ui';
+import { Button, Header, GlowOrb } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
