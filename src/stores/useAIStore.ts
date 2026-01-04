@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   type AIState,
@@ -53,9 +53,10 @@ const AI_SESSIONS_KEY = 'stopshorts-ai-sessions';
 interface AIStore extends AIState, AIActions {}
 
 export const useAIStore = create<AIStore>()(
-  persist(
-    (set, get) => ({
-      ...initialState,
+  devtools(
+    persist(
+      (set, get) => ({
+        ...initialState,
 
       // ============================================
       // Session Management
@@ -373,16 +374,18 @@ export const useAIStore = create<AIStore>()(
           },
         });
       },
-    }),
-    {
-      name: 'stopshorts-ai-store',
-      storage: createJSONStorage(() => AsyncStorage),
-      // Only persist certain fields
-      partialize: (state) => ({
-        personaId: state.personaId,
-        modelStatus: state.modelStatus,
       }),
-    }
+      {
+        name: 'stopshorts-ai-store',
+        storage: createJSONStorage(() => AsyncStorage),
+        // Only persist certain fields
+        partialize: (state) => ({
+          personaId: state.personaId,
+          modelStatus: state.modelStatus,
+        }),
+      }
+    ),
+    { name: 'AIStore', enabled: __DEV__ }
   )
 );
 
