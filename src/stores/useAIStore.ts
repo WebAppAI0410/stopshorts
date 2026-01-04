@@ -13,6 +13,7 @@ import {
   DEFAULT_LONG_TERM_MEMORY,
   LONG_TERM_LIMITS,
 } from '../types/ai';
+import { buildTrainingContext } from '../services/ai/promptBuilder';
 
 // Utility to generate unique IDs
 function generateId(): string {
@@ -401,12 +402,22 @@ async function generateAIResponse(
   _personaId: PersonaId,
   _longTermMemory: LongTermMemory | null
 ): Promise<string> {
+  // Build training context for personalized responses
+  const trainingContext = buildTrainingContext();
+
   // Placeholder responses based on message content
   // This will be replaced with actual LLM integration via react-native-executorch
+  // When integrated, trainingContext will be included in the system prompt
   const lastMessage = messages[messages.length - 1];
   const content = lastMessage?.content.toLowerCase() || '';
 
+  // Log training context in dev mode for debugging
+  if (__DEV__) {
+    console.log('[AIStore] Training context:', trainingContext);
+  }
+
   // Simple pattern matching for demo purposes
+  // In production, the LLM will use trainingContext for personalized recommendations
   if (content.includes('つらい') || content.includes('難しい')) {
     return 'その気持ち、よく分かります。少しずつでいいんですよ。今日、何か小さな一歩を踏み出せたことはありますか？';
   }
@@ -417,6 +428,14 @@ async function generateAIResponse(
 
   if (content.includes('できた') || content.includes('成功')) {
     return 'すごい！その調子です。小さな成功を積み重ねることが大切ですね。どんな気持ちですか？';
+  }
+
+  if (content.includes('トレーニング') || content.includes('学習') || content.includes('勉強')) {
+    // Use training context to suggest next topic
+    if (trainingContext.includes('完了済み: なし')) {
+      return '習慣改善のトレーニングをまだ始めていないようですね。「習慣ループの理解」から始めてみませんか？自分の行動パターンを理解することが第一歩です。';
+    }
+    return 'トレーニングを進めているんですね！学んだことを日常に活かせていますか？';
   }
 
   // Default supportive response
