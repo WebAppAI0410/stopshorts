@@ -6,6 +6,61 @@
 
 **StopShorts** is a mobile app that helps users break their short-form video addiction (TikTok, YouTube Shorts, Instagram Reels) using behavioral psychology techniques like Urge Surfing.
 
+## Spec-Driven Development (SDD)
+
+**cc-sdd** を使用した仕様駆動開発を採用。Codex / Claude Code 両方で同じワークフローを使用可能。
+
+### Workflow
+```
+/kiro:spec-init → /kiro:spec-requirements → /kiro:spec-design → /kiro:spec-tasks → /kiro:spec-impl
+```
+
+### Key Directories
+- `.kiro/specs/` - Feature specifications
+- `.kiro/steering/` - Project context (product.md, tech.md, structure.md)
+- `.claude/commands/kiro/` - Kiro commands for Claude Code
+
+### When to Use SDD
+- New feature implementation
+- Multi-file changes
+- Architecture-impacting changes
+
+### Skip SDD For
+- Bug fixes, typos, style tweaks
+
+## Agent Workflow (Codex + Claude Code)
+
+### Project Skills (local)
+- Source: `./.claude/skills/`
+- Synced to Codex global skills at: `~/.codex/skills/`
+- Project-specific skills:
+  - `stopshorts-onboarding`
+  - `stopshorts-ui-consistency`
+  - `stopshorts-store`
+  - `sdd-workflow` *(NEW)*
+- Sync script: `./scripts/sync-skills.sh`
+
+### Global Skills
+- Location: `~/.codex/skills/`
+- Includes global Claude skills synced from `/home/hdyk/.claude/skills/`
+
+### Session Retrospective
+- Log what worked/failed after major tasks in:
+  - `docs/reviews/2025-12-22_codex-session-retrospective.md`
+  - `docs/reviews/SESSION_LOG.md` (rolling)
+  - Add a new dated entry for future retrospectives.
+
+### Command Hygiene (avoid common failures)
+- Validate paths before `cat`: `rg --files -g 'filename'`
+- Quote commands with parentheses: `'app/(onboarding)/...'`
+- Preflight EAS flows before download (quota/artifacts)
+
+### Dev Build Rebuild Decision (Expo)
+- Rebuild **only** when native code/config changes:
+  - Added/updated a native module
+  - Changed config plugins or native app metadata (icons, splash, etc.)
+- JS/TS-only changes do **not** require a rebuild; just restart the bundler.
+
 ## Current Implementation Status
 
 ### ✅ Completed Features
@@ -120,6 +175,10 @@ src/
 ```bash
 # Development
 npx expo start
+
+# Storybook (UI review)
+EXPO_PUBLIC_STORYBOOK_ENABLED=true npx expo start
+npm run storybook:generate
 
 # Type check
 npx tsc --noEmit

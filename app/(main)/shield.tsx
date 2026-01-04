@@ -17,12 +17,14 @@ interface ShieldScreenProps {
 export default function ShieldScreen({ onClose, onExtend }: ShieldScreenProps) {
     const { colors, typography, spacing, borderRadius } = useTheme();
     const {
-        interventionDurationMinutes,
+        interventionSettings,
         purpose,
         sleepProfile,
         addictionAssessment,
         implementationIntent,
     } = useAppStore();
+
+    const thresholdMinutes = interventionSettings.delayMinutes;
 
     // Get personalized message and coaching context
     const personalizedData = useMemo(() => {
@@ -76,7 +78,7 @@ export default function ShieldScreen({ onClose, onExtend }: ShieldScreenProps) {
                 {/* Title */}
                 <Animated.View entering={FadeInUp.duration(600).delay(400)}>
                     <Text style={[typography.h1, { color: colors.textPrimary, textAlign: 'center' }]}>
-                        {t('shield.title', { minutes: interventionDurationMinutes })}
+                        {t('shield.title', { minutes: thresholdMinutes })}
                     </Text>
                 </Animated.View>
 
@@ -134,8 +136,8 @@ export default function ShieldScreen({ onClose, onExtend }: ShieldScreenProps) {
                     >
                         <Text style={[typography.button, { color: colors.textSecondary }]}>
                             {warningLevel === 'critical'
-                                ? t('shield.buttons.extend', { minutes: interventionDurationMinutes }) + '（おすすめしません）'
-                                : t('shield.buttons.extend', { minutes: interventionDurationMinutes })
+                                ? t('shield.buttons.extend', { minutes: thresholdMinutes }) + '（おすすめしません）'
+                                : t('shield.buttons.extend', { minutes: thresholdMinutes })
                             }
                         </Text>
                         <View style={[styles.underline, { backgroundColor: colors.textMuted }]} />

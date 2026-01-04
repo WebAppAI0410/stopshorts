@@ -43,6 +43,22 @@ npm test
 - `ThemeProvider` など Context が必要な場合は wrapper を使う
 - Reanimated / Gesture Handler / AsyncStorage は Jest で mock 済み
 
+## UI Review (Storybook)
+
+### 目的
+- React Native 実機/シミュレータで UI を忠実に確認
+- 仕様レビューと実装の差分を最小化
+
+### 使い方
+```bash
+npm run storybook:generate
+EXPO_PUBLIC_STORYBOOK_ENABLED=true npx expo start
+```
+
+### メモ
+- `/storybook` ルートで Storybook を開く
+- 新しい `*.stories.tsx` を追加したら `storybook:generate` を再実行
+
 ## E2E Tests (Detox)
 
 ### 対象

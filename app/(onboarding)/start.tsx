@@ -19,7 +19,7 @@ export default function StartScreen() {
     const calculateImpactFromScreenTime = useAppStore((state) => state.calculateImpactFromScreenTime);
     const alternativeActivity = useAppStore((state) => state.alternativeActivity);
     const customAlternativeActivity = useAppStore((state) => state.customAlternativeActivity);
-    const ifThenPlan = useAppStore((state) => state.ifThenPlan);
+    const selectedInterventionType = useAppStore((state) => state.selectedInterventionType);
 
     // Get goal display name from translation
     const getGoalDisplayName = (goalType: string | null): string => {
@@ -27,11 +27,10 @@ export default function StartScreen() {
         return t(`onboarding.v3.goal.options.${goalType}.title`);
     };
 
-    // Get If-Then action display name from translation
-    const getIfThenActionDisplayName = (planAction: string | null, customAction?: string): string => {
-        if (!planAction) return '';
-        if (planAction === 'custom') return customAction || '';
-        return t(`onboarding.v3.ifThen.options.${planAction}`);
+    // Get intervention type display name from translation
+    const getInterventionDisplayName = (interventionType: string | null): string => {
+        if (!interventionType) return '';
+        return t(`onboarding.interventionSelect.options.${interventionType}.title`);
     };
 
     const handleStart = () => {
@@ -192,7 +191,7 @@ export default function StartScreen() {
                         }
                     ]} />
 
-                    {/* Row 4: If-Then Plan */}
+                    {/* Row 4: Intervention Type */}
                     <View style={styles.commitmentRow}>
                         <Text style={[
                             typography.caption,
@@ -201,7 +200,7 @@ export default function StartScreen() {
                                 marginBottom: spacing.xs,
                             }
                         ]}>
-                            {t('onboarding.v3.start.ifThenLabel')}
+                            {t('onboarding.v3.start.interventionLabel')}
                         </Text>
                         <Text style={[
                             typography.bodyLarge,
@@ -210,10 +209,7 @@ export default function StartScreen() {
                                 fontWeight: '600',
                             }
                         ]}>
-                            {getIfThenActionDisplayName(
-                                ifThenPlan?.action || null,
-                                ifThenPlan?.customAction
-                            )}
+                            {getInterventionDisplayName(selectedInterventionType)}
                         </Text>
                     </View>
                 </Animated.View>

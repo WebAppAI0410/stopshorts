@@ -97,6 +97,8 @@ docs/
 ├── issues/                                # タスク管理
 │   └── mvp_issues.md                      # MVP Issue分解
 └── mockups/                               # HTMLモックアップ
+    ├── index.html                         # モックアップ一覧
+    ├── onboarding-flow.html               # オンボーディング詳細モック
     └── wave_mockup.html                   # 波アニメーションモックアップ
 ```
 

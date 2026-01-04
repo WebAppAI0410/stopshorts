@@ -7,7 +7,6 @@ import {
   type SubscriptionPlan,
   type SubscriptionStatus,
   type SleepProfile,
-  type DailyStats,
   type ImplementationIntentConfig,
   type AddictionAssessment,
   type PurposeDetails,
@@ -28,11 +27,14 @@ import {
   type CustomApp,
   // Intervention settings
   type InterventionSettings,
+  type UrgeSurfingDurationSeconds,
+  type InterventionType,
   // Profile types
   type AvatarIcon,
   // Mapping functions
   goalTypeToPurpose,
 } from '../types';
+import { shouldResetDailyCount } from '../services/friction';
 
 interface AppState {
   // User State
@@ -49,6 +51,7 @@ interface AppState {
   subscriptionExpiry: string | null;
   trialStartDate: string | null;
   interventionDurationMinutes: number;
+  urgeSurfingDurationSeconds: UrgeSurfingDurationSeconds;
   implementationIntent: ImplementationIntentConfig | null;
   dailyGoalMinutes: number;
 
@@ -82,8 +85,13 @@ interface AppState {
   // Intervention Settings (Android only)
   interventionSettings: InterventionSettings;
 
-  // Statistics
-  stats: DailyStats[];
+  // Friction Intervention State
+  selectedInterventionType: InterventionType;
+  dailyOpenCount: number;
+  lastOpenDate: string | null;
+
+  // NOTE: Legacy stats removed - use useStatisticsStore for all analytics
+  // See: docs/reviews/2026-01-03_project_review.md
 
   // Actions
   setUserName: (name: string) => void;
@@ -101,9 +109,10 @@ interface AppState {
   ) => void;
   startTrial: () => void;
   setInterventionDuration: (minutes: number) => void;
+  setUrgeSurfingDuration: (seconds: UrgeSurfingDurationSeconds) => void;
   setImplementationIntent: (intent: ImplementationIntentConfig) => void;
   setDailyGoal: (minutes: number) => void;
-  recordIntervention: (app: ManagedApp) => void;
+  // NOTE: recordIntervention removed - use useStatisticsStore.recordIntervention instead
   reset: () => void;
 
   // New Feature v2 Actions
@@ -142,6 +151,11 @@ interface AppState {
   setBaselineMonthlyMinutes: (minutes: number) => void;
   setInterventionSettings: (settings: Partial<InterventionSettings>) => void;
 
+  // Friction Intervention Actions
+  setSelectedInterventionType: (type: InterventionType) => void;
+  incrementOpenCount: () => void;
+  resetOpenCountIfNeeded: () => void;
+
   // Onboarding Actions
   restartOnboarding: () => void;
 }
@@ -163,9 +177,10 @@ const initialState = {
   subscriptionExpiry: null,
   trialStartDate: null,
   interventionDurationMinutes: 5,
+  urgeSurfingDurationSeconds: 30 as UrgeSurfingDurationSeconds,
   implementationIntent: null,
   dailyGoalMinutes: 60,
-  stats: [],
+  // NOTE: stats removed - use useStatisticsStore for all analytics
   // New Feature v2 initial state
   usageAssessment: null,
   lifetimeImpact: null,
@@ -193,6 +208,10 @@ const initialState = {
     timing: 'immediate',
     delayMinutes: 5,
   } as InterventionSettings,
+  // Friction Intervention state
+  selectedInterventionType: 'breathing' as InterventionType,
+  dailyOpenCount: 0,
+  lastOpenDate: null as string | null,
 };
 
 export const useAppStore = create<AppState>()(
@@ -245,68 +264,18 @@ export const useAppStore = create<AppState>()(
       setInterventionDuration: (minutes) =>
         set({ interventionDurationMinutes: minutes }),
 
+      setUrgeSurfingDuration: (seconds) =>
+        set({ urgeSurfingDurationSeconds: seconds }),
+
       setImplementationIntent: (intent) =>
         set({ implementationIntent: intent }),
 
       setDailyGoal: (minutes) =>
         set({ dailyGoalMinutes: minutes }),
 
-      recordIntervention: (app) => {
-        const today = new Date().toISOString().split('T')[0];
-        const { stats, interventionDurationMinutes } = get();
-        const existingIndex = stats.findIndex((s) => s.date === today);
-
-        // 古いデータのクリーンアップ (90日以上前のデータを削除)
-        const MAX_STATS_DAYS = 90;
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - MAX_STATS_DAYS);
-        const cutoffString = cutoffDate.toISOString().split('T')[0];
-
-        const createEmptyAppStats = () => ({
-          tiktok: { interventionCount: 0, blockedMinutes: 0 },
-          youtubeShorts: { interventionCount: 0, blockedMinutes: 0 },
-          instagramReels: { interventionCount: 0, blockedMinutes: 0 },
-        });
-
-        let updatedStats: DailyStats[];
-
-        if (existingIndex >= 0) {
-          // イミュータブルな更新パターン
-          updatedStats = stats.map((stat, index) => {
-            if (index !== existingIndex) return stat;
-            return {
-              ...stat,
-              interventionCount: stat.interventionCount + 1,
-              totalBlockedMinutes: stat.totalBlockedMinutes + interventionDurationMinutes,
-              apps: {
-                ...stat.apps,
-                [app]: {
-                  interventionCount: (stat.apps[app]?.interventionCount ?? 0) + 1,
-                  blockedMinutes: (stat.apps[app]?.blockedMinutes ?? 0) + interventionDurationMinutes,
-                },
-              },
-            };
-          });
-        } else {
-          const newStats: DailyStats = {
-            date: today,
-            interventionCount: 1,
-            totalBlockedMinutes: interventionDurationMinutes,
-            apps: {
-              ...createEmptyAppStats(),
-              [app]: {
-                interventionCount: 1,
-                blockedMinutes: interventionDurationMinutes,
-              },
-            },
-          };
-          updatedStats = [...stats, newStats];
-        }
-
-        // 古いデータを除外して設定
-        const filteredStats = updatedStats.filter((s) => s.date >= cutoffString);
-        set({ stats: filteredStats });
-      },
+      // NOTE: recordIntervention removed - use useStatisticsStore.recordIntervention instead
+      // Legacy implementation was here but caused double counting with useStatisticsStore
+      // See: docs/reviews/2026-01-03_project_review.md
 
       reset: () => set(initialState),
 
@@ -406,10 +375,11 @@ export const useAppStore = create<AppState>()(
         const state = get();
 
         // Validate required onboarding data (motivation is optional in v3 flow)
-        if (!state.alternativeActivity || !state.ifThenPlan || !state.goal) {
+        // Per spec (design.md 3.2.1): check selectedInterventionType instead of ifThenPlan
+        if (!state.alternativeActivity || !state.selectedInterventionType || !state.goal) {
           console.error('[Onboarding] Cannot complete: missing required data', {
             alternativeActivity: !!state.alternativeActivity,
-            ifThenPlan: !!state.ifThenPlan,
+            selectedInterventionType: !!state.selectedInterventionType,
             goal: !!state.goal,
           });
           return; // Early return if validation fails
@@ -428,7 +398,8 @@ export const useAppStore = create<AppState>()(
           screenTimeData: state.screenTimeData,
           alternativeActivity: state.alternativeActivity,
           customActivity: state.customAlternativeActivity || undefined,
-          ifThenPlan: state.ifThenPlan,
+          ...(state.ifThenPlan && { ifThenPlan: state.ifThenPlan }), // Legacy, kept for migration
+          selectedInterventionType: state.selectedInterventionType,  // New intervention method
           completedAt: now,
         };
 
@@ -584,6 +555,29 @@ export const useAppStore = create<AppState>()(
             ...settings,
           },
         });
+      },
+
+      // Friction Intervention Actions
+      setSelectedInterventionType: (type) =>
+        set({ selectedInterventionType: type }),
+
+      incrementOpenCount: () => {
+        const { dailyOpenCount } = get();
+        const today = new Date().toISOString();
+        set({
+          dailyOpenCount: dailyOpenCount + 1,
+          lastOpenDate: today,
+        });
+      },
+
+      resetOpenCountIfNeeded: () => {
+        const { lastOpenDate } = get();
+        if (shouldResetDailyCount(lastOpenDate)) {
+          set({
+            dailyOpenCount: 0,
+            lastOpenDate: null,
+          });
+        }
       },
 
       // Onboarding Actions

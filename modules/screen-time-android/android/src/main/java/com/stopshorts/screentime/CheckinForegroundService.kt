@@ -16,7 +16,7 @@ import androidx.core.app.NotificationCompat
  *
  * Supports two intervention timing modes:
  * - immediate: Show overlay immediately when target app is detected
- * - delayed: Show overlay after user has been using the app for X minutes
+ * - delayed: Show overlay when cumulative usage for the day reaches a threshold
  */
 class CheckinForegroundService : Service() {
 
@@ -37,7 +37,9 @@ class CheckinForegroundService : Service() {
         private const val INTERVENTION_CHANNEL_NAME = "Intervention Alerts"
 
         private const val CHECK_INTERVAL_MS = 1500L // Check every 1.5 seconds
-        private const val COOLDOWN_PERIOD_MS = 5 * 60 * 1000L // 5 minutes cooldown
+        // Cooldown for IMMEDIATE mode only. Delayed mode uses threshold-based triggering.
+        // See docs/specs/06_intervention_timing.md
+        private const val COOLDOWN_PERIOD_MS = 5 * 60 * 1000L // 5 minutes cooldown (immediate mode)
 
         const val ACTION_START_MONITORING = "com.stopshorts.screentime.START_MONITORING"
         const val ACTION_STOP_MONITORING = "com.stopshorts.screentime.STOP_MONITORING"
@@ -122,9 +124,9 @@ class CheckinForegroundService : Service() {
     private var interventionTiming: String = "immediate" // "immediate" or "delayed"
     private var interventionDelayMinutes: Int = 5 // 5, 10, or 15
 
-    // Track continuous usage start time for each app (for delayed mode)
-    private val appUsageStartTimes: MutableMap<String, Long> = mutableMapOf()
-    private val interventionTriggeredForSession: MutableSet<String> = mutableSetOf()
+    // Track cumulative threshold crossings per app (for delayed mode)
+    private val lastThresholdCounts: MutableMap<String, Int> = mutableMapOf()
+    private var lastThresholdDate: String = ""
 
     private val monitoringRunnable = object : Runnable {
         override fun run() {
@@ -275,9 +277,8 @@ class CheckinForegroundService : Service() {
         interventionDelayMinutes = delayMinutes
         logDebug("Updated settings: timing=$timing, delay=$delayMinutes min")
 
-        // Clear usage tracking when settings change
-        appUsageStartTimes.clear()
-        interventionTriggeredForSession.clear()
+        // Clear threshold tracking when settings change
+        lastThresholdCounts.clear()
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -345,6 +346,7 @@ class CheckinForegroundService : Service() {
      */
     private fun checkForegroundApp() {
         try {
+            resetDailyThresholdsIfNeeded()
             val currentApp = usageStatsTracker.getCurrentForegroundApp()
             val now = System.currentTimeMillis()
 
@@ -372,17 +374,11 @@ class CheckinForegroundService : Service() {
                         lastCheckinTimestamps[currentApp] = now
                     }
                 } else {
-                    // Delayed mode: track usage time and show after delay
-                    handleDelayedIntervention(currentApp, now)
+                    // Delayed mode: cumulative usage threshold per day
+                    handleCumulativeIntervention(currentApp, now)
                 }
             } else {
-                // User switched away from target app - reset tracking for all apps
-                // that the user is no longer using
-                val appsToReset = appUsageStartTimes.keys.filter { it != currentApp }
-                appsToReset.forEach { pkg ->
-                    appUsageStartTimes.remove(pkg)
-                    interventionTriggeredForSession.remove(pkg)
-                }
+                // No target app in foreground
             }
         } catch (e: Exception) {
             // Log error but don't crash the service
@@ -391,55 +387,85 @@ class CheckinForegroundService : Service() {
     }
 
     /**
-     * Handle delayed intervention mode - show overlay after user has used app for X minutes
+     * Handle delayed intervention mode - show overlay after daily cumulative usage reaches threshold
+     *
+     * Per spec (docs/specs/06_intervention_timing.md):
+     * - Trigger at each cumulative threshold (e.g., 10, 20, 30 minutes)
+     * - Use lastThresholdCounts to prevent duplicate triggers at the same threshold
+     * - Do NOT apply 5-minute cooldown in delayed mode; threshold count is the gate
      */
-    private fun handleDelayedIntervention(packageName: String, now: Long) {
-        // Check if we already triggered intervention for this session
-        if (packageName in interventionTriggeredForSession) {
-            // Check cooldown for next intervention
-            if (shouldShowOverlay(packageName)) {
-                // Reset session tracking and start new tracking period
-                interventionTriggeredForSession.remove(packageName)
-                appUsageStartTimes[packageName] = now
-            }
-            return
+    private fun handleCumulativeIntervention(packageName: String, now: Long) {
+        if (interventionDelayMinutes <= 0) return
+
+        val totalMinutesToday = getTodayUsageMinutes(packageName, now)
+        val thresholdCount = totalMinutesToday / interventionDelayMinutes
+        val lastCount = lastThresholdCounts[packageName] ?: 0
+
+        // Trigger only when crossing a new threshold
+        // This replaces the cooldown logic for delayed mode - we only care about threshold crossings
+        if (thresholdCount <= lastCount) return
+
+        logDebug("Cumulative threshold reached for $packageName (${totalMinutesToday}min, threshold #$thresholdCount)")
+
+        // Attempt to launch urge surfing directly; fallback to notification + overlay
+        currentDetectedApp = packageName
+        val opened = launchUrgeSurfing(packageName)
+        if (opened) {
+            sendInterventionEvent(proceeded = false, appPackage = packageName)
+        } else {
+            // Send high-priority notification first
+            sendInterventionNotification(packageName)
+            // Show overlay as fallback
+            triggerCheckinOverlay(packageName)
         }
 
-        // Start tracking if not already
-        if (packageName !in appUsageStartTimes) {
-            appUsageStartTimes[packageName] = now
-            logDebug("Started tracking $packageName at $now")
-            return
+        // Mark threshold as triggered
+        lastThresholdCounts[packageName] = thresholdCount
+        lastCheckinTimestamps[packageName] = now
+    }
+
+    private fun getTodayUsageMinutes(packageName: String, now: Long): Int {
+        val startOfDay = getStartOfDayMillis(now)
+        val stats = usageStatsTracker.getUsageStatsWithFallback(startOfDay, now, listOf(packageName))
+        val totalMs = stats.firstOrNull()?.get("totalTimeMs") as? Number ?: 0
+        return (totalMs.toLong() / 60000L).toInt()
+    }
+
+    private fun getStartOfDayMillis(now: Long): Long {
+        val calendar = java.util.Calendar.getInstance().apply {
+            timeInMillis = now
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
         }
+        return calendar.timeInMillis
+    }
 
-        // Check if delay has elapsed
-        val startTime = appUsageStartTimes[packageName] ?: return
-        val elapsedMs = now - startTime
-        val delayMs = interventionDelayMinutes * 60 * 1000L
-
-        if (elapsedMs >= delayMs) {
-            logDebug("Delay elapsed for $packageName (${elapsedMs}ms >= ${delayMs}ms)")
-
-            // Attempt to launch urge surfing directly; fallback to notification + overlay
-            currentDetectedApp = packageName
-            val opened = launchUrgeSurfing(packageName)
-            if (opened) {
-                sendInterventionEvent(proceeded = false, appPackage = packageName)
-            } else {
-                // Send high-priority notification first
-                sendInterventionNotification(packageName)
-                // Show overlay as fallback
-                triggerCheckinOverlay(packageName)
-            }
-
-            // Mark as triggered for this session
-            interventionTriggeredForSession.add(packageName)
-            lastCheckinTimestamps[packageName] = now
+    private fun resetDailyThresholdsIfNeeded() {
+        val todayKey = getDateKey(System.currentTimeMillis())
+        if (todayKey != lastThresholdDate) {
+            lastThresholdDate = todayKey
+            lastThresholdCounts.clear()
+            lastCheckinTimestamps.clear()
+            logDebug("Reset daily thresholds for $todayKey")
         }
     }
 
+    private fun getDateKey(timestamp: Long): String {
+        val calendar = java.util.Calendar.getInstance().apply { timeInMillis = timestamp }
+        val year = calendar.get(java.util.Calendar.YEAR)
+        val month = calendar.get(java.util.Calendar.MONTH) + 1
+        val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
+        return String.format("%04d-%02d-%02d", year, month, day)
+    }
+
     /**
-     * Check if overlay should be shown based on cooldown period
+     * Check if overlay should be shown based on cooldown period.
+     *
+     * NOTE: This cooldown is ONLY used for immediate mode to prevent rapid successive triggers.
+     * For delayed (cumulative) mode, the threshold count mechanism in handleCumulativeIntervention
+     * serves as the gate, not this cooldown. See docs/specs/06_intervention_timing.md.
      */
     private fun shouldShowOverlay(packageName: String): Boolean {
         val lastCheckin = lastCheckinTimestamps[packageName] ?: return true

@@ -45,7 +45,7 @@
 
 | 要件 | 実装 | 状態 | 補足 |
 |---|---|---|---|
-| FR-003-1 今日の介入回数 | `useAppStore.stats`, `recordIntervention()` | 実装済 | 介入トリガーはモック |
+| FR-003-1 今日の介入回数 | `useStatisticsStore.dailyStats`, `recordIntervention()` | 実装済 | 統計ストア統合済 |
 | FR-003-2 週間サマリー | `app/(main)/statistics.tsx` | 実装済 | データ無し時はダミー値 |
 | FR-003-3 節約時間計算 | `DailyStats.totalBlockedMinutes` | 実装済 | 実測連動は未接続 |
 | FR-003-4 ストリーク表示 | `StreakIndicator` | UI実装済 | 計算は仮値 |

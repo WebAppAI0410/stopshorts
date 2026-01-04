@@ -10,31 +10,29 @@ import { t } from '../../src/i18n';
 import { useSettingsBack } from '../../src/hooks/useSettingsBack';
 
 type DurationOption = {
-  minutes: number;
+  seconds: 30 | 60;
   icon: keyof typeof Ionicons.glyphMap;
 };
 
 const durationOptions: DurationOption[] = [
-  { minutes: 1, icon: 'timer-outline' },
-  { minutes: 3, icon: 'timer-outline' },
-  { minutes: 5, icon: 'timer-outline' },
-  { minutes: 10, icon: 'timer-outline' },
+  { seconds: 30, icon: 'timer-outline' },
+  { seconds: 60, icon: 'timer-outline' },
 ];
 
-export default function InterventionDurationScreen() {
+export default function UrgeSurfingDurationScreen() {
   const { colors, typography, spacing } = useTheme();
-  const { interventionDurationMinutes, setInterventionDuration } = useAppStore();
-  const [selectedMinutes, setSelectedMinutes] = useState(interventionDurationMinutes);
+  const { urgeSurfingDurationSeconds, setUrgeSurfingDuration } = useAppStore();
+  const [selectedSeconds, setSelectedSeconds] = useState(urgeSurfingDurationSeconds);
   const handleBack = useSettingsBack();
 
   const handleSave = () => {
-    setInterventionDuration(selectedMinutes);
+    setUrgeSurfingDuration(selectedSeconds);
     handleBack();
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title={t('settings.limits.interventionTime')} showBack onBack={handleBack} />
+      <Header title={t('settings.limits.urgeSurfingDuration')} showBack onBack={handleBack} />
 
       <ScrollView
         style={styles.scrollView}
@@ -46,27 +44,27 @@ export default function InterventionDurationScreen() {
             typography.h1,
             { color: colors.textPrimary, marginBottom: spacing.sm }
           ]}>
-            {t('settings.limits.interventionTime')}
+            {t('settings.limits.urgeSurfingDuration')}
           </Text>
           <Text style={[
             typography.bodyLarge,
             { color: colors.textSecondary, marginBottom: spacing.xl }
           ]}>
-            {t('settings.limits.interventionTimeDescription', { defaultValue: '介入後に表示するガイドの長さを選択してください。' })}
+            {t('settings.limits.urgeSurfingDurationDescription', { defaultValue: '衝動サーフィンのガイド時間を選択してください。' })}
           </Text>
         </Animated.View>
 
         <View style={styles.optionsContainer}>
           {durationOptions.map((option, index) => (
             <Animated.View
-              key={option.minutes}
+              key={option.seconds}
               entering={FadeInRight.duration(500).delay(200 + index * 70)}
             >
               <SelectionCard
-                title={t('settings.limits.minutesValue', { minutes: option.minutes })}
+                title={t('settings.limits.secondsValue', { seconds: option.seconds })}
                 icon={option.icon}
-                selected={selectedMinutes === option.minutes}
-                onPress={() => setSelectedMinutes(option.minutes)}
+                selected={selectedSeconds === option.seconds}
+                onPress={() => setSelectedSeconds(option.seconds)}
               />
             </Animated.View>
           ))}

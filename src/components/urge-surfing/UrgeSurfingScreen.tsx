@@ -33,10 +33,9 @@ interface UrgeSurfingScreenProps {
   /** Callback when user dismisses (goes home) */
   onDismiss: () => void;
   /** Source of the intervention */
-  source?: 'shield' | 'training' | 'manual';
+  source?: 'shield' | 'training' | 'manual' | 'shortcut';
 }
 
-const SURFING_DURATION_MS = 30000; // 30 seconds
 const BREATH_CYCLES = 3;
 
 export function UrgeSurfingScreen({
@@ -50,9 +49,10 @@ export function UrgeSurfingScreen({
   const [intensityBefore, setIntensityBefore] = useState(5);
   const [intensityAfter, setIntensityAfter] = useState(3);
   const [isSliderActive, setIsSliderActive] = useState(false);
-  const [cycleCount, setCycleCount] = useState(3); // Default 3 cycles (30s)
 
-  const { userName } = useAppStore();
+  const { urgeSurfingDurationSeconds, userName } = useAppStore();
+  const cycleCount = Math.max(1, Math.round(urgeSurfingDurationSeconds / 10));
+  const displayName = userName && userName.trim().length > 0 ? userName.trim() : 'ユーザー';
   const { recordUrgeSurfing, recordIntervention } = useStatisticsStore();
 
   const progress = useSharedValue(0);
@@ -204,28 +204,6 @@ export function UrgeSurfingScreen({
               </Text>
             </View>
 
-            <View style={[styles.section, { marginTop: spacing.xl }]}>
-              <Text style={[typography.label, { color: colors.textSecondary }]}>
-                時間をえらぶ
-              </Text>
-              <View style={styles.durationSelector}>
-                <Button
-                  title="30秒 (3回)"
-                  onPress={() => setCycleCount(3)}
-                  variant={cycleCount === 3 ? 'primary' : 'outline'}
-                  size="sm"
-                  style={{ flex: 1 }}
-                />
-                <Button
-                  title="60秒 (6回)"
-                  onPress={() => setCycleCount(6)}
-                  variant={cycleCount === 6 ? 'primary' : 'outline'}
-                  size="sm"
-                  style={{ flex: 1 }}
-                />
-              </View>
-            </View>
-
             <View style={[styles.buttonContainer, { marginTop: spacing.xl }]}>
               <Button
                 title={`🌊 波に乗る（${cycleCount * 10}秒）`}
@@ -261,7 +239,7 @@ export function UrgeSurfingScreen({
                   { color: colors.primary, textAlign: 'center', marginTop: spacing.sm, fontWeight: '600' },
                 ]}
               >
-                {userName ? `${userName}さんの` : ''}「{blockedAppName}を見たい」という衝動
+                {`${displayName}さんの`}「{blockedAppName}を見たい」という衝動
               </Text>
               <Text
                 style={[
@@ -469,11 +447,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
-  },
-  durationSelector: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
   },
 });
 

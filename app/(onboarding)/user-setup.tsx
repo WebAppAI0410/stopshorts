@@ -611,6 +611,7 @@ export default function UserSetupScreen() {
                         onPress={handleNameSubmit}
                         disabled={name.trim().length === 0}
                         size="lg"
+                        testID="next-button"
                     />
                 ) : Platform.OS === 'ios' ? (
                     <Button

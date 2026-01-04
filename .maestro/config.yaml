@@ -1,0 +1,28 @@
+# Maestro Configuration for StopShorts
+# https://maestro.mobile.dev/
+
+appId: com.stopshorts.app
+
+flows:
+  - flows/onboarding-flow.yaml
+  - flows/intervention-select.yaml
+  - flows/training-flow.yaml
+
+# Test execution settings
+executionOrder: sequential
+
+# Timeouts
+timeout: 30000
+
+# iOS Simulator settings
+ios:
+  deviceName: "iPhone 15 Pro"
+
+# Android Emulator settings
+android:
+  deviceName: "Pixel 7"
+
+# Output settings
+output:
+  format: "junit"
+  path: "./test-results"

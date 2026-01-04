@@ -31,6 +31,7 @@ export default function UrgeSurfingDemoScreen() {
   const [selectedApp, setSelectedApp] = useState<TargetAppId>('tiktok');
   const [swipeCount, setSwipeCount] = useState(0);
   const { userName } = useAppStore();
+  const displayName = userName && userName.trim().length > 0 ? userName.trim() : 'ユーザー';
   const breathingProgress = useSharedValue(0);
   const breathingStartTime = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -77,7 +78,7 @@ export default function UrgeSurfingDemoScreen() {
   }, []);
 
   const handleContinueOnboarding = useCallback(() => {
-    router.push('/(onboarding)/start' as Href);
+    router.push('/(onboarding)/ai-preview' as Href);
   }, [router]);
 
   // App selection phase - follows standard onboarding layout
@@ -377,7 +378,7 @@ export default function UrgeSurfingDemoScreen() {
                 { color: colors.primary, textAlign: 'center', marginTop: spacing.sm, fontWeight: '600' },
               ]}
             >
-              {userName ? `${userName}さんの` : ''}「{theme?.name || 'アプリ'}を見たい」という衝動
+              {`${displayName}さんの`}「{theme?.name || 'アプリ'}を見たい」という衝動
             </Text>
             <Text
               style={[

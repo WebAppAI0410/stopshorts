@@ -148,6 +148,11 @@ export function WaveAnimation({
     fill: waveColorValue.value,
   }));
 
+  // Progress bar width animation - must be at component top level (React Hooks rule)
+  const progressWidthStyle = useAnimatedStyle(() => ({
+    width: `${Math.round(progress.value * 100)}%` as `${number}%`,
+  }));
+
   return (
     <View style={[styles.container, { height }]}>
       {/* Background with slight glassmorphism */}
@@ -165,9 +170,7 @@ export function WaveAnimation({
           style={[
             styles.progressFill,
             { backgroundColor: colors.primary },
-            useAnimatedStyle(() => ({
-              width: `${Math.round(progress.value * 100)}%` as any,
-            })),
+            progressWidthStyle,
           ]}
         />
       </View>

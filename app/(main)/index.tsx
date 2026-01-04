@@ -49,8 +49,8 @@ export default function DashboardScreen() {
         urgeSurfingCompleted: todayStatsNew.urgeSurfing.completed,
     };
 
-    const handleStartSurfing = () => {
-        router.push('/(main)/urge-surfing');
+    const handleStartPractice = () => {
+        router.push('/(main)/intervention-practice');
     };
 
     return (
@@ -180,20 +180,20 @@ export default function DashboardScreen() {
                 >
                     <View style={styles.surfingCardContent}>
                         <View style={[styles.surfingIcon, { backgroundColor: colors.primary + '20' }]}>
-                            <Text style={{ fontSize: 32 }}>🌊</Text>
+                            <Text style={{ fontSize: 32 }}>🛡️</Text>
                         </View>
                         <View style={styles.surfingInfo}>
                             <Text style={[typography.h3, { color: colors.textPrimary }]}>
-                                衝動サーフィング
+                                介入を練習
                             </Text>
                             <Text style={[typography.bodySmall, { color: colors.textSecondary, marginTop: spacing.xs }]}>
-                                今日 {todayStats.urgeSurfingCompleted} 回完了
+                                呼吸ガイド・フリクションを体験
                             </Text>
                         </View>
                     </View>
                     <Button
                         title="練習する"
-                        onPress={handleStartSurfing}
+                        onPress={handleStartPractice}
                         variant="outline"
                         size="sm"
                         style={{ marginTop: spacing.md }}

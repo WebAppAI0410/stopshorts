@@ -1,3 +1,6 @@
+// Import types used in other type definitions
+import type { InterventionType } from './intervention';
+
 // User Purpose Types
 export type UserPurpose = 'sleep' | 'study' | 'work' | 'creative' | 'mental' | 'other';
 
@@ -197,7 +200,8 @@ export interface OnboardingCommitment {
   manualDailyHours?: number;              // Fallback if no Screen Time access
   alternativeActivity: AlternativeActivity;
   customActivity?: string;
-  ifThenPlan: IfThenPlan;
+  ifThenPlan?: IfThenPlan;                // Deprecated - kept for migration compatibility
+  selectedInterventionType?: InterventionType;  // New: selected intervention method
   completedAt: string;                    // ISO date string
 }
 

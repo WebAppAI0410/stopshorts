@@ -1,0 +1,49 @@
+appId: com.stopshorts.app
+---
+# Intervention Selection Test
+# Tests that intervention settings can be accessed from the settings tab
+#
+# Prerequisites: None - uses demo mode skip if onboarding is shown
+
+- launchApp:
+    clearState: true
+
+# Wait for app to fully load
+- waitForAnimationToEnd
+
+# Skip onboarding using demo mode if on welcome screen
+- runFlow:
+    when:
+      visible: "始める"
+    commands:
+      - waitForAnimationToEnd
+      # Tap on "デモモードでスキップ →" to skip entire onboarding
+      - tapOn:
+          text: ".*デモモードでスキップ.*"
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# Now we should be on the main screen (Dashboard)
+# Wait for the screen to settle
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Tap on settings tab using text
+- tapOn: "設定"
+
+- waitForAnimationToEnd
+
+# Look for intervention settings and tap it
+- scrollUntilVisible:
+    element: "介入設定"
+    direction: DOWN
+    timeout: 15000
+    speed: 30
+
+- tapOn: "介入設定"
+
+# Verify we reached the Intervention Settings screen
+- waitForAnimationToEnd
+
+# Assert that we can see intervention type options
+- assertVisible: "介入タイプ"

@@ -35,7 +35,7 @@ export default function AlternativeScreen() {
     const handleContinue = () => {
         if (!selectedActivity) return;
         setAlternativeActivity(selectedActivity, customActivity || undefined);
-        router.push('/(onboarding)/if-then' as Href);
+        router.push('/(onboarding)/intervention-select' as Href);
     };
 
     const isValid = selectedActivity && (selectedActivity !== 'custom' || customActivity.trim().length > 0);

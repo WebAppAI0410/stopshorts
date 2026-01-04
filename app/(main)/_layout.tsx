@@ -60,6 +60,19 @@ export default function MainLayout() {
                 }}
             />
             <Tabs.Screen
+                name="training"
+                options={{
+                    title: t('tabs.training'),
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'book' : 'book-outline'}
+                            size={24}
+                            color={color}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
                 name="settings"
                 options={{
                     title: t('tabs.settings'),
@@ -116,7 +129,7 @@ export default function MainLayout() {
                 }}
             />
             <Tabs.Screen
-                name="intervention-duration"
+                name="urge-surfing-duration"
                 options={{
                     href: null,
                 }}
@@ -133,9 +146,28 @@ export default function MainLayout() {
                     href: null,
                 }}
             />
+            <Tabs.Screen
+                name="intervention-practice"
+                options={{
+                    href: null,
+                }}
+            />
             {/* Hide shield from tab bar - it's a modal screen */}
             <Tabs.Screen
                 name="shield"
+                options={{
+                    href: null,
+                }}
+            />
+            {/* Hide training nested routes from tab bar - expo-router auto-discovers them */}
+            <Tabs.Screen
+                name="training/index"
+                options={{
+                    href: null,
+                }}
+            />
+            <Tabs.Screen
+                name="training/[topicId]"
                 options={{
                     href: null,
                 }}

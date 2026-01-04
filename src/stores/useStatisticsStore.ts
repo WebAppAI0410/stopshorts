@@ -12,6 +12,7 @@ import type {
   LifetimeStatistics,
   Badge,
 } from '../types/statistics';
+import type { IntentionLog, IntentionId } from '../types';
 import { getDateKey, getTimeOfDay } from '../types/statistics';
 import { BADGE_DEFINITIONS, checkBadges, calculateStreak } from '../services/badges';
 
@@ -43,6 +44,7 @@ interface StatisticsState {
   dailyStats: Record<string, DailyStatistics>; // key: YYYY-MM-DD
   lifetime: LifetimeStatistics;
   interventionHistory: InterventionRecord[]; // Detailed intervention records
+  intentionHistory: IntentionLog[]; // Friction intervention intention logs
 
   // Habit Score (replacement for streak - gradual increase/decrease)
   habitScore: number; // 0-100
@@ -51,6 +53,7 @@ interface StatisticsState {
   // Actions
   recordUrgeSurfing: (record: UrgeSurfingRecordInput) => void;
   recordIntervention: (input: InterventionInput) => void;
+  recordIntention: (intentionId: IntentionId, proceeded: boolean, customText?: string, appPackage?: string) => void;
   recordUsageTime: (appId: string, minutes: number) => void;
   setDailyUsageBreakdown: (dateKey: string, breakdown: Record<string, number>) => void; // For historical data sync
   recordTrainingSession: (minutes: number) => void;
@@ -173,6 +176,7 @@ export const useStatisticsStore = create<StatisticsState>()(
       dailyStats: {},
       lifetime: createEmptyLifetime(),
       interventionHistory: [],
+      intentionHistory: [],
       habitScore: 50, // Start at 50 (middle)
       habitScoreLastUpdatedDate: null,
 
@@ -275,6 +279,23 @@ export const useStatisticsStore = create<StatisticsState>()(
           },
           interventionHistory: newHistory,
         });
+      },
+
+      recordIntention: (intentionId, proceeded, customText, appPackage) => {
+        const state = get();
+        const now = new Date();
+        const log: IntentionLog = {
+          id: `${now.getTime()}-${Math.random().toString(36).slice(2, 9)}`,
+          intentionId,
+          customText,
+          timestamp: now.toISOString(),
+          proceeded,
+          appPackage,
+        };
+
+        // Keep last 100 intention logs to limit storage
+        const newIntentionHistory = [...state.intentionHistory, log].slice(-100);
+        set({ intentionHistory: newIntentionHistory });
       },
 
       recordUsageTime: (appId, minutes) => {
@@ -597,6 +618,8 @@ export const useStatisticsStore = create<StatisticsState>()(
           lifetime: createEmptyLifetime(),
           habitScore: 50,
           habitScoreLastUpdatedDate: null,
+          interventionHistory: [],
+          intentionHistory: [],
         });
       },
     }),

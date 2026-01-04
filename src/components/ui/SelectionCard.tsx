@@ -99,7 +99,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
                     <Text
                         style={[
                             typography.h3,
-                            { color: selected ? colors.textPrimary : colors.textPrimary, fontSize: 18 },
+                            { color: colors.textPrimary, fontSize: 18 },
                         ]}
                     >
                         {title}

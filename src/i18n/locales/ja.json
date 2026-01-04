@@ -436,7 +436,7 @@
         "timeLabel": "取り戻す時間",
         "timeValue": "年間 {{hours}}時間",
         "alternativeLabel": "代わりにやること",
-        "ifThenLabel": "開きたくなったら",
+        "interventionLabel": "止め方",
         "startButton": "今日から始める",
         "trialNote": "3日間無料で全機能をお試しいただけます"
       },
@@ -820,7 +820,8 @@
           "description": "AIとの対話で気持ちを整理し、衝動を落ち着かせます"
         }
       },
-      "info": "練習モードでは実際のアプリ起動はブロックされません。各介入の流れを確認できます。"
+      "info": "練習モードでは実際のアプリ起動はブロックされません。各介入の流れを確認できます。",
+      "comingSoon": "準備中"
     },
     "mirror": {
       "title": "{{app}}を開く前に",

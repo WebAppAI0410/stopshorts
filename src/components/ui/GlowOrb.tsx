@@ -28,7 +28,7 @@ export const GlowOrb: React.FC<GlowOrbProps> = ({
 
     useEffect(() => {
         pulse.value = withRepeat(withTiming(1, { duration: 4000 }), -1, true);
-    }, []);
+    }, [pulse]);
 
     const sizeValue = {
         medium: 200,

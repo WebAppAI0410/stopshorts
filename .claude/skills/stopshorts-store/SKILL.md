@@ -46,11 +46,25 @@ trialStartDate: string | null
 
 ### Statistics
 ```typescript
-stats: DailyStats[]  // Last 90 days
+// NOTE: stats moved to useStatisticsStore
 checkIns: DailyCheckIn[]
 ```
 
-## Critical Actions
+## Statistics Store
+For intervention/urge surfing statistics, use `useStatisticsStore`:
+```typescript
+import { useStatisticsStore } from '../src/stores/useStatisticsStore';
+
+// Read statistics
+const { getTodayStats, lifetime, getHabitScore } = useStatisticsStore();
+const todayStats = getTodayStats();
+
+// Record intervention
+const { recordIntervention, recordUrgeSurfing } = useStatisticsStore();
+recordIntervention({ proceeded: false, appPackage: 'com.tiktok.android' });
+```
+
+## Critical Actions (useAppStore)
 
 ### calculateImpactFromScreenTime(data)
 Calculates yearly impact from screen time data:
@@ -65,10 +79,9 @@ Validates and finalizes onboarding:
 - Requires: alternativeActivity, ifThenPlan, goal
 - Sets: hasCompletedOnboarding, starts trial
 
-### recordIntervention(app)
-Records when user pauses short video usage:
-- Updates stats for today
-- Auto-cleans data older than 90 days
+### recordIntervention (DEPRECATED)
+**Moved to `useStatisticsStore.recordIntervention()`**
+Use the statistics store for intervention recording.
 
 ## Additional Resources
 

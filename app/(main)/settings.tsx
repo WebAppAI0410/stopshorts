@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, Href } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Header, GlowOrb } from '../../src/components/ui';
@@ -57,7 +57,7 @@ function SettingRow({
 export default function SettingsScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius, themeMode } = useTheme();
-    const { reset, interventionDurationMinutes, goal, alternativeActivity, customAlternativeActivity, ifThenPlan, selectedApps, customApps, interventionSettings } = useAppStore();
+    const { reset, urgeSurfingDurationSeconds, goal, alternativeActivity, customAlternativeActivity, ifThenPlan, selectedApps, customApps, interventionSettings } = useAppStore();
     const selectedCustomCount = customApps.filter((app) => app.isSelected !== false).length;
     const interventionLabel = interventionSettings.timing === 'immediate'
         ? '即時'
@@ -115,20 +115,6 @@ export default function SettingsScreen() {
             >
                 <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.section}>
                     <Text style={[typography.label, { color: colors.textMuted, marginBottom: spacing.md }]}>
-                        プロフィール
-                    </Text>
-                    <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg, borderColor: colors.border }]}>
-        <SettingRow
-            {...settingRowCommonProps}
-            label="プロフィール設定"
-            icon="person-outline"
-            onPress={() => router.push('/(main)/profile-settings' as Href)}
-        />
-                    </View>
-                </Animated.View>
-
-                <Animated.View entering={FadeInDown.duration(600).delay(150)} style={styles.section}>
-                    <Text style={[typography.label, { color: colors.textMuted, marginBottom: spacing.md }]}>
                         {t('settings.theme.title').toUpperCase()}
                     </Text>
                     <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg, borderColor: colors.border }]}>
@@ -142,7 +128,7 @@ export default function SettingsScreen() {
                     </View>
                 </Animated.View>
 
-                <Animated.View entering={FadeInDown.duration(600).delay(200)} style={styles.section}>
+                <Animated.View entering={FadeInDown.duration(600).delay(150)} style={styles.section}>
                     <Text style={[typography.label, { color: colors.textMuted, marginBottom: spacing.md }]}>
                         {t('settings.yourSettings.title').toUpperCase()}
                     </Text>
@@ -178,7 +164,7 @@ export default function SettingsScreen() {
                     </View>
                 </Animated.View>
 
-                <Animated.View entering={FadeInDown.duration(600).delay(250)} style={styles.section}>
+                <Animated.View entering={FadeInDown.duration(600).delay(200)} style={styles.section}>
                     <Text style={[typography.label, { color: colors.textMuted, marginBottom: spacing.md }]}>
                         {t('settings.limits.title').toUpperCase()}
                     </Text>
@@ -192,15 +178,15 @@ export default function SettingsScreen() {
                         />
         <SettingRow
             {...settingRowCommonProps}
-            label={t('settings.limits.interventionTime')}
-            value={t('settings.limits.minutesValue', { minutes: interventionDurationMinutes })}
+            label={t('settings.limits.urgeSurfingDuration')}
+            value={t('settings.limits.secondsValue', { seconds: urgeSurfingDurationSeconds })}
             icon="time-outline"
-            onPress={() => router.push('/(main)/intervention-duration')}
+            onPress={() => router.push('/(main)/urge-surfing-duration')}
         />
                     </View>
                 </Animated.View>
 
-                <Animated.View entering={FadeInDown.duration(600).delay(300)} style={styles.section}>
+                <Animated.View entering={FadeInDown.duration(600).delay(250)} style={styles.section}>
                     <Text style={[typography.label, { color: colors.textMuted, marginBottom: spacing.md }]}>
                         {t('settings.data.title').toUpperCase()}
                     </Text>

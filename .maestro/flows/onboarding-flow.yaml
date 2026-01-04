@@ -1,0 +1,33 @@
+appId: com.stopshorts.app
+---
+# Onboarding Flow E2E Test
+# Tests the complete onboarding experience from welcome to permission screen
+#
+# Note: React Native buttons require accessibilityLabel for text-based selection.
+# The Button component has been updated with accessibilityLabel={title}.
+# Rebuild the app to enable text-based button taps.
+
+- launchApp:
+    clearState: true
+
+# Welcome Screen
+- assertVisible: "始める"
+- tapOn: "始める"
+
+# User Setup Screen - Name input step
+- assertVisible: "はじめまして"
+- assertVisible: "お名前を教えてください"
+- tapOn:
+    text: "ニックネーム"
+- inputText: "TestUser"
+- hideKeyboard
+
+# Tap "次へ" button (bottom center of screen)
+# Future: Use `- tapOn: "次へ"` after rebuilding with accessibilityLabel fix
+- tapOn:
+    point: "50%,85%"
+
+# User Setup Screen - Permission step (Android)
+- assertVisible:
+    text: "使用状況へのアクセスを許可"
+    optional: true
