@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
 import Animated, { FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, ProgressIndicator, GlowOrb, Header } from '../../src/components/ui';
+import { Button, GlowOrb, Header } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { t } from '../../src/i18n';
@@ -245,9 +245,6 @@ export default function StartScreen() {
                     onPress={handleStart}
                     size="lg"
                 />
-                <View style={{ marginTop: spacing.xl }}>
-                    <ProgressIndicator totalSteps={11} currentStep={11} />
-                </View>
             </Animated.View>
         </SafeAreaView>
     );

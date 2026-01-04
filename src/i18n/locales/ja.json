@@ -496,6 +496,61 @@
       "continue": "このまま続ける",
       "tryAnother": "他の方法も試す"
     },
+    "urgeSurfingDemo": {
+      "title": "衝動サーフィングを体験",
+      "subtitle": "アプリを使いたい衝動との付き合い方を学びましょう",
+      "whatIs": {
+        "title": "衝動サーフィングとは？",
+        "description": "衝動は波のようなもの。最初は強く押し寄せますが、必ずピークを過ぎて収まっていきます。\n\nこの波に「抵抗」するのではなく、深呼吸をしながら「観察」することで、衝動に支配されずにやり過ごすことができます。"
+      },
+      "selectApp": "体験するアプリを選択",
+      "demoNote": "デモでは3回スワイプすると介入画面が表示されます。",
+      "immediateNote": "実際のアプリでは「即時介入」も選べます。",
+      "immediateDescription": "アプリを開いた瞬間に介入画面を表示し、無意識のスクロールを防ぎます。",
+      "startButton": "体験を開始",
+      "skipButton": "スキップして続ける",
+      "swipeCounter": "{{current}}/{{total}} スワイプ",
+      "intervention": {
+        "header": "StopShorts Shield",
+        "title": "ちょっと待って",
+        "description": "これが介入画面です。\nここで一度立ち止まり、本当に必要か考えます。",
+        "urgeSurfingTitle": "🌊 衝動サーフィングとは？",
+        "urgeSurfingDescription": "衝動は波のように必ず過ぎ去ります。深呼吸をしながら波を観察し、やり過ごす練習をしましょう。",
+        "rideWaveButton": "🌊 波に乗る（30秒）"
+      },
+      "breathing": {
+        "title": "🧘 衝動サーフィング中",
+        "urgeFor": "{{name}}さんの「{{app}}を見たい」という衝動",
+        "instruction": "深呼吸をしながら、この「波」を静かに観察しましょう",
+        "quote": "「この衝動は一時的なもの。波のように、必ず過ぎていく」"
+      },
+      "complete": {
+        "title": "素晴らしい！",
+        "description": "これが衝動サーフィングの体験です。\n実際のアプリ使用時も同じように介入が発生します。",
+        "learnedTitle": "学んだこと",
+        "learned1": "衝動は波のように自然に収まる",
+        "learned2": "深呼吸で冷静さを取り戻せる",
+        "learned3": "一度立ち止まることで選択できる",
+        "nextButton": "次へ"
+      }
+    },
+    "howItWorks": {
+      "demoPreview": {
+        "title": "次は実際に体験してみましょう",
+        "subtitle": "アプリの介入と衝動サーフィングを\nシミュレーターで体験できます"
+      },
+      "tryButton": "体験してみる"
+    },
+    "realityCheck": {
+      "monthlyUsage": "今月のショート動画使用時間",
+      "yearlyProjection": "このペースで1年続けると",
+      "yearlyHours": "年間 {{hours}} 時間",
+      "impactTitle": "この時間があれば...",
+      "impactMessage": "あなたの年間 {{hours}} 時間で\n人生を変えるスキルが身につきます",
+      "achievableTitle": "具体的に何ができる？",
+      "achievableYears": "{{years}}年で達成可能",
+      "quickWinTitle": "今すぐ始めれば3ヶ月で"
+    },
     "aiPreview": {
       "title": "あなた専用のサポート",
       "subtitle": "AIコーチと心理トレーニングで、習慣改善をサポートします",

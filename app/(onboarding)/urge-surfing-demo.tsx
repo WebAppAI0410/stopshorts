@@ -98,7 +98,7 @@ export default function UrgeSurfingDemoScreen() {
           {/* Title */}
           <Animated.View entering={FadeInUp.duration(600)}>
             <Text style={[typography.h1, { color: colors.textPrimary, marginBottom: spacing.sm }]}>
-              衝動サーフィングを体験
+              {t('onboarding.urgeSurfingDemo.title')}
             </Text>
             <Text
               style={[
@@ -106,7 +106,7 @@ export default function UrgeSurfingDemoScreen() {
                 { color: colors.textSecondary },
               ]}
             >
-              アプリを使いたい衝動との付き合い方を学びましょう
+              {t('onboarding.urgeSurfingDemo.subtitle')}
             </Text>
           </Animated.View>
 
@@ -126,14 +126,11 @@ export default function UrgeSurfingDemoScreen() {
             <View style={styles.infoRow}>
               <Ionicons name="water-outline" size={20} color={colors.accent} />
               <Text style={[typography.h3, { color: colors.textPrimary, marginLeft: spacing.sm }]}>
-                衝動サーフィングとは？
+                {t('onboarding.urgeSurfingDemo.whatIs.title')}
               </Text>
             </View>
             <Text style={[typography.bodySmall, { color: colors.textSecondary, lineHeight: 22, marginTop: spacing.sm }]}>
-              衝動は波のようなもの。最初は強く押し寄せますが、必ずピークを過ぎて収まっていきます。
-              {'\n\n'}
-              この波に「抵抗」するのではなく、深呼吸をしながら「観察」することで、
-              衝動に支配されずにやり過ごすことができます。
+              {t('onboarding.urgeSurfingDemo.whatIs.description')}
             </Text>
           </Animated.View>
 
@@ -143,7 +140,7 @@ export default function UrgeSurfingDemoScreen() {
               selectedApp={selectedApp}
               availableApps={['tiktok', 'instagramReels', 'youtubeShorts', 'facebookReels']}
               onSelectApp={setSelectedApp}
-              title="体験するアプリを選択"
+              title={t('onboarding.urgeSurfingDemo.selectApp')}
             />
           </Animated.View>
 
@@ -168,7 +165,7 @@ export default function UrgeSurfingDemoScreen() {
                   { color: colors.textSecondary, flex: 1, marginLeft: spacing.sm },
                 ]}
               >
-                デモでは3回スワイプすると介入画面が表示されます。
+                {t('onboarding.urgeSurfingDemo.demoNote')}
               </Text>
             </View>
           </Animated.View>
@@ -190,10 +187,10 @@ export default function UrgeSurfingDemoScreen() {
               <Ionicons name="flash-outline" size={20} color={colors.primary} />
               <View style={{ flex: 1, marginLeft: spacing.sm }}>
                 <Text style={[typography.bodySmall, { color: colors.textSecondary }]}>
-                  実際のアプリでは「即時介入」も選べます。
+                  {t('onboarding.urgeSurfingDemo.immediateNote')}
                 </Text>
                 <Text style={[typography.caption, { color: colors.textMuted, marginTop: 4 }]}>
-                  アプリを開いた瞬間に介入画面を表示し、無意識のスクロールを防ぎます。
+                  {t('onboarding.urgeSurfingDemo.immediateDescription')}
                 </Text>
               </View>
             </View>
@@ -205,13 +202,13 @@ export default function UrgeSurfingDemoScreen() {
           entering={FadeInUp.duration(600).delay(750)}
           style={[styles.footer, { paddingHorizontal: spacing.gutter }]}
         >
-          <Button title="体験を開始" onPress={handleStartSimulation} size="lg" />
+          <Button title={t('onboarding.urgeSurfingDemo.startButton')} onPress={handleStartSimulation} size="lg" />
           <TouchableOpacity
             onPress={handleContinueOnboarding}
             style={[styles.skipButton, { marginTop: spacing.sm }]}
           >
             <Text style={[typography.bodySmall, { color: colors.textMuted }]}>
-              スキップして続ける
+              {t('onboarding.urgeSurfingDemo.skipButton')}
             </Text>
           </TouchableOpacity>
           <View style={{ marginTop: spacing.lg }}>
@@ -237,7 +234,7 @@ export default function UrgeSurfingDemoScreen() {
             </TouchableOpacity>
             <View style={[styles.swipeCounter, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
               <Text style={styles.swipeCounterText}>
-                {swipeCount}/3 スワイプ
+                {t('onboarding.urgeSurfingDemo.swipeCounter', { current: swipeCount, total: 3 })}
               </Text>
             </View>
           </SafeAreaView>
@@ -272,7 +269,7 @@ export default function UrgeSurfingDemoScreen() {
             <Animated.View entering={FadeIn.duration(600)} style={styles.interventionHeader}>
               <Ionicons name="shield-checkmark" size={20} color={colors.accent} />
               <Text style={[typography.h3, { color: colors.accent, marginLeft: spacing.sm }]}>
-                StopShorts Shield
+                {t('onboarding.urgeSurfingDemo.intervention.header')}
               </Text>
             </Animated.View>
 
@@ -293,7 +290,7 @@ export default function UrgeSurfingDemoScreen() {
                   },
                 ]}
               >
-                ちょっと待って
+                {t('onboarding.urgeSurfingDemo.intervention.title')}
               </Text>
               <Text
                 style={[
@@ -305,8 +302,7 @@ export default function UrgeSurfingDemoScreen() {
                   },
                 ]}
               >
-                これが介入画面です。{'\n'}
-                ここで一度立ち止まり、本当に必要か考えます。
+                {t('onboarding.urgeSurfingDemo.intervention.description')}
               </Text>
             </Animated.View>
 
@@ -324,7 +320,7 @@ export default function UrgeSurfingDemoScreen() {
               ]}
             >
               <Text style={[typography.caption, { color: colors.primary }]}>
-                🌊 衝動サーフィングとは？
+                {t('onboarding.urgeSurfingDemo.intervention.urgeSurfingTitle')}
               </Text>
               <Text
                 style={[
@@ -332,7 +328,7 @@ export default function UrgeSurfingDemoScreen() {
                   { color: colors.textSecondary, marginTop: spacing.xs },
                 ]}
               >
-                衝動は波のように必ず過ぎ去ります。深呼吸をしながら波を観察し、やり過ごす練習をしましょう。
+                {t('onboarding.urgeSurfingDemo.intervention.urgeSurfingDescription')}
               </Text>
             </Animated.View>
 
@@ -340,13 +336,13 @@ export default function UrgeSurfingDemoScreen() {
 
             {/* Buttons */}
             <Animated.View entering={FadeInUp.duration(600).delay(800)} style={styles.buttonContainer}>
-              <Button title="🌊 波に乗る（30秒）" onPress={handleStartBreathing} size="lg" />
+              <Button title={t('onboarding.urgeSurfingDemo.intervention.rideWaveButton')} onPress={handleStartBreathing} size="lg" />
               <TouchableOpacity
                 onPress={handleContinueOnboarding}
                 style={[styles.skipButton, { marginTop: spacing.md }]}
               >
                 <Text style={[typography.body, { color: colors.textMuted }]}>
-                  スキップして続ける
+                  {t('onboarding.urgeSurfingDemo.skipButton')}
                 </Text>
               </TouchableOpacity>
             </Animated.View>
@@ -370,7 +366,7 @@ export default function UrgeSurfingDemoScreen() {
 
           <Animated.View entering={FadeIn.duration(600)} style={styles.breathingHeader}>
             <Text style={[typography.h2, { color: colors.textPrimary, textAlign: 'center' }]}>
-              🧘 衝動サーフィング中
+              {t('onboarding.urgeSurfingDemo.breathing.title')}
             </Text>
             <Text
               style={[
@@ -378,7 +374,7 @@ export default function UrgeSurfingDemoScreen() {
                 { color: colors.primary, textAlign: 'center', marginTop: spacing.sm, fontWeight: '600' },
               ]}
             >
-              {`${displayName}さんの`}「{theme?.name || 'アプリ'}を見たい」という衝動
+              {t('onboarding.urgeSurfingDemo.breathing.urgeFor', { name: displayName, app: theme?.name || 'アプリ' })}
             </Text>
             <Text
               style={[
@@ -386,7 +382,7 @@ export default function UrgeSurfingDemoScreen() {
                 { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xs },
               ]}
             >
-              深呼吸をしながら、この「波」を静かに観察しましょう
+              {t('onboarding.urgeSurfingDemo.breathing.instruction')}
             </Text>
           </Animated.View>
 
@@ -426,7 +422,7 @@ export default function UrgeSurfingDemoScreen() {
                 { color: colors.textSecondary, textAlign: 'center', fontStyle: 'italic' },
               ]}
             >
-              「この衝動は一時的なもの。波のように、必ず過ぎていく」
+              {t('onboarding.urgeSurfingDemo.breathing.quote')}
             </Text>
           </View>
         </SafeAreaView>
@@ -454,7 +450,7 @@ export default function UrgeSurfingDemoScreen() {
 
         <Animated.View entering={FadeInUp.duration(600).delay(200)}>
           <Text style={[typography.h1, { color: colors.textPrimary, textAlign: 'center' }]}>
-            素晴らしい！
+            {t('onboarding.urgeSurfingDemo.complete.title')}
           </Text>
           <Text
             style={[
@@ -462,8 +458,7 @@ export default function UrgeSurfingDemoScreen() {
               { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.sm },
             ]}
           >
-            これが衝動サーフィングの体験です。{'\n'}
-            実際のアプリ使用時も同じように介入が発生します。
+            {t('onboarding.urgeSurfingDemo.complete.description')}
           </Text>
         </Animated.View>
 
@@ -480,24 +475,24 @@ export default function UrgeSurfingDemoScreen() {
           ]}
         >
           <Text style={[typography.h3, { color: colors.textPrimary, marginBottom: spacing.md }]}>
-            学んだこと
+            {t('onboarding.urgeSurfingDemo.complete.learnedTitle')}
           </Text>
           <View style={styles.summaryItem}>
             <Ionicons name="checkmark" size={20} color={colors.success} />
             <Text style={[typography.body, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
-              衝動は波のように自然に収まる
+              {t('onboarding.urgeSurfingDemo.complete.learned1')}
             </Text>
           </View>
           <View style={[styles.summaryItem, { marginTop: spacing.sm }]}>
             <Ionicons name="checkmark" size={20} color={colors.success} />
             <Text style={[typography.body, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
-              深呼吸で冷静さを取り戻せる
+              {t('onboarding.urgeSurfingDemo.complete.learned2')}
             </Text>
           </View>
           <View style={[styles.summaryItem, { marginTop: spacing.sm }]}>
             <Ionicons name="checkmark" size={20} color={colors.success} />
             <Text style={[typography.body, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
-              一度立ち止まることで選択できる
+              {t('onboarding.urgeSurfingDemo.complete.learned3')}
             </Text>
           </View>
         </Animated.View>
@@ -508,7 +503,7 @@ export default function UrgeSurfingDemoScreen() {
         entering={FadeInUp.duration(600).delay(600)}
         style={[styles.footer, { paddingHorizontal: spacing.gutter }]}
       >
-        <Button title="次へ" onPress={handleContinueOnboarding} size="lg" />
+        <Button title={t('onboarding.urgeSurfingDemo.complete.nextButton')} onPress={handleContinueOnboarding} size="lg" />
         <View style={{ marginTop: spacing.xl }}>
           <ProgressIndicator totalSteps={11} currentStep={10} />
         </View>

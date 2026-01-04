@@ -217,7 +217,7 @@ export default function AIPreviewScreen() {
       >
         <Button title={t('common.continue')} onPress={handleContinue} size="lg" />
         <View style={{ marginTop: spacing.xl }}>
-          <ProgressIndicator totalSteps={11} currentStep={10} />
+          <ProgressIndicator totalSteps={11} currentStep={11} />
         </View>
       </Animated.View>
     </SafeAreaView>
