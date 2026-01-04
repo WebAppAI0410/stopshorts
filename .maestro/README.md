@@ -57,6 +57,26 @@ maestro test --debug .maestro/flows/onboarding-flow.yaml
 maestro test .maestro/ --format junit --output ./test-results
 ```
 
+### Maestro Cloud (GitHub Actions)
+
+PRごとに自動でE2Eテストを実行します。
+
+#### 必要なシークレット
+
+| シークレット名 | 説明 | 取得方法 |
+|---------------|------|----------|
+| `MAESTRO_CLOUD_API_KEY` | APIキー | [console.mobile.dev](https://console.mobile.dev) |
+| `MAESTRO_CLOUD_PROJECT_ID` | プロジェクトID | console.mobile.dev |
+| `EXPO_TOKEN` | EASビルド用 | [expo.dev](https://expo.dev/settings/access-tokens) |
+
+#### 手動実行
+
+Actions → Maestro Cloud E2E Tests → Run workflow
+
+#### 料金
+
+無料枠: 月60分 / 詳細: [maestro.dev/pricing](https://maestro.dev/pricing)
+
 ## テストフロー
 
 | フロー | 説明 | カバレッジ |
