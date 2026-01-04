@@ -68,6 +68,8 @@ interface StatisticsState {
   getEarnedBadges: () => Badge[];
   getTotalSavedMinutes: () => number;
   getHabitScore: () => number;
+  getRecentInterventionCount: (windowMs?: number) => number;
+  isHighFrequencyAttempts: (windowMs?: number, threshold?: number) => boolean;
   getMonthlyAchievementStats: (dailyGoalMinutes: number, selectedPackages?: string[]) => {
     achievedDays: number;
     totalDaysWithData: number;
@@ -541,6 +543,21 @@ export const useStatisticsStore = create<StatisticsState>()(
 
       getHabitScore: () => {
         return get().habitScore;
+      },
+
+      getRecentInterventionCount: (windowMs = 60 * 60 * 1000) => {
+        const state = get();
+        const now = Date.now();
+        const windowStart = now - windowMs;
+
+        return state.interventionHistory.filter(
+          (record) => record.timestamp > windowStart
+        ).length;
+      },
+
+      isHighFrequencyAttempts: (windowMs = 60 * 60 * 1000, threshold = 3) => {
+        const count = get().getRecentInterventionCount(windowMs);
+        return count >= threshold;
       },
 
       getMonthlyAchievementStats: (dailyGoalMinutes, selectedPackages) => {

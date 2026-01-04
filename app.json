@@ -37,6 +37,12 @@
       "expo-router",
       "expo-localization",
       "expo-dev-client",
+      [
+        "expo-notifications",
+        {
+          "color": "#C65D3B"
+        }
+      ],
       "./modules/screen-time/plugin/withScreenTime",
       "./modules/detox/plugin/withDetox"
     ],

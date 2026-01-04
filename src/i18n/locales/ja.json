@@ -775,6 +775,21 @@
     "network": "ネットワーク接続を確認してください",
     "permission": "必要な権限が付与されていません"
   },
+  "notifications": {
+    "aiProposal": {
+      "title": "AIコーチからの提案",
+      "body": "最近よく頑張っていますね。少し話しませんか？"
+    },
+    "successCelebration": {
+      "title": "素晴らしい！",
+      "body": "今日は{{minutes}}分の時間を取り戻しました。この調子で続けましょう！"
+    },
+    "dailyCheckin": {
+      "title": "今日の振り返り",
+      "body": "今日一日どうでしたか？AIコーチと話してみませんか？"
+    },
+    "channelName": "AIコーチ"
+  },
   "tabs": {
     "home": "ホーム",
     "stats": "統計",
