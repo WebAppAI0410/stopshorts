@@ -96,7 +96,7 @@ export default function ShieldScreen({ onClose, onExtend }: ShieldScreenProps) {
                         style={[styles.intentBox, { backgroundColor: colors.surface, borderRadius: borderRadius.lg }]}
                     >
                         <Text style={[typography.label, { color: colors.textMuted, marginBottom: 4 }]}>
-                            あなたの約束
+                            {t('shield.yourPromise')}
                         </Text>
                         <Text style={[typography.body, { color: colors.accent, fontWeight: '600' }]}>
                             「{implementationIntentText}」
@@ -136,7 +136,7 @@ export default function ShieldScreen({ onClose, onExtend }: ShieldScreenProps) {
                     >
                         <Text style={[typography.button, { color: colors.textSecondary }]}>
                             {warningLevel === 'critical'
-                                ? t('shield.buttons.extend', { minutes: thresholdMinutes }) + '（おすすめしません）'
+                                ? t('shield.buttons.extend', { minutes: thresholdMinutes }) + t('shield.notRecommended')
                                 : t('shield.buttons.extend', { minutes: thresholdMinutes })
                             }
                         </Text>

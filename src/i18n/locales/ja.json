@@ -596,7 +596,21 @@
     "stats": {
       "todayInterventions": "今日の介入回数",
       "timeSaved": "節約した時間",
-      "streak": "継続日数"
+      "streak": "継続日数",
+      "todayUsage": "今日の使用時間",
+      "interventionCount": "介入回数"
+    },
+    "units": {
+      "minutes": "分",
+      "times": "回"
+    },
+    "practice": {
+      "title": "介入を練習",
+      "description": "呼吸ガイド・フリクションを体験",
+      "button": "練習する"
+    },
+    "badges": {
+      "newBadge": "新しいバッジを獲得！"
     },
     "interventionMessage": "{{count}} 回の介入が行われました",
     "todaysPledge": "今日の誓い",
@@ -612,6 +626,8 @@
   },
   "shield": {
     "title": "{{minutes}}分が経過しました",
+    "yourPromise": "あなたの約束",
+    "notRecommended": "（おすすめしません）",
     "messages": {
       "sleep": {
         "default": "質の良い睡眠は、明日の自分への投資です",
