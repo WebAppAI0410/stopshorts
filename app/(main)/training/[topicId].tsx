@@ -3,7 +3,7 @@
  * Shows article, quiz, and worksheet content for a specific topic
  */
 
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -12,8 +12,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header, Button, GlowOrb } from '../../../src/components/ui';
 import { useTheme } from '../../../src/contexts/ThemeContext';
 import { t } from '../../../src/i18n';
+import { useAppStore } from '../../../src/stores/useAppStore';
 import { getTopicById } from '../../../src/data/trainingTopics';
-import type { TrainingContent, QuizQuestion, WorksheetPrompt } from '../../../src/types/training';
+import type { TrainingContent } from '../../../src/types/training';
 
 type ContentPhase = 'list' | 'article' | 'quiz' | 'worksheet' | 'complete';
 
@@ -21,13 +22,29 @@ export default function TopicDetailScreen() {
   const router = useRouter();
   const { topicId } = useLocalSearchParams<{ topicId: string }>();
   const { colors, typography, spacing, borderRadius } = useTheme();
+  const {
+    trainingProgress,
+    completeContent,
+    saveWorksheetAnswer,
+    recordQuizScore,
+    markTopicCompleted,
+    isContentCompleted,
+  } = useAppStore();
 
   const topic = useMemo(() => getTopicById(topicId || ''), [topicId]);
+  const topicProgress = topicId ? trainingProgress[topicId] : undefined;
   const [phase, setPhase] = useState<ContentPhase>('list');
   const [currentContentIndex, setCurrentContentIndex] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
   const [worksheetAnswers, setWorksheetAnswers] = useState<Record<string, string>>({});
   const [showQuizResult, setShowQuizResult] = useState(false);
+
+  // Load saved worksheet answers from store
+  useEffect(() => {
+    if (topicProgress?.worksheetAnswers) {
+      setWorksheetAnswers(topicProgress.worksheetAnswers);
+    }
+  }, [topicProgress?.worksheetAnswers]);
 
   if (!topic) {
     return (
@@ -52,15 +69,45 @@ export default function TopicDetailScreen() {
   }, [topic]);
 
   const handleNextContent = useCallback(() => {
+    if (!topicId) return;
+
+    // Mark current content as completed
+    const currentContentItem = topic.contents[currentContentIndex];
+    if (currentContentItem) {
+      completeContent(topicId, currentContentItem.id);
+
+      // For quizzes, calculate and record score
+      if (currentContentItem.type === 'quiz' && currentContentItem.questions) {
+        const totalQuestions = currentContentItem.questions.length;
+        const correctAnswers = currentContentItem.questions.filter(
+          (q) => quizAnswers[q.id] === q.correctIndex
+        ).length;
+        const score = Math.round((correctAnswers / totalQuestions) * 100);
+        recordQuizScore(topicId, currentContentItem.id, score);
+      }
+
+      // For worksheets, save all answers
+      if (currentContentItem.type === 'worksheet' && currentContentItem.prompts) {
+        currentContentItem.prompts.forEach((prompt) => {
+          const answer = worksheetAnswers[prompt.id];
+          if (answer) {
+            saveWorksheetAnswer(topicId, prompt.id, answer);
+          }
+        });
+      }
+    }
+
     if (currentContentIndex < topic.contents.length - 1) {
       const nextContent = topic.contents[currentContentIndex + 1];
       setCurrentContentIndex(currentContentIndex + 1);
       setPhase(nextContent.type);
       setShowQuizResult(false);
     } else {
+      // Mark topic as completed when all contents are done
+      markTopicCompleted(topicId);
       setPhase('complete');
     }
-  }, [currentContentIndex, topic.contents]);
+  }, [currentContentIndex, topic.contents, topicId, quizAnswers, worksheetAnswers, completeContent, recordQuizScore, saveWorksheetAnswer, markTopicCompleted]);
 
   const handleQuizAnswer = useCallback((questionId: string, answerIndex: number) => {
     setQuizAnswers((prev) => ({ ...prev, [questionId]: answerIndex }));
@@ -104,7 +151,7 @@ export default function TopicDetailScreen() {
       {/* Content Items */}
       <View style={[styles.contentsList, { marginTop: spacing.xl }]}>
         {topic.contents.map((content, index) => {
-          const isCompleted = false; // TODO: Get from store
+          const contentCompleted = topicId ? isContentCompleted(topicId, content.id) : false;
           const iconName = content.type === 'article' ? 'document-text-outline' :
                           content.type === 'quiz' ? 'help-circle-outline' : 'create-outline';
 
@@ -127,13 +174,13 @@ export default function TopicDetailScreen() {
                 <View
                   style={[
                     styles.contentIcon,
-                    { backgroundColor: isCompleted ? colors.success + '20' : colors.primary + '20' },
+                    { backgroundColor: contentCompleted ? colors.success + '20' : colors.primary + '20' },
                   ]}
                 >
                   <Ionicons
-                    name={isCompleted ? 'checkmark-circle' : iconName}
+                    name={contentCompleted ? 'checkmark-circle' : iconName}
                     size={24}
-                    color={isCompleted ? colors.success : colors.primary}
+                    color={contentCompleted ? colors.success : colors.primary}
                   />
                 </View>
                 <View style={styles.contentInfo}>

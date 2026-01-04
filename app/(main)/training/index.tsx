@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header, GlowOrb } from '../../../src/components/ui';
 import { useTheme } from '../../../src/contexts/ThemeContext';
 import { t } from '../../../src/i18n';
+import { useAppStore } from '../../../src/stores/useAppStore';
 import { TRAINING_TOPICS, getTopicsByCategory } from '../../../src/data/trainingTopics';
 import type { TrainingCategory, TrainingTopic } from '../../../src/types/training';
 
@@ -30,6 +31,7 @@ const CATEGORIES: CategoryInfo[] = [
 export default function TrainingScreen() {
   const router = useRouter();
   const { colors, typography, spacing, borderRadius } = useTheme();
+  const { trainingProgress, getCompletedTopicIds } = useAppStore();
 
   const topicsByCategory = useMemo(() => {
     return {
@@ -38,6 +40,10 @@ export default function TrainingScreen() {
       goal: getTopicsByCategory('goal'),
     };
   }, []);
+
+  const completedTopicCount = useMemo(() => {
+    return getCompletedTopicIds().length;
+  }, [trainingProgress, getCompletedTopicIds]);
 
   const handleTopicPress = useCallback(
     (topicId: string) => {
@@ -59,10 +65,11 @@ export default function TrainingScreen() {
 
   const renderTopicCard = (topic: TrainingTopic, index: number, colorKey: 'primary' | 'accent' | 'success') => {
     const color = getColorForCategory(colorKey);
-    const completedContents = 0; // TODO: Get from store
+    const topicProgress = trainingProgress[topic.id];
+    const completedContents = topicProgress?.completedContents.length ?? 0;
     const totalContents = topic.contents.length;
     const progress = totalContents > 0 ? completedContents / totalContents : 0;
-    const isCompleted = progress === 1;
+    const isCompleted = topicProgress?.isCompleted ?? false;
 
     return (
       <Animated.View
@@ -210,7 +217,7 @@ export default function TrainingScreen() {
         >
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={[typography.h2, { color: colors.textPrimary }]}>0</Text>
+              <Text style={[typography.h2, { color: colors.textPrimary }]}>{completedTopicCount}</Text>
               <Text style={[typography.caption, { color: colors.textMuted }]}>
                 {t('training.stats.completed')}
               </Text>
