@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 import { useMonitoringService } from '../src/hooks/useMonitoringService';
 import { useDailyUsageSync } from '../src/hooks/useDailyUsageSync';
+import { useNotifications } from '../src/hooks/useNotifications';
 
 export default function RootLayout() {
   return (
@@ -26,6 +27,10 @@ function AppWithStatusBar() {
   // Sync daily usage data from native module to statistics store
   // This updates habit score and records usage history
   useDailyUsageSync();
+
+  // Initialize notifications and listen for notification taps
+  // This enables AI coach conversation triggers
+  useNotifications();
 
   return (
     <>

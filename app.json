@@ -37,6 +37,13 @@
       "expo-router",
       "expo-localization",
       "expo-dev-client",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#C65D3B"
+        }
+      ],
       "./modules/screen-time/plugin/withScreenTime",
       "./modules/detox/plugin/withDetox"
     ],
