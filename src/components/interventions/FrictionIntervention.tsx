@@ -6,7 +6,7 @@
  * 3. Confirm (final decision)
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
@@ -30,9 +30,6 @@ interface FrictionInterventionProps {
   /** Callback when user dismisses (goes home) */
   onDismiss: () => void;
 }
-
-// Start performance measurement before component renders
-performanceMonitor.start('friction_intervention_mount');
 
 export function FrictionIntervention({
   blockedAppName = 'TikTok',
@@ -64,7 +61,12 @@ export function FrictionIntervention({
     incrementOpenCount();
   }, []);
 
-  // Measure mount time
+  // Start mount time measurement (useLayoutEffect runs before paint)
+  useLayoutEffect(() => {
+    performanceMonitor.start('friction_intervention_mount');
+  }, []);
+
+  // End mount time measurement
   useEffect(() => {
     if (!mountMeasuredRef.current) {
       mountMeasuredRef.current = true;

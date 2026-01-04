@@ -12,7 +12,7 @@
  * In Expo Go or when native module is unavailable, fallback UI is shown.
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
@@ -74,9 +74,6 @@ function useFallbackPermissions(): [{ granted: boolean; canAskAgain: boolean } |
   return [{ granted: false, canAskAgain: false }, async () => {}];
 }
 
-// Start performance measurement before component renders
-performanceMonitor.start('mirror_intervention_mount');
-
 export function MirrorIntervention({
   blockedAppName,
   userGoal,
@@ -114,7 +111,12 @@ export function MirrorIntervention({
     opacity: pulseOpacity.value,
   }));
 
-  // Measure mount time
+  // Start mount time measurement (useLayoutEffect runs before paint)
+  useLayoutEffect(() => {
+    performanceMonitor.start('mirror_intervention_mount');
+  }, []);
+
+  // End mount time measurement
   useEffect(() => {
     if (!mountMeasuredRef.current) {
       mountMeasuredRef.current = true;

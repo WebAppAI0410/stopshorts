@@ -9,7 +9,7 @@
  * - "Quit" (primary) and "Give in to temptation" (ghost) buttons
  */
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -52,9 +52,6 @@ interface AIInterventionProps {
   minMessages?: number;
 }
 
-// Start performance measurement before component renders
-performanceMonitor.start('ai_intervention_mount');
-
 export function AIIntervention({
   blockedAppName,
   onProceed,
@@ -91,7 +88,12 @@ export function AIIntervention({
     typingOpacity.value = withTiming(isGenerating ? 1 : 0, { duration: 200 });
   }, [isGenerating, typingOpacity]);
 
-  // Measure mount time
+  // Start mount time measurement (useLayoutEffect runs before paint)
+  useLayoutEffect(() => {
+    performanceMonitor.start('ai_intervention_mount');
+  }, []);
+
+  // End mount time measurement
   useEffect(() => {
     if (!mountMeasuredRef.current) {
       mountMeasuredRef.current = true;
