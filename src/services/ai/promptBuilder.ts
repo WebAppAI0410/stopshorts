@@ -3,9 +3,9 @@
  * Constructs system prompts, user context, and manages token budgets
  */
 
-import type { PersonaId, LongTermMemory, Message, ConversationModeId } from '../../types/ai';
+import type { PersonaId, LongTermMemory, Message, ConversationModeId, SessionSummary } from '../../types/ai';
 import { TOKEN_BUDGET, MAX_CONTEXT_TOKENS } from '../../types/ai';
-import { useAppStore } from '../../stores/useAppStore';
+import type { TrainingProgress } from '../../types/training';
 import { TRAINING_TOPICS } from '../../data/trainingTopics';
 
 // ============================================
@@ -139,15 +139,31 @@ const TOPIC_TITLES: Record<string, string> = {
 };
 
 /**
- * Build training context from user's progress
- * Returns formatted string with completed and not-started topics
+ * Maximum number of recent session insights to include in context
  */
-export function buildTrainingContext(): string {
-  const { trainingProgress, getCompletedTopicIds } = useAppStore.getState();
-  const completedIds = getCompletedTopicIds();
+const MAX_RECENT_SESSION_INSIGHTS = 5;
+
+/**
+ * Input for buildTrainingContext to avoid circular dependencies
+ * Data should be passed from the caller (store) instead of importing stores directly
+ */
+export interface TrainingContextInput {
+  trainingProgress: Record<string, TrainingProgress>;
+  completedTopicIds: string[];
+  sessionSummaries: SessionSummary[];
+}
+
+/**
+ * Build training context from user's progress
+ * Returns formatted string with completed and not-started topics,
+ * plus recent insights from past sessions for AI context
+ * @param input - Training progress, completed topic IDs, and session summaries (passed from stores)
+ */
+export function buildTrainingContext(input: TrainingContextInput): string {
+  const { trainingProgress, completedTopicIds, sessionSummaries } = input;
 
   const completedTopics = TRAINING_TOPICS
-    .filter((t) => completedIds.includes(t.id))
+    .filter((t) => completedTopicIds.includes(t.id))
     .map((t) => TOPIC_TITLES[t.id] || t.id);
 
   const notStartedTopics = TRAINING_TOPICS
@@ -155,15 +171,59 @@ export function buildTrainingContext(): string {
     .map((t) => TOPIC_TITLES[t.id] || t.id);
 
   const inProgressTopics = TRAINING_TOPICS
-    .filter((t) => trainingProgress[t.id] && !completedIds.includes(t.id))
+    .filter((t) => trainingProgress[t.id] && !completedTopicIds.includes(t.id))
     .map((t) => TOPIC_TITLES[t.id] || t.id);
 
-  return `
+  // Extract recent insights from past session summaries
+  const recentInsights = extractRecentSessionInsights(sessionSummaries);
+
+  let context = `
 ## ユーザーのトレーニング進捗
 - 完了済み: ${completedTopics.join(', ') || 'なし'}
 - 学習中: ${inProgressTopics.join(', ') || 'なし'}
 - 未開始: ${notStartedTopics.join(', ') || 'なし'}
 `;
+
+  // Add recent session insights if available
+  if (recentInsights.length > 0) {
+    context += `
+## 過去の会話で発見したこと
+${recentInsights.map((insight) => `- ${insight}`).join('\n')}
+`;
+  }
+
+  return context;
+}
+
+/**
+ * Extract recent insights from session summaries
+ * Returns the most recent unique insights from past sessions
+ *
+ * @param sessionSummaries - Array of past session summaries
+ * @returns Array of insight strings (max MAX_RECENT_SESSION_INSIGHTS)
+ */
+function extractRecentSessionInsights(
+  sessionSummaries: Array<{ insights: string[] }>
+): string[] {
+  const seenInsights = new Set<string>();
+  const insights: string[] = [];
+
+  // Process from most recent to oldest
+  for (let i = sessionSummaries.length - 1; i >= 0; i--) {
+    const session = sessionSummaries[i];
+    for (const insight of session.insights) {
+      if (!seenInsights.has(insight)) {
+        seenInsights.add(insight);
+        insights.push(insight);
+
+        if (insights.length >= MAX_RECENT_SESSION_INSIGHTS) {
+          return insights;
+        }
+      }
+    }
+  }
+
+  return insights;
 }
 
 /**
@@ -185,9 +245,9 @@ export interface UserGoals {
 }
 
 /**
- * Training progress for context
+ * Training progress for user context display
  */
-export interface TrainingProgress {
+export interface TrainingProgressContext {
   completedTopics: string[];
   currentLevel: number;
 }
@@ -231,7 +291,7 @@ function describeWeeklyTrend(trend: UserStats['weeklyTrend']): string {
 export function buildUserContext(
   stats: UserStats,
   goals: UserGoals,
-  training: TrainingProgress,
+  training: TrainingProgressContext,
   longTermMemory: LongTermMemory | null
 ): string {
   const recentInsights =
@@ -357,7 +417,7 @@ export function buildFullPrompt(
   messages: Message[],
   stats: UserStats,
   goals: UserGoals,
-  training: TrainingProgress,
+  training: TrainingProgressContext,
   longTermMemory: LongTermMemory | null
 ): FullPromptResult {
   const systemPrompt = buildSystemPrompt(personaId);

@@ -15,7 +15,9 @@ import {
   LONG_TERM_LIMITS,
 } from '../types/ai';
 import { handleCrisisIfDetected } from '../services/ai/mentalHealthHandler';
-import { buildTrainingContext } from '../services/ai/promptBuilder';
+import { buildTrainingContext, type TrainingContextInput } from '../services/ai/promptBuilder';
+import { extractInsights } from '../services/ai/insightExtractor';
+import { useAppStore } from './useAppStore';
 import { secureStorage, migrateToSecureStorage } from '../utils/secureStorage';
 
 // Utility to generate unique IDs
@@ -183,7 +185,8 @@ export const useAIStore = create<AIStore>()(
           const response = await generateAIResponse(
             [...session.messages, userMessage],
             get().personaId,
-            get().longTermMemory
+            get().longTermMemory,
+            get().sessionSummaries
           );
 
           const assistantMessage: Message = {
@@ -428,10 +431,18 @@ export const useAIStore = create<AIStore>()(
 async function generateAIResponse(
   messages: Message[],
   _personaId: PersonaId,
-  _longTermMemory: LongTermMemory | null
+  _longTermMemory: LongTermMemory | null,
+  sessionSummaries: SessionSummary[]
 ): Promise<string> {
   // Build training context for personalized responses
-  const trainingContext = buildTrainingContext();
+  // Get data from useAppStore and pass as arguments to avoid circular dependency
+  const { trainingProgress, getCompletedTopicIds } = useAppStore.getState();
+  const trainingContextInput: TrainingContextInput = {
+    trainingProgress,
+    completedTopicIds: getCompletedTopicIds(),
+    sessionSummaries,
+  };
+  const trainingContext = buildTrainingContext(trainingContextInput);
 
   // Placeholder responses based on message content
   // This will be replaced with actual LLM integration via react-native-executorch
@@ -493,14 +504,6 @@ async function generateSessionSummary(messages: Message[]): Promise<string> {
   const messageCount = messages.length;
   const firstTopic = messages[0]?.content.slice(0, 50) || '';
   return `${messageCount}回のやりとり。話題: ${firstTopic}...`;
-}
-
-/**
- * Extract insights from messages (placeholder - will use LLM)
- */
-function extractInsights(_messages: Message[]): string[] {
-  // Placeholder - actual implementation will use LLM to extract insights
-  return [];
 }
 
 /**
