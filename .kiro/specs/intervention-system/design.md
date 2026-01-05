@@ -20,7 +20,7 @@
 │  │ (既存)   │ │          │ │          │ │                  ││
 │  └──────────┘ └──────────┘ └──────────┘ └──────────────────┘│
 ├─────────────────────────────────────────────────────────────┤
-│                    AI Engine (Gemma 3n E2B)                  │
+│                    AI Engine (Qwen 3 0.6B)                   │
 │  ┌─────────────────────────────────────────────────────────┐│
 │  │ react-native-executorch                                 ││
 │  │ ├─ Model Download Manager                               ││
@@ -477,29 +477,32 @@ completeOnboarding: () => {
            │
            ▼
 ┌─────────────────────────────────────────────────────────────┐
-│              Gemma 3n E2B Engine (react-native-executorch)   │
+│              Qwen 3 0.6B Engine (react-native-executorch)    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 採用モデル: Gemma 3n E2B
+### 4.2 採用モデル: Qwen 3 0.6B
 
-**決定日**: 2026年1月1日
+**決定日**: 2026年1月5日（更新）
 
 | 項目 | 値 |
 |------|-----|
-| モデル | Gemma 3n E2B |
-| 実効パラメータ | 2B（実際は5B、Per-Layer Embeddings技術により圧縮） |
+| モデル | Qwen 3 0.6B |
+| パラメータ | 0.6B |
 | RAM要件 | 2GB |
-| 推論速度 | 60-70 tokens/秒 |
-| Time-to-first-token | 0.3秒 |
-| 日本語対応 | ✅ 良好（WMT24++で高評価） |
-| ライセンス | Gemma Terms of Use |
+| 推論速度 | 高速（ExecuTorch最適化） |
+| 日本語対応 | ✅ 良好（多言語対応） |
+| ライセンス | Apache 2.0 |
+| 形式 | .pte (PyTorch ExecuTorch) |
 
 **選定理由**:
+- react-native-executorch公式対応（software-mansion提供.pte）
 - 2GB RAMで動作可能 → 幅広いデバイスで対応
-- 日本語性能が良好
-- Google製でモバイル最適化済み
-- react-native-executorchで統合可能
+- 日本語を含む多言語対応
+- QWEN3_0_6B定数として提供済み
+
+**⚠️ Gemma 3n E2Bを不採用の理由**:
+- `.task`/`.litertlm`形式（Google LiteRT用）でreact-native-executorch非対応
 
 ### 4.3 モデルダウンロードフロー
 

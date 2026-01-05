@@ -1392,6 +1392,27 @@
   "ai": {
     "crisis": {
       "response": "あなたの気持ちを聞かせてくれてありがとうございます。今とても辛い状況にいるのですね。\n\n専門の相談窓口に連絡することをお勧めします：\n\n📞 いのちの電話: 0120-783-556\n📞 よりそいホットライン: 0120-279-338\n🌐 https://www.mhlw.go.jp/mamorouyokokoro/\n\nあなたは一人ではありません。"
+    },
+    "model": {
+      "title": "AIモデル",
+      "description": "デバイス上でAI機能を使うには、モデルのダウンロードが必要です。Wi-Fi環境でのダウンロードをお勧めします。",
+      "download": "ダウンロード",
+      "downloading": "ダウンロード中...",
+      "ready": "AIモデルの準備が完了しました",
+      "error": "ダウンロードに失敗しました",
+      "unavailable": "このデバイスではAI機能を利用できません",
+      "retry": "再試行",
+      "skip": "後でダウンロード",
+      "requirements": "必要条件: RAM {{ram}}GB以上、空き容量{{storage}}",
+      "status": {
+        "not_downloaded": "未ダウンロード",
+        "downloading": "ダウンロード中",
+        "downloaded": "ダウンロード完了",
+        "loading": "読み込み中",
+        "ready": "準備完了",
+        "error": "エラー",
+        "unavailable": "利用不可"
+      }
     }
   }
 }

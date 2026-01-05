@@ -187,21 +187,28 @@
 - [x] React Native統合ライブラリ調査
 - [x] 対応デバイス要件の確定
 - [x] **調査結果ドキュメント作成** → `research-local-llm.md`
-- [x] **採用モデル決定**: Gemma 3n E2B（research-local-llm.md参照）
-  - ⚠️ 調査結果: react-native-executorchは.pte形式必須
-  - 📝 Qwen 3 0.6Bも候補（公式.pte提供済み）
+- [x] **採用モデル決定**: **Qwen 3 0.6B**（research-local-llm.md参照）
+  - ⚠️ Gemma 3n E2Bは.task形式（LiteRT用）でreact-native-executorch非対応
+  - ✅ Qwen 3 0.6Bは.pte形式（ExecuTorch用）で公式サポート済み
 
-### Task 5.2: LLMエンジン実装 ❌ 未着手
-- [ ] react-native-executorch セットアップ
+### Task 5.2: LLMエンジン実装 🔄 実装中
+- [x] react-native-executorch セットアップ
   - `npm install react-native-executorch`
   - `npx expo prebuild` (Development Build必須)
-- [ ] モデル統合（Gemma 3n E2B or Qwen 3 0.6B）
-- [ ] デバイス互換性チェック（RAM ≥ 2GB）
-- [ ] 推論ラッパー作成（ExecutorchLLMService）
-- [ ] ModelDownloadCard UI実装
+- [x] モデル統合（**Qwen 3 0.6B**を採用）
+  - ⚠️ Gemma 3n E2Bは.task形式（LiteRT用）で非対応
+  - ✅ Qwen 3 0.6Bは.pte形式（ExecuTorch用）で対応済み
+- [x] 推論ラッパー作成（ExecutorchLLMService + useExecutorchLLM）
+- [x] ModelDownloadCard UI実装
+- [x] AIIntervention.tsxへのLLM統合
+- [ ] デバイス互換性チェック（RAM ≥ 2GB）- ネイティブモジュール必要
 - [ ] 非対応時のUI（タブ非表示/無効化）
-> **現状**: mockLLM.ts（パターンマッチング）+ 危機検出で動作中
-> **次のステップ**: react-native-executorch統合PR作成
+> **現状**: react-native-executorch統合完了、Development Build必要
+> **実装ファイル**:
+> - `src/services/ai/executorchLLM.ts`
+> - `src/hooks/useExecutorchLLM.ts`
+> - `src/components/ai/ModelDownloadCard.tsx`
+> - `src/components/interventions/AIIntervention.tsx`
 
 ### Task 5.3: システムプロンプト設計 ✅
 - [x] 固定システムプロンプト作成（動的要素なし）
@@ -382,7 +389,7 @@
 - [x] 必要なモデルサイズ
 - [x] メモリ/ストレージ要件
 - [x] 応答速度ベンチマーク
-- [x] **結果**: Gemma 3n E2B 採用
+- [x] **結果**: **Qwen 3 0.6B** 採用（Gemma 3n E2Bは非対応）
 
 ### Research 2: AIペルソナ 🔄 (基本設計済み)
 - [x] 基本ペルソナ定義（励まし型 / ストレート型）→ design.md 4.5
