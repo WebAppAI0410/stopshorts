@@ -80,7 +80,7 @@ export function useExecutorchLLM(
   } = options;
 
   // Local state
-  const [error, setError] = useState<Error | null>(null);
+  const [internalError, setInternalError] = useState<Error | null>(null);
   const [shouldPreventLoad, setShouldPreventLoad] = useState(initialPreventLoad);
   const abortRef = useRef(false);
 
@@ -150,16 +150,21 @@ export function useExecutorchLLM(
     onStatusChange?.(status);
   }, [status, llm.error, downloadProgressPercent, service, onStatusChange]);
 
-  // Convert llm.error (string) to Error object
-  useEffect(() => {
+  // Derive error from llm.error (string) or internal error
+  // Using useMemo to avoid cascading renders from setState in effect
+  const error = useMemo((): Error | null => {
     if (llm.error) {
-      const err = new Error(llm.error);
-      setError(err);
-      onError?.(err);
-    } else {
-      setError(null);
+      return new Error(llm.error);
     }
-  }, [llm.error, onError]);
+    return internalError;
+  }, [llm.error, internalError]);
+
+  // Call onError callback when error changes (side effect only, no setState)
+  useEffect(() => {
+    if (error) {
+      onError?.(error);
+    }
+  }, [error, onError]);
 
   /**
    * Generate a response with crisis detection
@@ -170,7 +175,7 @@ export function useExecutorchLLM(
       conversationHistory: Message[]
     ): Promise<string> => {
       abortRef.current = false;
-      setError(null);
+      setInternalError(null);
 
       // Check for crisis keywords FIRST - before any LLM processing
       const crisisResponse = handleCrisisIfDetected(userMessage);
@@ -183,7 +188,7 @@ export function useExecutorchLLM(
         const err = new Error(
           'Model is not ready. Please download the model first.'
         );
-        setError(err);
+        setInternalError(err);
         onError?.(err);
         throw err;
       }
@@ -217,7 +222,7 @@ export function useExecutorchLLM(
         return llm.response || '';
       } catch (err) {
         const errorObj = err instanceof Error ? err : new Error(String(err));
-        setError(errorObj);
+        setInternalError(errorObj);
         onError?.(errorObj);
         throw errorObj;
       }
@@ -239,7 +244,7 @@ export function useExecutorchLLM(
    * The hook's useEffect will automatically begin the download process.
    */
   const startDownload = useCallback(() => {
-    setError(null);
+    setInternalError(null);
     setShouldPreventLoad(false);
   }, []);
 
