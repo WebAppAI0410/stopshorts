@@ -197,19 +197,20 @@
   - `npx expo prebuild` (Development Build必須)
 - [x] Qwen 3 0.6B モデル統合
   - モデル: [software-mansion/react-native-executorch-qwen-3](https://huggingface.co/software-mansion/react-native-executorch-qwen-3)
-  - `ExecutorchLLMService` で統合 (`src/services/ai/executorchLLM.ts`)
+  - モデル設定: `QWEN_3_CONFIG` (`src/services/ai/executorchLLM.ts`)
 - [x] デバイス互換性チェック（RAM ≥ 2GB, Storage ≥ 500MB）
-  - `checkAvailability()` メソッドで実装
-- [x] 推論ラッパー作成（ExecutorchLLMService）
-  - `src/services/ai/executorchLLM.ts` で実装
-  - `getLLMService()` ファクトリーパターンで取得
-- [x] useAIStore統合
-  - `downloadModel()`, `checkModelStatus()`, `generateAIResponse()` を実LLM対応
+  - `DEVICE_REQUIREMENTS` 定数で定義
+- [x] 推論実装（React Hook経由）
+  - **重要**: react-native-executorchは`useLLM` Reactフックのみ提供
+  - `AIIntervention.tsx`で`useLLM`フックを直接使用
+  - サービスクラス(`ExecutorchLLMService`)は設定のみ提供
+  - `useExecutorchLLM.ts`ラッパーフック（アプリ固有の統合用）
 - [x] モデルダウンロードUI
   - `ModelDownloadCard` コンポーネント (`src/components/ai/ModelDownloadCard.tsx`)
   - コンパクト版とフルカード版を提供
+  - ダウンロード進捗バー表示
 - [ ] 非対応時のUI（タブ非表示/無効化）→ 画面統合時に対応
-> **完了日**: 2026-01-04
+> **更新日**: 2026-01-05 (useLLMフック直接使用に変更)
 
 ### Task 5.3: システムプロンプト設計 ✅
 - [x] 固定システムプロンプト作成（動的要素なし）
@@ -266,8 +267,9 @@
 - [x] メッセージリスト表示
 - [ ] クイックアクションボタン（後続で実装）
 - [x] 入力フィールド
-- [x] 送信＆応答（Mock LLM）
+- [x] 送信＆応答（useLLMフック経由で実LLM推論）
 > **実装ファイル**: `src/components/interventions/AIIntervention.tsx`
+> **更新日**: 2026-01-05 (プレースホルダーから実LLM推論に変更)
 
 ### Task 5.8: AIタブ実装
 - [ ] ボトムナビにAIタブ追加

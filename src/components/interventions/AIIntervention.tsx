@@ -3,13 +3,13 @@
  * Conversational AI chatbot for mindful intervention
  *
  * Features:
- * - Chat interface with AI assistant
- * - Pattern-based responses (placeholder for LLM)
+ * - Chat interface with AI assistant using react-native-executorch
+ * - Real LLM inference with Qwen 3 0.6B model
  * - Session management with memory
  * - "Quit" (primary) and "Give in to temptation" (ghost) buttons
  */
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -33,12 +33,15 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { useLLM } from 'react-native-executorch';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useAIStore, selectMessages, selectModelReady } from '../../stores/useAIStore';
+import { useAIStore, selectModelReady } from '../../stores/useAIStore';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
 import { t } from '../../i18n';
 import { Button } from '../ui';
 import { ModelDownloadCard } from '../ai';
+import { QWEN_3_CONFIG } from '../../services/ai/executorchLLM';
+import { buildSystemPrompt } from '../../services/ai/promptBuilder';
 import type { Message } from '../../types/ai';
 
 interface AIInterventionProps {
@@ -63,20 +66,30 @@ export function AIIntervention({
 
   const [inputText, setInputText] = useState('');
   const [showButtons, setShowButtons] = useState(false);
+  const [localMessages, setLocalMessages] = useState<Message[]>([]);
+  const lastResponseRef = useRef<string>('');
 
-  // AI Store
+  // AI Store (for session management and model status)
   const startSession = useAIStore((state) => state.startSession);
   const endSession = useAIStore((state) => state.endSession);
-  const sendMessage = useAIStore((state) => state.sendMessage);
-  const addAIGreeting = useAIStore((state) => state.addAIGreeting);
-  const isGenerating = useAIStore((state) => state.isGenerating);
+  const personaId = useAIStore((state) => state.personaId);
   const checkModelStatus = useAIStore((state) => state.checkModelStatus);
   const modelStatus = useAIStore((state) => state.modelStatus);
-  const messages = useAIStore(selectMessages);
   const isModelReady = useAIStore(selectModelReady);
 
   // Statistics
   const { recordIntervention } = useStatisticsStore();
+
+  // Build system prompt based on persona
+  const systemPrompt = useMemo(() => buildSystemPrompt(personaId), [personaId]);
+
+  // react-native-executorch useLLM hook for actual inference
+  const llm = useLLM({
+    model: QWEN_3_CONFIG,
+  });
+
+  // Use LLM hook state for generation status
+  const isGenerating = llm.isGenerating;
 
   // Animation for typing indicator
   const typingOpacity = useSharedValue(0);
@@ -89,14 +102,40 @@ export function AIIntervention({
     typingOpacity.value = withTiming(isGenerating ? 1 : 0, { duration: 200 });
   }, [isGenerating, typingOpacity]);
 
+  // Configure LLM with system prompt when ready
+  useEffect(() => {
+    if (llm.isReady && llm.configure) {
+      llm.configure({
+        chatConfig: {
+          systemPrompt,
+        },
+      });
+    }
+  }, [llm.isReady, llm.configure, systemPrompt]);
+
   // Check model status on mount
   useEffect(() => {
     checkModelStatus();
   }, [checkModelStatus]);
 
+  // Update local messages when LLM response is complete
+  useEffect(() => {
+    if (!isGenerating && llm.response && llm.response !== lastResponseRef.current) {
+      lastResponseRef.current = llm.response;
+      const aiMessage: Message = {
+        id: `ai-${Date.now()}`,
+        role: 'assistant',
+        content: llm.response,
+        timestamp: Date.now(),
+        tokenEstimate: Math.ceil(llm.response.length / 2.5),
+      };
+      setLocalMessages((prev) => [...prev, aiMessage]);
+    }
+  }, [isGenerating, llm.response]);
+
   // Start session on mount with initial AI greeting (only when model is ready)
   useEffect(() => {
-    if (!isModelReady) return;
+    if (!llm.isReady) return;
 
     startSession();
 
@@ -104,7 +143,14 @@ export function AIIntervention({
     // Using a short delay for natural feel
     const timer = setTimeout(() => {
       const greeting = t('intervention.ai.greeting', { app: blockedAppName });
-      addAIGreeting(greeting);
+      const greetingMessage: Message = {
+        id: `greeting-${Date.now()}`,
+        role: 'assistant',
+        content: greeting,
+        timestamp: Date.now(),
+        tokenEstimate: Math.ceil(greeting.length / 2.5),
+      };
+      setLocalMessages([greetingMessage]);
     }, 500);
 
     return () => {
@@ -112,33 +158,61 @@ export function AIIntervention({
       // End session on unmount
       endSession('navigation_away');
     };
-  }, [startSession, endSession, addAIGreeting, blockedAppName, isModelReady]);
+  }, [startSession, endSession, blockedAppName, llm.isReady]);
 
   // Show decision buttons after minimum exchanges (excluding initial greeting)
   useEffect(() => {
     // minMessages * 2 for user + AI exchanges, +1 for initial AI greeting
-    if (messages.length >= minMessages * 2 + 1) {
+    if (localMessages.length >= minMessages * 2 + 1) {
       setShowButtons(true);
     }
-  }, [messages.length, minMessages]);
+  }, [localMessages.length, minMessages]);
 
   // Scroll to bottom when new message arrives
   useEffect(() => {
-    if (messages.length > 0) {
+    if (localMessages.length > 0) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [messages.length]);
+  }, [localMessages.length]);
 
-  // Handle send message
-  const handleSend = useCallback(() => {
-    if (!inputText.trim() || isGenerating) return;
+  // Handle send message using useLLM hook
+  const handleSend = useCallback(async () => {
+    if (!inputText.trim() || isGenerating || !llm.isReady) return;
 
-    sendMessage(inputText.trim());
+    const userMessageContent = inputText.trim();
+
+    // Add user message to local state
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: userMessageContent,
+      timestamp: Date.now(),
+      tokenEstimate: Math.ceil(userMessageContent.length / 2.5),
+    };
+    setLocalMessages((prev) => [...prev, userMessage]);
     setInputText('');
     Keyboard.dismiss();
-  }, [inputText, isGenerating, sendMessage]);
+
+    // Send to LLM using the hook's sendMessage
+    try {
+      await llm.sendMessage(userMessageContent);
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[AIIntervention] Error sending message:', error);
+      }
+      // Add error message
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: 'すみません、少し考えが詰まってしまいました。もう一度お話しいただけますか？',
+        timestamp: Date.now(),
+        tokenEstimate: 50,
+      };
+      setLocalMessages((prev) => [...prev, errorMessage]);
+    }
+  }, [inputText, isGenerating, llm.isReady, llm.sendMessage]);
 
   // Handle proceed action
   const handleProceed = useCallback(() => {
@@ -162,7 +236,7 @@ export function AIIntervention({
 
       return (
         <Animated.View
-          entering={EnterAnimation.duration(300).delay(index === messages.length - 1 ? 0 : 0)}
+          entering={EnterAnimation.duration(300).delay(index === localMessages.length - 1 ? 0 : 0)}
           style={[
             styles.messageBubble,
             isUser ? styles.userBubble : styles.aiBubble,
@@ -190,7 +264,7 @@ export function AIIntervention({
         </Animated.View>
       );
     },
-    [colors, typography, spacing, borderRadius, messages.length]
+    [colors, typography, spacing, borderRadius, localMessages.length]
   );
 
   // Typing indicator
@@ -213,8 +287,18 @@ export function AIIntervention({
     </Animated.View>
   );
 
+  // Determine if model is not ready (use LLM hook state primarily)
+  const modelNotReady = !llm.isReady;
+
+  // Show download/loading status from LLM hook or fallback to store status
+  const displayStatus = llm.downloadProgress > 0 && llm.downloadProgress < 1
+    ? 'downloading'
+    : llm.error
+      ? 'error'
+      : modelStatus;
+
   // If model is not ready, show download card
-  if (!isModelReady) {
+  if (modelNotReady) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
@@ -230,18 +314,34 @@ export function AIIntervention({
               {t('intervention.ai.title')}
             </Text>
             <Text style={[typography.caption, { color: colors.textMuted }]}>
-              {modelStatus === 'downloading'
+              {displayStatus === 'downloading'
                 ? t('intervention.ai.modelDownloading')
-                : modelStatus === 'unavailable'
-                  ? t('intervention.ai.modelUnavailable')
+                : displayStatus === 'error' || llm.error
+                  ? llm.error || t('intervention.ai.modelUnavailable')
                   : t('intervention.ai.subtitle', { app: blockedAppName })}
             </Text>
           </View>
         </Animated.View>
 
-        {/* Model Download Card */}
+        {/* Model Download Progress or Card */}
         <View style={[styles.modelContainer, { paddingHorizontal: spacing.gutter }]}>
-          <ModelDownloadCard />
+          {llm.downloadProgress > 0 && llm.downloadProgress < 1 ? (
+            <View style={styles.progressContainer}>
+              <Text style={[typography.body, { color: colors.textPrimary, marginBottom: spacing.sm }]}>
+                {t('model.downloading')} ({Math.round(llm.downloadProgress * 100)}%)
+              </Text>
+              <View style={[styles.progressBar, { backgroundColor: colors.backgroundCard }]}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { backgroundColor: colors.primary, width: `${llm.downloadProgress * 100}%` },
+                  ]}
+                />
+              </View>
+            </View>
+          ) : (
+            <ModelDownloadCard />
+          )}
         </View>
 
         {/* Dismiss button for unavailable model */}
@@ -287,7 +387,7 @@ export function AIIntervention({
         {/* Messages List */}
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={localMessages}
           renderItem={renderMessage}
           keyExtractor={(item) => item.id}
           contentContainerStyle={[
@@ -481,5 +581,19 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  progressContainer: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  progressBar: {
+    height: 4,
+    borderRadius: 2,
+    width: '80%',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
   },
 });

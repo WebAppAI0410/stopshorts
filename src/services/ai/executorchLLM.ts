@@ -1,6 +1,15 @@
 /**
  * ExecuTorch LLM Service
  * Production LLM implementation using react-native-executorch with Qwen 3 0.6B
+ *
+ * ARCHITECTURE:
+ * - Actual inference is handled by useLLM hook in React components
+ * - This service provides device compatibility checks and model configuration
+ * - See src/hooks/useExecutorchLLM.ts for the hook wrapper used in AIIntervention
+ *
+ * Note: The generate() and generateStream() methods are not usable from service
+ * level because react-native-executorch only exposes the useLLM React hook.
+ * Use useExecutorchLLM hook in React components for actual LLM inference.
  */
 
 import type {
@@ -12,14 +21,10 @@ import type {
   DownloadProgressCallback,
 } from './types';
 
-// Note: react-native-executorch provides useLLM hook for React components
-// For service-level access, we need to use the underlying API
-// This implementation provides the interface for future integration
-
 /**
  * Minimum device requirements for Qwen 3 0.6B
  */
-const DEVICE_REQUIREMENTS = {
+export const DEVICE_REQUIREMENTS = {
   minRAMMB: 2048, // 2GB RAM minimum
   minStorageMB: 500, // 500MB for model file
   modelSizeMB: 400, // Approximate Q4 quantized model size
@@ -34,6 +39,8 @@ const MODEL_CONFIG = {
     'https://huggingface.co/software-mansion/react-native-executorch-qwen-3/resolve/main/qwen-3-0.6B/qwen-3-0.6B-Q4.pte',
   tokenizerUrl:
     'https://huggingface.co/software-mansion/react-native-executorch-qwen-3/resolve/main/tokenizer.json',
+  tokenizerConfigUrl:
+    'https://huggingface.co/software-mansion/react-native-executorch-qwen-3/resolve/main/tokenizer_config.json',
 } as const;
 
 /**
@@ -225,15 +232,18 @@ export class ExecutorchLLMService implements LLMService {
 
   /**
    * Run inference with the model
-   * Note: This is a placeholder. Actual implementation uses useLLM hook.
+   *
+   * NOT SUPPORTED: react-native-executorch only provides useLLM React hook.
+   * Use useExecutorchLLM hook in React components for actual LLM inference.
+   *
+   * @throws Error always - service-level inference not supported
    */
-  private async runInference(prompt: string): Promise<string> {
-    // Placeholder response for development
-    // In production, this would call ExecuTorch's generate function
-    void prompt; // Acknowledge prompt parameter
-
-    // Return a contextual placeholder
-    return 'この機能は現在開発中です。react-native-executorchの完全統合後に動作します。';
+  private async runInference(_prompt: string): Promise<string> {
+    throw new Error(
+      'Service-level LLM inference is not supported. ' +
+        'Use useExecutorchLLM hook in React components instead. ' +
+        'See src/hooks/useExecutorchLLM.ts for usage.'
+    );
   }
 
   /**
@@ -293,6 +303,7 @@ export function getExecutorchLLM(): ExecutorchLLMService {
 export const QWEN_3_CONFIG = {
   modelSource: MODEL_CONFIG.modelUrl,
   tokenizerSource: MODEL_CONFIG.tokenizerUrl,
+  tokenizerConfigSource: MODEL_CONFIG.tokenizerConfigUrl,
 } as const;
 
 /**
