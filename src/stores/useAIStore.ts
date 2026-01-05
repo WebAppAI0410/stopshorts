@@ -14,6 +14,7 @@ import {
   DEFAULT_LONG_TERM_MEMORY,
   LONG_TERM_LIMITS,
 } from '../types/ai';
+import { handleCrisisIfDetected } from '../services/ai/mentalHealthHandler';
 import { buildTrainingContext } from '../services/ai/promptBuilder';
 import { secureStorage, migrateToSecureStorage } from '../utils/secureStorage';
 
@@ -436,7 +437,14 @@ async function generateAIResponse(
   // This will be replaced with actual LLM integration via react-native-executorch
   // When integrated, trainingContext will be included in the system prompt
   const lastMessage = messages[messages.length - 1];
-  const content = lastMessage?.content.toLowerCase() || '';
+  const content = lastMessage?.content || '';
+  const contentLower = content.toLowerCase();
+
+  // Check for mental health crisis keywords first - highest priority
+  const crisisResponse = handleCrisisIfDetected(content);
+  if (crisisResponse) {
+    return crisisResponse;
+  }
 
   // Log training context in dev mode for debugging
   if (__DEV__) {
@@ -445,15 +453,15 @@ async function generateAIResponse(
 
   // Simple pattern matching for demo purposes
   // In production, the LLM will use trainingContext for personalized recommendations
-  if (content.includes('つらい') || content.includes('難しい')) {
+  if (contentLower.includes('つらい') || contentLower.includes('難しい')) {
     return 'その気持ち、よく分かります。少しずつでいいんですよ。今日、何か小さな一歩を踏み出せたことはありますか？';
   }
 
-  if (content.includes('開いて') || content.includes('見てしまった')) {
+  if (contentLower.includes('開いて') || contentLower.includes('見てしまった')) {
     return 'なるほど、開いてしまったんですね。でも、こうして話してくれていること自体が大きな一歩です。何がきっかけで開きたくなりましたか？';
   }
 
-  if (content.includes('できた') || content.includes('成功')) {
+  if (contentLower.includes('できた') || contentLower.includes('成功')) {
     return 'すごい！その調子です。小さな成功を積み重ねることが大切ですね。どんな気持ちですか？';
   }
 

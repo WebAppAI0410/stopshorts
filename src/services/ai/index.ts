@@ -20,6 +20,15 @@ export {
   wouldExceedContext,
 } from './promptBuilder';
 
+// Mental Health Crisis Handler
+export {
+  detectCrisisKeywords,
+  getCrisisResponse,
+  handleCrisisIfDetected,
+} from './mentalHealthHandler';
+
+export type { CrisisDetectionResult } from './mentalHealthHandler';
+
 export type {
   UserStats,
   UserGoals,
