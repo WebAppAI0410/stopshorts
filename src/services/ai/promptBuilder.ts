@@ -3,7 +3,7 @@
  * Constructs system prompts, user context, and manages token budgets
  */
 
-import type { PersonaId, LongTermMemory, Message } from '../../types/ai';
+import type { PersonaId, LongTermMemory, Message, ConversationModeId } from '../../types/ai';
 import { TOKEN_BUDGET, MAX_CONTEXT_TOKENS } from '../../types/ai';
 
 // ============================================
@@ -35,6 +35,48 @@ const SYSTEM_PROMPT_BASE = `あなたはStopShortsアプリのAIアシスタン�
 - 医療アドバイスはしない
 - 危機的状況では専門家を勧める
 `;
+
+/**
+ * Mode-specific prompt additions for quick actions
+ */
+export const MODE_PROMPTS: Record<ConversationModeId, string> = {
+  explore: `
+## 現在のモード: 原因を探る
+ユーザーがショート動画を見たくなる原因を一緒に探りましょう。
+- 何がきっかけでアプリを開きたくなるのか深掘りする
+- 感情や状況のパターンを見つける手助けをする
+- 判断せず、共感的に傾聴する
+- 具体的な例を聞いて、トリガーを特定する
+`,
+  plan: `
+## 現在のモード: If-Then計画を作成
+ユーザーと一緒にIf-Then計画を作成しましょう。
+- 「もし〇〇したくなったら、△△する」の形式で計画を立てる
+- ユーザーの生活スタイルに合った代替行動を提案する
+- 実行可能で具体的な計画になるよう導く
+- 作成した計画を確認し、必要なら調整する
+`,
+  training: `
+## 現在のモード: トレーニング誘導
+適切なトレーニングトピックを提案しましょう。
+- ユーザーの現状に合ったトピックを勧める
+- 習慣ループ、衝動サーフィング、認知再構成などのコンセプトを簡潔に説明
+- 学習への意欲を高める
+- トレーニング画面への移動を促す
+`,
+  reflect: `
+## 現在のモード: 今日を振り返る
+ユーザーの今日一日を振り返る手助けをしましょう。
+- 今日のショート動画との付き合い方を振り返る
+- 良かった点、改善できる点を一緒に考える
+- 小さな進歩も認め、励ます
+- 明日に向けた前向きな気持ちを育む
+`,
+  free: `
+## 現在のモード: 自由会話
+ユーザーの話を自由に聞き、サポートしましょう。
+`,
+};
 
 /**
  * Persona-specific prompt additions
@@ -74,8 +116,11 @@ export function estimateTokens(text: string): number {
 /**
  * Build the full system prompt
  */
-export function buildSystemPrompt(personaId: PersonaId): string {
-  return SYSTEM_PROMPT_BASE + PERSONAS[personaId];
+export function buildSystemPrompt(
+  personaId: PersonaId,
+  modeId: ConversationModeId = 'free'
+): string {
+  return SYSTEM_PROMPT_BASE + PERSONAS[personaId] + MODE_PROMPTS[modeId];
 }
 
 /**

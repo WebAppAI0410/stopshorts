@@ -10,6 +10,7 @@ import {
   type SessionEndTrigger,
   type LongTermMemory,
   type SessionSummary,
+  type ConversationModeId,
   DEFAULT_LONG_TERM_MEMORY,
   LONG_TERM_LIMITS,
 } from '../types/ai';
@@ -63,7 +64,7 @@ export const useAIStore = create<AIStore>()(
       // Session Management
       // ============================================
 
-      startSession: () => {
+      startSession: (modeId: ConversationModeId = 'free') => {
         const sessionId = generateId();
         const now = Date.now();
 
@@ -72,6 +73,7 @@ export const useAIStore = create<AIStore>()(
           messages: [],
           startedAt: now,
           lastActivityAt: now,
+          modeId,
         };
 
         set({ currentSession: newSession });

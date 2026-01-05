@@ -40,7 +40,21 @@ import { performanceMonitor } from '../../utils/performanceMonitor';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import { t } from '../../i18n';
 import { Button } from '../ui';
-import type { Message } from '../../types/ai';
+import type { Message, ConversationModeId } from '../../types/ai';
+
+/**
+ * Quick action configuration for conversation modes
+ */
+const QUICK_ACTIONS: Array<{
+  id: ConversationModeId;
+  icon: keyof typeof Ionicons.glyphMap;
+  labelKey: string;
+}> = [
+  { id: 'explore', icon: 'search-outline', labelKey: 'intervention.ai.quickActions.explore' },
+  { id: 'plan', icon: 'list-outline', labelKey: 'intervention.ai.quickActions.plan' },
+  { id: 'training', icon: 'school-outline', labelKey: 'intervention.ai.quickActions.training' },
+  { id: 'reflect', icon: 'moon-outline', labelKey: 'intervention.ai.quickActions.reflect' },
+];
 
 interface AIInterventionProps {
   /** Name of the blocked app */
@@ -70,6 +84,7 @@ export function AIIntervention({
 
   const [inputText, setInputText] = useState('');
   const [showButtons, setShowButtons] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<ConversationModeId | null>(null);
 
   // AI Store
   const startSession = useAIStore((state) => state.startSession);
@@ -115,23 +130,38 @@ export function AIIntervention({
     }
   }, [isGenerating]);
 
-  // Start session on mount with initial AI greeting
+  // Ref for greeting timer cleanup (Codex P1 fix)
+  const greetingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Handle quick action selection
+  const handleQuickActionSelect = useCallback(
+    (modeId: ConversationModeId) => {
+      setSelectedMode(modeId);
+      startSession(modeId);
+
+      // AI initiates with mode-specific greeting (with cleanup support)
+      greetingTimerRef.current = setTimeout(() => {
+        const greetingKey = `intervention.ai.modeGreetings.${modeId}` as const;
+        const greeting = t(greetingKey);
+        addAIGreeting(greeting);
+      }, 300);
+    },
+    [startSession, addAIGreeting]
+  );
+
+  // Cleanup session and timer on unmount
   useEffect(() => {
-    startSession();
-
-    // AI initiates the conversation with a greeting
-    // Using a short delay for natural feel
-    const timer = setTimeout(() => {
-      const greeting = t('intervention.ai.greeting', { app: blockedAppName });
-      addAIGreeting(greeting);
-    }, 500);
-
     return () => {
-      clearTimeout(timer);
-      // End session on unmount
-      endSession('navigation_away');
+      // Clear greeting timer to prevent firing after unmount (Codex P1 fix)
+      if (greetingTimerRef.current) {
+        clearTimeout(greetingTimerRef.current);
+        greetingTimerRef.current = null;
+      }
+      if (selectedMode) {
+        endSession('navigation_away');
+      }
     };
-  }, [startSession, endSession, addAIGreeting, blockedAppName]);
+  }, [selectedMode, endSession]);
 
   // Show decision buttons after minimum exchanges (excluding initial greeting)
   useEffect(() => {
@@ -224,6 +254,61 @@ export function AIIntervention({
       );
     },
     [colors, typography, spacing, borderRadius, messages.length]
+  );
+
+  // Render quick action buttons
+  const renderQuickActions = () => (
+    <Animated.View
+      entering={FadeIn.duration(400).delay(200)}
+      style={styles.quickActionsContainer}
+    >
+      <Text
+        style={[
+          typography.h3,
+          { color: colors.textPrimary, textAlign: 'center', marginBottom: spacing.lg },
+        ]}
+      >
+        {t('intervention.ai.quickActions.title')}
+      </Text>
+      <View style={styles.quickActionsGrid}>
+        {QUICK_ACTIONS.map((action, index) => (
+          <Animated.View
+            key={action.id}
+            entering={FadeInUp.duration(300).delay(100 * index)}
+          >
+            <Pressable
+              onPress={() => handleQuickActionSelect(action.id)}
+              style={({ pressed }) => [
+                styles.quickActionButton,
+                {
+                  backgroundColor: colors.backgroundCard,
+                  borderRadius: borderRadius.lg,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.quickActionIcon,
+                  { backgroundColor: colors.primary + '15', borderRadius: borderRadius.full },
+                ]}
+              >
+                <Ionicons name={action.icon} size={24} color={colors.primary} />
+              </View>
+              <Text
+                style={[
+                  typography.body,
+                  { color: colors.textPrimary, textAlign: 'center', marginTop: spacing.sm },
+                ]}
+              >
+                {t(action.labelKey)}
+              </Text>
+            </Pressable>
+          </Animated.View>
+        ))}
+      </View>
+    </Animated.View>
   );
 
   // Typing indicator
@@ -339,14 +424,18 @@ export function AIIntervention({
             showsVerticalScrollIndicator={false}
             ListFooterComponent={isGenerating ? renderTypingIndicator : null}
             ListEmptyComponent={
-              <Animated.View
-                entering={FadeIn.duration(400).delay(200)}
-                style={styles.emptyContainer}
-              >
-                <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center' }]}>
-                  {t('intervention.ai.emptyMessage')}
-                </Text>
-              </Animated.View>
+              selectedMode === null ? (
+                renderQuickActions()
+              ) : (
+                <Animated.View
+                  entering={FadeIn.duration(400).delay(200)}
+                  style={styles.emptyContainer}
+                >
+                  <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center' }]}>
+                    {t('intervention.ai.emptyMessage')}
+                  </Text>
+                </Animated.View>
+              )
             }
           />
         </View>
@@ -374,69 +463,62 @@ export function AIIntervention({
           </Animated.View>
         )}
 
-        {/* Input Area */}
-        <Animated.View
-          entering={FadeInUp.duration(400).delay(200)}
-          style={[
-            styles.inputContainer,
-            {
-              backgroundColor: colors.backgroundCard,
-              borderTopColor: colors.border,
-              paddingHorizontal: spacing.gutter,
-              paddingVertical: spacing.sm,
-            },
-          ]}
-        >
-          <TextInput
+        {/* Input Area (only shown after mode is selected) */}
+        {selectedMode !== null && (
+          <Animated.View
+            entering={FadeInUp.duration(400).delay(200)}
             style={[
-              styles.textInput,
-              typography.body,
+              styles.inputContainer,
               {
-                backgroundColor: colors.background,
-                color: colors.textPrimary,
-                borderRadius: borderRadius.lg,
-                paddingHorizontal: spacing.md,
+                backgroundColor: colors.backgroundCard,
+                borderTopColor: colors.border,
+                paddingHorizontal: spacing.gutter,
                 paddingVertical: spacing.sm,
               },
             ]}
-            placeholder={t('intervention.ai.inputPlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            value={inputText}
-            onChangeText={setInputText}
-            multiline
-            maxLength={500}
-            editable={!isGenerating}
-            returnKeyType="send"
-            onSubmitEditing={handleSend}
-            accessibilityLabel={t('intervention.ai.accessibility.inputLabel')}
-            accessibilityHint={t('intervention.ai.accessibility.inputHint')}
-          />
-          <Pressable
-            onPress={handleSend}
-            disabled={!inputText.trim() || isGenerating}
-            accessibilityRole="button"
-            accessibilityLabel={
-              inputText.trim()
-                ? t('intervention.ai.accessibility.sendButton')
-                : t('intervention.ai.accessibility.sendButtonDisabled')
-            }
-            accessibilityState={{ disabled: !inputText.trim() || isGenerating }}
-            style={({ pressed }) => [
-              styles.sendButton,
-              {
-                backgroundColor: inputText.trim() ? colors.primary : colors.backgroundCard,
-                borderRadius: borderRadius.full,
-                opacity: pressed ? 0.8 : 1,
-              },
-            ]}
           >
-            <Ionicons
-              name="send"
-              size={20}
-              color={inputText.trim() ? '#FFFFFF' : colors.textMuted}
+            <TextInput
+              style={[
+                styles.textInput,
+                typography.body,
+                {
+                  backgroundColor: colors.background,
+                  color: colors.textPrimary,
+                  borderRadius: borderRadius.lg,
+                  paddingHorizontal: spacing.md,
+                  paddingVertical: spacing.sm,
+                },
+              ]}
+              placeholder={t('intervention.ai.inputPlaceholder')}
+              placeholderTextColor={colors.textMuted}
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              maxLength={500}
+              editable={!isGenerating}
+              returnKeyType="send"
+              onSubmitEditing={handleSend}
             />
-          </Pressable>
-        </Animated.View>
+            <Pressable
+              onPress={handleSend}
+              disabled={!inputText.trim() || isGenerating}
+              style={({ pressed }) => [
+                styles.sendButton,
+                {
+                  backgroundColor: inputText.trim() ? colors.primary : colors.backgroundCard,
+                  borderRadius: borderRadius.full,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <Ionicons
+                name="send"
+                size={20}
+                color={inputText.trim() ? '#FFFFFF' : colors.textMuted}
+              />
+            </Pressable>
+          </Animated.View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -510,6 +592,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
+  },
+  quickActionsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 16,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  quickActionButton: {
+    width: 140,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  quickActionIcon: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   buttonsContainer: {
     paddingTop: 8,
