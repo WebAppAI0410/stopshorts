@@ -432,7 +432,9 @@ async function generateAIResponse(
 
   if (content.includes('トレーニング') || content.includes('学習') || content.includes('勉強')) {
     // Use training context to suggest next topic
-    if (trainingContext.includes('完了済み: なし')) {
+    // Check both completed AND in-progress to determine if truly not started (Codex P2 fix)
+    const hasNotStarted = trainingContext.includes('完了済み: なし') && trainingContext.includes('学習中: なし');
+    if (hasNotStarted) {
       return '習慣改善のトレーニングをまだ始めていないようですね。「習慣ループの理解」から始めてみませんか？自分の行動パターンを理解することが第一歩です。';
     }
     return 'トレーニングを進めているんですね！学んだことを日常に活かせていますか？';
