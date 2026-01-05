@@ -735,8 +735,14 @@
   "subscription": {
     "trial": {
       "title": "無料トライアル",
-      "description": "すべての機能を1日間お試しいただけます",
-      "remaining": "残り{{hours}}時間"
+      "description": "すべての機能を3日間お試しいただけます",
+      "remaining": "残り{{days}}日",
+      "daysLeft": "トライアル残り{{days}}日"
+    },
+    "trialWarning": {
+      "title": "あと1日で使えなくなります",
+      "message": "明日以降もStopShortsを使い続けるには、プランを選択してください。",
+      "button": "プランを見る"
     },
     "expired": {
       "title": "サブスクリプションが終了しました",
@@ -750,20 +756,41 @@
       "subscribeButton": "プランを更新する",
       "restoreButton": "購入を復元"
     },
+    "resubscribe": {
+      "title": "プレミアムに戻る",
+      "message": "あなたの成果をもう一度発揮しましょう",
+      "button": "プレミアムを再開"
+    },
+    "stats": {
+      "interventions": "介入回数",
+      "timeSaved": "取り戻した時間"
+    },
+    "validUntil": "{{date}}まで有効",
+    "restore": "購入を復元",
+    "restoring": "復元中...",
+    "restoreSuccess": "購入を復元しました",
+    "restoreNoSubscription": "復元できるサブスクリプションが見つかりませんでした",
+    "restoreError": "復元中にエラーが発生しました",
+    "managePlan": "プランを管理",
+    "currentPlan": "現在のプラン",
+    "cancelled": "解約予約中",
+    "billingIssue": "支払いに問題があります",
     "plans": {
+      "free": "無料",
+      "trial": "トライアル",
       "monthly": {
-        "title": "30日プラン",
+        "title": "月額プラン",
         "price": "¥980"
       },
       "quarterly": {
         "title": "90日プラン",
-        "price": "¥1,980",
-        "savings": "33%お得"
+        "price": "¥2,350",
+        "savings": "20%お得"
       },
       "annual": {
         "title": "年間プラン",
-        "price": "¥3,980",
-        "savings": "66%お得"
+        "price": "¥5,880",
+        "savings": "50%お得"
       }
     },
     "features": {
@@ -771,6 +798,11 @@
       "unlimited": "無制限のアプリ管理",
       "personalization": "パーソナライズ文言",
       "statistics": "詳細統計"
+    },
+    "modal": {
+      "title": "プレミアム機能を解除",
+      "yourAchievements": "あなたの成果",
+      "selectPlan": "プランを選択して続けましょう"
     }
   },
   "errors": {
