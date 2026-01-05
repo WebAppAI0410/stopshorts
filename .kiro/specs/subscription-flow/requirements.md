@@ -6,6 +6,18 @@ RevenueCatを使用した課金フローの実装。既存の料金設計（`doc
 
 ---
 
+## 技術選定（確定）
+
+| 項目 | 選定 | 理由 |
+|------|------|------|
+| 課金SDK | **RevenueCat** | iOS/Android統一API、無料枠十分、業界標準 |
+| 支払い処理 | App Store / Google Play | RevenueCat経由で自動連携 |
+| バックエンド | 不要 | RevenueCatがEntitlement管理 |
+
+**ユーザー視点**: アプリ内でストアの決済画面が表示され、既存の支払い方法（Apple ID / Google Play登録済み）でワンタップ購入。
+
+---
+
 ## Functional Requirements
 
 ### FR-1: RevenueCat統合
