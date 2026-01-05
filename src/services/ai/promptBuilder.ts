@@ -5,6 +5,8 @@
 
 import type { PersonaId, LongTermMemory, Message, ConversationModeId } from '../../types/ai';
 import { TOKEN_BUDGET, MAX_CONTEXT_TOKENS } from '../../types/ai';
+import { useAppStore } from '../../stores/useAppStore';
+import { TRAINING_TOPICS } from '../../data/trainingTopics';
 
 // ============================================
 // System Prompts
@@ -121,6 +123,47 @@ export function buildSystemPrompt(
   modeId: ConversationModeId = 'free'
 ): string {
   return SYSTEM_PROMPT_BASE + PERSONAS[personaId] + MODE_PROMPTS[modeId];
+}
+
+// Topic ID to Japanese title mapping for AI context
+const TOPIC_TITLES: Record<string, string> = {
+  'habit-loop': '習慣ループの理解',
+  'if-then-plan': 'If-Thenプランニング',
+  'urge-surfing-science': '衝動サーフィンの科学',
+  'brain-self-control': '脳と自己制御',
+  'cognitive-reframing': '認知リフレーミング',
+  'dealing-with-boredom': '退屈への対処',
+  'loneliness-and-sns': '孤独感とSNS',
+  'screen-time-and-sleep': 'スクリーンタイムと睡眠',
+  'reclaiming-focus': '集中力の回復',
+};
+
+/**
+ * Build training context from user's progress
+ * Returns formatted string with completed and not-started topics
+ */
+export function buildTrainingContext(): string {
+  const { trainingProgress, getCompletedTopicIds } = useAppStore.getState();
+  const completedIds = getCompletedTopicIds();
+
+  const completedTopics = TRAINING_TOPICS
+    .filter((t) => completedIds.includes(t.id))
+    .map((t) => TOPIC_TITLES[t.id] || t.id);
+
+  const notStartedTopics = TRAINING_TOPICS
+    .filter((t) => !trainingProgress[t.id])
+    .map((t) => TOPIC_TITLES[t.id] || t.id);
+
+  const inProgressTopics = TRAINING_TOPICS
+    .filter((t) => trainingProgress[t.id] && !completedIds.includes(t.id))
+    .map((t) => TOPIC_TITLES[t.id] || t.id);
+
+  return `
+## ユーザーのトレーニング進捗
+- 完了済み: ${completedTopics.join(', ') || 'なし'}
+- 学習中: ${inProgressTopics.join(', ') || 'なし'}
+- 未開始: ${notStartedTopics.join(', ') || 'なし'}
+`;
 }
 
 /**
