@@ -130,9 +130,18 @@ describe('buildLongTermSummary', () => {
 
   it('includes confirmed insights', () => {
     const memory: LongTermMemory = {
+      version: 1,
       confirmedInsights: [
-        { content: '夜に開きやすい', confirmedByUser: true, createdAt: new Date().toISOString() },
+        {
+          id: 'insight-1',
+          content: '夜に開きやすい',
+          confidence: 0.9,
+          confirmedByUser: true,
+          createdAt: new Date().toISOString(),
+          lastReferencedAt: new Date().toISOString(),
+        },
       ],
+      plans: [],
       identifiedTriggers: [],
       effectiveStrategies: [],
     };
@@ -144,9 +153,18 @@ describe('buildLongTermSummary', () => {
 
   it('excludes unconfirmed insights', () => {
     const memory: LongTermMemory = {
+      version: 1,
       confirmedInsights: [
-        { content: '未確認の洞察', confirmedByUser: false, createdAt: new Date().toISOString() },
+        {
+          id: 'insight-2',
+          content: '未確認の洞察',
+          confidence: 0.5,
+          confirmedByUser: false,
+          createdAt: new Date().toISOString(),
+          lastReferencedAt: new Date().toISOString(),
+        },
       ],
+      plans: [],
       identifiedTriggers: [],
       effectiveStrategies: [],
     };
@@ -157,10 +175,12 @@ describe('buildLongTermSummary', () => {
 
   it('includes top triggers by frequency', () => {
     const memory: LongTermMemory = {
+      version: 1,
       confirmedInsights: [],
+      plans: [],
       identifiedTriggers: [
-        { trigger: '退屈', frequency: 5, firstSeen: '', lastSeen: '' },
-        { trigger: 'ストレス', frequency: 10, firstSeen: '', lastSeen: '' },
+        { id: 'trigger-1', trigger: '退屈', frequency: 5, discoveredAt: new Date().toISOString() },
+        { id: 'trigger-2', trigger: 'ストレス', frequency: 10, discoveredAt: new Date().toISOString() },
       ],
       effectiveStrategies: [],
     };
@@ -172,11 +192,13 @@ describe('buildLongTermSummary', () => {
 
   it('includes effective strategies above threshold', () => {
     const memory: LongTermMemory = {
+      version: 1,
       confirmedInsights: [],
+      plans: [],
       identifiedTriggers: [],
       effectiveStrategies: [
-        { description: '深呼吸', effectiveness: 0.8, usageCount: 5 },
-        { description: '散歩', effectiveness: 0.5, usageCount: 3 }, // Below threshold
+        { id: 'strategy-1', description: '深呼吸', effectiveness: 0.8, usageCount: 5, lastUsedAt: new Date().toISOString() },
+        { id: 'strategy-2', description: '散歩', effectiveness: 0.5, usageCount: 3, lastUsedAt: new Date().toISOString() }, // Below threshold
       ],
     };
 
@@ -187,7 +209,9 @@ describe('buildLongTermSummary', () => {
 
   it('returns empty string when memory has no relevant data', () => {
     const memory: LongTermMemory = {
+      version: 1,
       confirmedInsights: [],
+      plans: [],
       identifiedTriggers: [],
       effectiveStrategies: [],
     };
@@ -199,8 +223,8 @@ describe('buildLongTermSummary', () => {
 describe('formatConversationHistory', () => {
   it('formats messages correctly', () => {
     const messages: Message[] = [
-      { id: '1', role: 'user', content: 'こんにちは', timestamp: Date.now() },
-      { id: '2', role: 'assistant', content: 'やあ', timestamp: Date.now() },
+      { id: '1', role: 'user', content: 'こんにちは', timestamp: Date.now(), tokenEstimate: 2 },
+      { id: '2', role: 'assistant', content: 'やあ', timestamp: Date.now(), tokenEstimate: 1 },
     ];
 
     const formatted = formatConversationHistory(messages);
@@ -215,9 +239,9 @@ describe('formatConversationHistory', () => {
   it('truncates messages to fit token budget', () => {
     const longMessage = 'あ'.repeat(1000);
     const messages: Message[] = [
-      { id: '1', role: 'user', content: longMessage, timestamp: Date.now() },
-      { id: '2', role: 'user', content: longMessage, timestamp: Date.now() },
-      { id: '3', role: 'user', content: 'recent', timestamp: Date.now() },
+      { id: '1', role: 'user', content: longMessage, timestamp: Date.now(), tokenEstimate: 400 },
+      { id: '2', role: 'user', content: longMessage, timestamp: Date.now(), tokenEstimate: 400 },
+      { id: '3', role: 'user', content: 'recent', timestamp: Date.now(), tokenEstimate: 3 },
     ];
 
     // With a very small token limit, should prioritize recent messages
@@ -227,9 +251,9 @@ describe('formatConversationHistory', () => {
 
   it('preserves message order (oldest first in output)', () => {
     const messages: Message[] = [
-      { id: '1', role: 'user', content: 'first', timestamp: Date.now() },
-      { id: '2', role: 'assistant', content: 'second', timestamp: Date.now() },
-      { id: '3', role: 'user', content: 'third', timestamp: Date.now() },
+      { id: '1', role: 'user', content: 'first', timestamp: Date.now(), tokenEstimate: 2 },
+      { id: '2', role: 'assistant', content: 'second', timestamp: Date.now(), tokenEstimate: 3 },
+      { id: '3', role: 'user', content: 'third', timestamp: Date.now(), tokenEstimate: 2 },
     ];
 
     const formatted = formatConversationHistory(messages);
