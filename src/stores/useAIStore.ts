@@ -10,10 +10,12 @@ import {
   type SessionEndTrigger,
   type LongTermMemory,
   type SessionSummary,
+  type ConversationModeId,
   DEFAULT_LONG_TERM_MEMORY,
   LONG_TERM_LIMITS,
 } from '../types/ai';
 import { buildTrainingContext } from '../services/ai/promptBuilder';
+import { secureStorage, migrateToSecureStorage } from '../utils/secureStorage';
 
 // Utility to generate unique IDs
 function generateId(): string {
@@ -63,7 +65,7 @@ export const useAIStore = create<AIStore>()(
       // Session Management
       // ============================================
 
-      startSession: () => {
+      startSession: (modeId: ConversationModeId = 'free') => {
         const sessionId = generateId();
         const now = Date.now();
 
@@ -72,6 +74,7 @@ export const useAIStore = create<AIStore>()(
           messages: [],
           startedAt: now,
           lastActivityAt: now,
+          modeId,
         };
 
         set({ currentSession: newSession });
@@ -292,8 +295,20 @@ export const useAIStore = create<AIStore>()(
 
       loadMemory: async () => {
         try {
+          // Migrate from AsyncStorage to SecureStorage if needed
+          const memoryMigrated = await migrateToSecureStorage(AI_MEMORY_KEY);
+          const sessionsMigrated = await migrateToSecureStorage(AI_SESSIONS_KEY);
+
           // Load long-term memory
-          const memoryJson = await AsyncStorage.getItem(AI_MEMORY_KEY);
+          let memoryJson: string | null = null;
+          if (memoryMigrated) {
+            memoryJson = await secureStorage.getItem(AI_MEMORY_KEY);
+          }
+          // Fallback to AsyncStorage if SecureStorage failed or returned null
+          if (!memoryJson) {
+            memoryJson = await AsyncStorage.getItem(AI_MEMORY_KEY);
+          }
+
           if (memoryJson) {
             const memory: LongTermMemory = JSON.parse(memoryJson);
             set({ longTermMemory: memory });
@@ -302,7 +317,15 @@ export const useAIStore = create<AIStore>()(
           }
 
           // Load session summaries
-          const sessionsJson = await AsyncStorage.getItem(AI_SESSIONS_KEY);
+          let sessionsJson: string | null = null;
+          if (sessionsMigrated) {
+            sessionsJson = await secureStorage.getItem(AI_SESSIONS_KEY);
+          }
+          // Fallback to AsyncStorage if SecureStorage failed or returned null
+          if (!sessionsJson) {
+            sessionsJson = await AsyncStorage.getItem(AI_SESSIONS_KEY);
+          }
+
           if (sessionsJson) {
             const summaries: SessionSummary[] = JSON.parse(sessionsJson);
             set({ sessionSummaries: summaries });
@@ -320,13 +343,13 @@ export const useAIStore = create<AIStore>()(
 
         try {
           if (longTermMemory) {
-            await AsyncStorage.setItem(
+            await secureStorage.setItem(
               AI_MEMORY_KEY,
               JSON.stringify(longTermMemory)
             );
           }
 
-          await AsyncStorage.setItem(
+          await secureStorage.setItem(
             AI_SESSIONS_KEY,
             JSON.stringify(sessionSummaries)
           );
@@ -339,6 +362,10 @@ export const useAIStore = create<AIStore>()(
 
       clearMemory: async () => {
         try {
+          // Remove from both secure storage and AsyncStorage (for migration cleanup)
+          await secureStorage.removeItem(AI_MEMORY_KEY);
+          await secureStorage.removeItem(AI_SESSIONS_KEY);
+          // Also clean up any remaining AsyncStorage data from before migration
           await AsyncStorage.removeItem(AI_MEMORY_KEY);
           await AsyncStorage.removeItem(AI_SESSIONS_KEY);
           set({

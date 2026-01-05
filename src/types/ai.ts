@@ -101,6 +101,7 @@ export interface CurrentSession {
   messages: Message[];
   startedAt: number;
   lastActivityAt: number;
+  modeId: ConversationModeId;
 }
 
 // ============================================
@@ -128,6 +129,11 @@ export interface ModelInfo {
 // ============================================
 
 export type PersonaId = 'supportive' | 'direct';
+
+/**
+ * Conversation mode IDs for quick actions
+ */
+export type ConversationModeId = 'explore' | 'plan' | 'training' | 'reflect' | 'free';
 
 export interface Persona {
   id: PersonaId;
@@ -177,7 +183,7 @@ export interface AIState {
 
 export interface AIActions {
   // Session management
-  startSession: () => void;
+  startSession: (modeId?: ConversationModeId) => void;
   endSession: (trigger?: SessionEndTrigger) => Promise<void>;
 
   // Messaging
