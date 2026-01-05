@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -26,10 +26,12 @@ export default function DashboardScreen() {
     // Get real screen time data from Android native module
     const { todayData, loading: screenTimeLoading, isMockData } = useScreenTimeData();
 
-    // Get training progress data
-    const completedTopicIds = useAppStore((state) => state.getCompletedTopicIds());
+    // Get training progress data - use raw state to avoid infinite loop
+    const trainingProgressData = useAppStore((state) => state.trainingProgress);
     const totalTopics = TRAINING_TOPICS.length;
-    const completedTopicsCount = completedTopicIds.length;
+    const completedTopicsCount = useMemo(() => {
+        return Object.values(trainingProgressData).filter((p) => p.isCompleted).length;
+    }, [trainingProgressData]);
     const trainingProgress = totalTopics > 0 ? (completedTopicsCount / totalTopics) * 100 : 0;
 
     // Get statistics from intervention store
