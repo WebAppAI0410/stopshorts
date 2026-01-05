@@ -187,27 +187,21 @@
 - [x] React Native統合ライブラリ調査
 - [x] 対応デバイス要件の確定
 - [x] **調査結果ドキュメント作成** → `research-local-llm.md`
-- [x] **採用モデル決定**: Qwen 3 0.6B（2026-01-04 改訂）
-  - ⚠️ Gemma 3n E2Bは.task形式のため非採用（react-native-executorchは.pte必須）
-  - Qwen 3 0.6Bは公式.pteファイル提供済み
+- [x] **採用モデル決定**: Gemma 3n E2B（research-local-llm.md参照）
+  - ⚠️ 調査結果: react-native-executorchは.pte形式必須
+  - 📝 Qwen 3 0.6Bも候補（公式.pte提供済み）
 
-### Task 5.2: LLMエンジン実装 (部分完了)
-- [x] react-native-executorch セットアップ
-  - `npm install react-native-executorch` (v0.6.0)
+### Task 5.2: LLMエンジン実装 ❌ 未着手
+- [ ] react-native-executorch セットアップ
+  - `npm install react-native-executorch`
   - `npx expo prebuild` (Development Build必須)
-- [x] Qwen 3 0.6B モデル設定
-  - モデル: [software-mansion/react-native-executorch-qwen-3](https://huggingface.co/software-mansion/react-native-executorch-qwen-3)
-  - モデル設定: `QWEN_3_CONFIG` (`src/services/ai/executorchLLM.ts`)
-- [x] デバイス互換性チェック定義（RAM ≥ 2GB, Storage ≥ 500MB）
-  - `DEVICE_REQUIREMENTS` 定数で定義
-- [x] ModelDownloadCard UI実装
-  - `src/components/ai/ModelDownloadCard.tsx`
-- [ ] 推論統合（useLLMフック経由）
-  - **重要**: react-native-executorchは`useLLM` Reactフックのみ提供
-  - 現在はパターンマッチング + 危機検出でフォールバック
-  - 本番LLM統合は後続PRで対応予定
+- [ ] モデル統合（Gemma 3n E2B or Qwen 3 0.6B）
+- [ ] デバイス互換性チェック（RAM ≥ 2GB）
+- [ ] 推論ラッパー作成（ExecutorchLLMService）
+- [ ] ModelDownloadCard UI実装
 - [ ] 非対応時のUI（タブ非表示/無効化）
-> **ステータス**: 基盤インフラ完了、推論統合は別PRで対応
+> **現状**: mockLLM.ts（パターンマッチング）+ 危機検出で動作中
+> **次のステップ**: react-native-executorch統合PR作成
 
 ### Task 5.3: システムプロンプト設計 ✅
 - [x] 固定システムプロンプト作成（動的要素なし）
