@@ -60,6 +60,19 @@ export default function MainLayout() {
                 }}
             />
             <Tabs.Screen
+                name="ai"
+                options={{
+                    title: t('tabs.ai'),
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'}
+                            size={24}
+                            color={color}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
                 name="training"
                 options={{
                     title: t('tabs.training'),

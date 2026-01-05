@@ -592,6 +592,12 @@
   },
   "home": {
     "greeting": "おかえりなさい",
+    "training": {
+      "title": "心理トレーニング",
+      "completed": "トピック完了",
+      "viewAll": "すべて見る",
+      "progress": "{{completed}}/{{total}}"
+    },
     "greetings": {
       "morning": "おはようございます",
       "afternoon": "こんにちは",
@@ -775,12 +781,35 @@
     "network": "ネットワーク接続を確認してください",
     "permission": "必要な権限が付与されていません"
   },
+  "notifications": {
+    "aiProposal": {
+      "title": "AIコーチからの提案",
+      "body": "最近よく頑張っていますね。少し話しませんか？"
+    },
+    "successCelebration": {
+      "title": "素晴らしい！",
+      "body": "今日は{{minutes}}分の時間を取り戻しました。この調子で続けましょう！"
+    },
+    "dailyCheckin": {
+      "title": "今日の振り返り",
+      "body": "今日一日どうでしたか？AIコーチと話してみませんか？"
+    },
+    "channelName": "AIコーチ"
+  },
   "tabs": {
     "home": "ホーム",
     "stats": "統計",
+    "ai": "AIコーチ",
     "training": "学習",
     "settings": "設定",
     "profile": "プロフィール"
+  },
+  "ai": {
+    "screenTitle": "AIコーチ",
+    "subtitle": "何でも相談してください",
+    "greeting": "こんにちは！今日はどんなことを話しましょうか？",
+    "emptyMessage": "何でも話してください。一緒に考えましょう。",
+    "inputPlaceholder": "メッセージを入力..."
   },
   "statistics": {
     "title": "統計",
@@ -909,6 +938,22 @@
         "plan": "If-Then計画を一緒に作りましょう。「もし〇〇したくなったら、△△する」という形式で、あなた専用のプランを考えます。",
         "training": "トレーニングを始めましょう。習慣の仕組みや、衝動との付き合い方について学びます。何から始めますか？",
         "reflect": "今日一日を振り返ってみましょう。ショート動画との付き合い方はどうでしたか？"
+      },
+      "accessibility": {
+        "userMessage": "あなたのメッセージ: {{content}}",
+        "aiMessage": "AIコーチ: {{content}}",
+        "inputLabel": "メッセージ入力欄",
+        "inputHint": "AIコーチに送信するメッセージを入力",
+        "sendButton": "メッセージを送信",
+        "sendButtonDisabled": "メッセージを送信（入力してください）",
+        "quitButton": "アプリを閉じる",
+        "proceedButton": "アプリを開く",
+        "aiTyping": "AIコーチが返答を作成中"
+      },
+      "offline": {
+        "title": "オフラインです",
+        "message": "AIコーチはインターネット接続が必要です。",
+        "useFriction": "フリクション介入を使う"
       }
     },
     "settings": {
