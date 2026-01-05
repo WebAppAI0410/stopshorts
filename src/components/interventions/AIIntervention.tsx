@@ -90,7 +90,7 @@ export function AIIntervention({
   const [inputText, setInputText] = useState('');
   const [showButtons, setShowButtons] = useState(false);
   const [selectedMode, setSelectedMode] = useState<ConversationModeId | null>(null);
-  const [showDownloadCard, setShowDownloadCard] = useState(false);
+  const [showDownloadCard, setShowDownloadCard] = useState(true); // Show by default
 
   // AI Store
   const startSession = useAIStore((state) => state.startSession);
@@ -264,24 +264,34 @@ export function AIIntervention({
         // Generate response using LLM
         const response = await llm.generate(userInput, messages);
 
-        // Add AI response
+        // Add AI response (always update isGenerating, even if response is empty)
         const updatedSession = useAIStore.getState().currentSession;
-        if (updatedSession && response) {
-          const aiMessage: Message = {
-            id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-            role: 'assistant',
-            content: response,
-            timestamp: Date.now(),
-            tokenEstimate: Math.ceil(response.length / 2.5),
-          };
-          useAIStore.setState({
-            currentSession: {
-              ...updatedSession,
-              messages: [...updatedSession.messages, aiMessage],
-              lastActivityAt: Date.now(),
-            },
-            isGenerating: false,
-          });
+        if (updatedSession) {
+          if (response) {
+            const aiMessage: Message = {
+              id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+              role: 'assistant',
+              content: response,
+              timestamp: Date.now(),
+              tokenEstimate: Math.ceil(response.length / 2.5),
+            };
+            useAIStore.setState({
+              currentSession: {
+                ...updatedSession,
+                messages: [...updatedSession.messages, aiMessage],
+                lastActivityAt: Date.now(),
+              },
+              isGenerating: false,
+            });
+          } else {
+            // Empty response - still need to reset isGenerating
+            useAIStore.setState({ isGenerating: false });
+            // Fall back to pattern matching for empty responses
+            sendMessage(userInput);
+          }
+        } else {
+          // No session - reset isGenerating
+          useAIStore.setState({ isGenerating: false });
         }
       } catch (error) {
         if (__DEV__) {
@@ -360,16 +370,10 @@ export function AIIntervention({
     [colors, typography, spacing, borderRadius, messages.length]
   );
 
-  // Handle model download
-  const handleDownloadModel = useCallback(async () => {
-    try {
-      await llm.downloadModel();
-      setShowDownloadCard(false);
-    } catch (error) {
-      if (__DEV__) {
-        console.error('[AIIntervention] Model download error:', error);
-      }
-    }
+  // Handle model download - triggers preventLoad -> false
+  const handleDownloadModel = useCallback(() => {
+    llm.startDownload();
+    // Card will hide automatically when model becomes ready
   }, [llm]);
 
   // Handle skip download
@@ -383,8 +387,8 @@ export function AIIntervention({
       entering={FadeIn.duration(400).delay(200)}
       style={styles.quickActionsContainer}
     >
-      {/* Model Download Card - shown when LLM not ready */}
-      {!llm.isReady && llm.status !== 'unavailable' && (
+      {/* Model Download Card - shown when LLM not ready AND not skipped */}
+      {showDownloadCard && !llm.isReady && llm.status !== 'unavailable' && (
         <View style={{ marginBottom: spacing.lg, width: '100%' }}>
           <ModelDownloadCard
             status={llm.status}

@@ -7,6 +7,8 @@
  * - Training context injection
  * - Conversation mode support
  * - Error handling and fallback
+ *
+ * IMPORTANT: useLLM's downloadProgress is 0..1 scale, we convert to 0..100 for UI
  */
 
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
@@ -32,6 +34,8 @@ export interface UseExecutorchLLMOptions {
   personaId?: PersonaId;
   /** Conversation mode for system prompt */
   modeId?: ConversationModeId;
+  /** Prevent automatic model loading on mount (default: true) */
+  preventLoad?: boolean;
   /** Callback when model status changes */
   onStatusChange?: (status: ModelStatus) => void;
   /** Callback when error occurs */
@@ -46,8 +50,8 @@ export interface UseExecutorchLLMResult {
   ) => Promise<string>;
   /** Stop current generation */
   stop: () => void;
-  /** Download the model (triggers automatic loading) */
-  downloadModel: () => Promise<void>;
+  /** Start model download (changes preventLoad to false internally) */
+  startDownload: () => void;
   /** Current model status */
   status: ModelStatus;
   /** Download progress (0-100) */
@@ -70,20 +74,24 @@ export function useExecutorchLLM(
   const {
     personaId = 'supportive',
     modeId = 'free',
+    preventLoad: initialPreventLoad = true, // Default: prevent auto-download
     onStatusChange,
     onError,
   } = options;
 
   // Local state
   const [error, setError] = useState<Error | null>(null);
+  const [shouldPreventLoad, setShouldPreventLoad] = useState(initialPreventLoad);
   const abortRef = useRef(false);
 
   // Get the service instance for status syncing
   const service = useMemo(() => getExecutorchLLM(), []);
 
   // Use the LLM hook from react-native-executorch
+  // preventLoad controls whether to auto-download on mount
   const llm = useLLM({
     model: QWEN3_0_6B,
+    preventLoad: shouldPreventLoad,
   });
 
   // Build system prompt with training context
@@ -109,15 +117,27 @@ export function useExecutorchLLM(
     }
   }, [llm.isReady, systemPrompt, llm]);
 
+  // Convert progress from 0..1 to 0..100 for UI
+  const downloadProgressPercent = useMemo(
+    () => Math.round(llm.downloadProgress * 100),
+    [llm.downloadProgress]
+  );
+
   // Map LLM status to our ModelStatus type
+  // Note: llm.downloadProgress is 0..1 scale
   const status = useMemo((): ModelStatus => {
     if (llm.error) return 'error';
     if (llm.isReady) return 'ready';
     if (llm.isGenerating) return 'loading';
-    if (llm.downloadProgress > 0 && llm.downloadProgress < 100)
+    // downloadProgress is 0..1, so check > 0 and < 1
+    if (llm.downloadProgress > 0 && llm.downloadProgress < 1)
       return 'downloading';
+    // If preventLoad is true and not downloading, model is not downloaded yet
+    if (shouldPreventLoad && llm.downloadProgress === 0) return 'not_downloaded';
+    // If downloadProgress is 1 but not ready yet, it's still loading
+    if (llm.downloadProgress === 1 && !llm.isReady) return 'loading';
     return 'not_downloaded';
-  }, [llm.error, llm.isReady, llm.isGenerating, llm.downloadProgress]);
+  }, [llm.error, llm.isReady, llm.isGenerating, llm.downloadProgress, shouldPreventLoad]);
 
   // Sync status to service
   useEffect(() => {
@@ -125,9 +145,10 @@ export function useExecutorchLLM(
       status,
       llm.error ?? undefined
     );
-    service.updateDownloadProgress(llm.downloadProgress);
+    // Use percentage (0-100) for service
+    service.updateDownloadProgress(downloadProgressPercent);
     onStatusChange?.(status);
-  }, [status, llm.error, llm.downloadProgress, service, onStatusChange]);
+  }, [status, llm.error, downloadProgressPercent, service, onStatusChange]);
 
   // Convert llm.error (string) to Error object
   useEffect(() => {
@@ -213,47 +234,21 @@ export function useExecutorchLLM(
   }, [llm]);
 
   /**
-   * Download the model
-   * The useLLM hook handles download automatically when model is provided.
-   * This function just waits for it to complete.
+   * Start model download
+   * This sets preventLoad to false, triggering the useLLM hook to start downloading.
+   * The hook's useEffect will automatically begin the download process.
    */
-  const downloadModel = useCallback(async (): Promise<void> => {
-    try {
-      setError(null);
-      // The useLLM hook handles download automatically when modelSource is provided
-      // Just wait for it to complete
-      await new Promise<void>((resolve, reject) => {
-        const checkReady = setInterval(() => {
-          if (llm.error) {
-            clearInterval(checkReady);
-            reject(new Error(llm.error));
-          }
-          if (llm.isReady || llm.downloadProgress === 100) {
-            clearInterval(checkReady);
-            resolve();
-          }
-        }, 500);
-
-        // Timeout after 10 minutes
-        setTimeout(() => {
-          clearInterval(checkReady);
-          reject(new Error('Model download timed out'));
-        }, 10 * 60 * 1000);
-      });
-    } catch (err) {
-      const errorObj = err instanceof Error ? err : new Error(String(err));
-      setError(errorObj);
-      onError?.(errorObj);
-      throw errorObj;
-    }
-  }, [llm, onError]);
+  const startDownload = useCallback(() => {
+    setError(null);
+    setShouldPreventLoad(false);
+  }, []);
 
   return {
     generate,
     stop,
-    downloadModel,
+    startDownload,
     status,
-    downloadProgress: llm.downloadProgress,
+    downloadProgress: downloadProgressPercent,
     isReady: llm.isReady,
     isGenerating: llm.isGenerating,
     error,
