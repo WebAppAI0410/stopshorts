@@ -9,16 +9,21 @@
 
 | 項目 | 決定内容 |
 |------|---------|
-| **採用モデル** | **Gemma 3n E2B** |
+| **採用モデル** | **Qwen 3 0.6B** |
 | **統合方法** | react-native-executorch |
 | **ダウンロード** | オンボーディング後、オンデマンド |
-| **決定日** | 2026年1月1日 |
+| **決定日** | 2026年1月5日（更新） |
 
 ### 選定理由
-1. **2GB RAMで動作** → 幅広いデバイスで対応可能
-2. **日本語性能良好** → WMT24++ベンチマークで高評価
-3. **高速推論** → 60-70 tokens/秒、Time-to-first-token 0.3秒
-4. **Google製** → モバイル最適化済み、信頼性高い
+1. **公式.pteファイル提供** → react-native-executorchで動作確認済み
+2. **2GB RAMで動作** → 幅広いデバイスで対応可能
+3. **日本語性能良好** → 多言語対応モデル
+4. **software-mansion公式サポート** → react-native-executorchメンテナーが提供
+
+### ⚠️ Gemma 3n E2Bを採用しない理由
+- Gemma 3n E2Bは`.task`/`.litertlm`形式（Google LiteRT用）
+- react-native-executorchは`.pte`形式（PyTorch ExecuTorch）のみ対応
+- **フォーマット非互換のため使用不可**
 
 ---
 
@@ -26,11 +31,11 @@
 
 | プラットフォーム | 対応状況 | 推奨アプローチ | 対応デバイス率 |
 |-----------------|---------|---------------|---------------|
-| **iOS** | ✅ 対応可能 | react-native-executorch + Gemma 3n | RAM ≥ 2GB のデバイス |
-| **Android** | ✅ 対応可能 | react-native-executorch + Gemma 3n | RAM ≥ 2GB のデバイス |
+| **iOS** | ✅ 対応可能 | react-native-executorch + Qwen 3 0.6B | RAM ≥ 2GB のデバイス |
+| **Android** | ✅ 対応可能 | react-native-executorch + Qwen 3 0.6B | RAM ≥ 2GB のデバイス |
 | **React Native** | ✅ 採用決定 | react-native-executorch | - |
 
-**結論**: Gemma 3n E2Bを採用。2GB RAMで動作可能なため、従来の推定より広いデバイス対応が期待できる。
+**結論**: Qwen 3 0.6Bを採用。react-native-executorch公式対応の.pte形式モデル。2GB RAMで動作可能。
 
 ---
 

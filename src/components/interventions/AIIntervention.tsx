@@ -4,8 +4,10 @@
  *
  * Features:
  * - Chat interface with AI assistant
- * - Pattern-based responses (placeholder for LLM)
+ * - Local LLM inference (Qwen 3 0.6B via react-native-executorch)
+ * - Pattern-based fallback when LLM not available
  * - Session management with memory
+ * - Crisis detection (mental health keywords)
  * - "Quit" (primary) and "Give in to temptation" (ghost) buttons
  */
 
@@ -38,8 +40,11 @@ import { useAIStore, selectMessages } from '../../stores/useAIStore';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
 import { performanceMonitor } from '../../utils/performanceMonitor';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
+import { useExecutorchLLM } from '../../hooks/useExecutorchLLM';
+import { handleCrisisIfDetected } from '../../services/ai';
 import { t } from '../../i18n';
 import { Button } from '../ui';
+import { ModelDownloadCard } from '../ai/ModelDownloadCard';
 import type { Message, ConversationModeId } from '../../types/ai';
 
 /**
@@ -85,6 +90,7 @@ export function AIIntervention({
   const [inputText, setInputText] = useState('');
   const [showButtons, setShowButtons] = useState(false);
   const [selectedMode, setSelectedMode] = useState<ConversationModeId | null>(null);
+  const [showDownloadCard, setShowDownloadCard] = useState(false);
 
   // AI Store
   const startSession = useAIStore((state) => state.startSession);
@@ -93,6 +99,13 @@ export function AIIntervention({
   const addAIGreeting = useAIStore((state) => state.addAIGreeting);
   const isGenerating = useAIStore((state) => state.isGenerating);
   const messages = useAIStore(selectMessages);
+  const personaId = useAIStore((state) => state.personaId);
+
+  // LLM Hook - integrates with local Qwen 3 0.6B model
+  const llm = useExecutorchLLM({
+    personaId,
+    modeId: selectedMode || 'free',
+  });
 
   // Statistics
   const { recordIntervention } = useStatisticsStore();
@@ -180,18 +193,109 @@ export function AIIntervention({
     }
   }, [messages.length]);
 
-  // Handle send message
-  const handleSend = useCallback(() => {
-    if (!inputText.trim() || isGenerating) return;
+  // Handle send message - uses LLM when available, falls back to pattern matching
+  const handleSend = useCallback(async () => {
+    if (!inputText.trim() || isGenerating || llm.isGenerating) return;
+
+    const userInput = inputText.trim();
+    setInputText('');
+    Keyboard.dismiss();
 
     // Start LLM response timing
     performanceMonitor.start('llm_response');
     llmResponsePendingRef.current = true;
 
-    sendMessage(inputText.trim());
-    setInputText('');
-    Keyboard.dismiss();
-  }, [inputText, isGenerating, sendMessage]);
+    // Check for crisis keywords FIRST - before any LLM processing
+    const crisisResponse = handleCrisisIfDetected(userInput);
+    if (crisisResponse) {
+      // Add user message to session
+      const session = useAIStore.getState().currentSession;
+      if (session) {
+        const userMessage: Message = {
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          role: 'user',
+          content: userInput,
+          timestamp: Date.now(),
+          tokenEstimate: Math.ceil(userInput.length / 2.5),
+        };
+        const aiMessage: Message = {
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          role: 'assistant',
+          content: crisisResponse,
+          timestamp: Date.now(),
+          tokenEstimate: Math.ceil(crisisResponse.length / 2.5),
+        };
+        useAIStore.setState({
+          currentSession: {
+            ...session,
+            messages: [...session.messages, userMessage, aiMessage],
+            lastActivityAt: Date.now(),
+          },
+        });
+      }
+      performanceMonitor.end('llm_response');
+      llmResponsePendingRef.current = false;
+      return;
+    }
+
+    // If LLM is ready, use it for generation
+    if (llm.isReady) {
+      try {
+        // Add user message first
+        const session = useAIStore.getState().currentSession;
+        if (session) {
+          const userMessage: Message = {
+            id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            role: 'user',
+            content: userInput,
+            timestamp: Date.now(),
+            tokenEstimate: Math.ceil(userInput.length / 2.5),
+          };
+          useAIStore.setState({
+            currentSession: {
+              ...session,
+              messages: [...session.messages, userMessage],
+              lastActivityAt: Date.now(),
+            },
+            isGenerating: true,
+          });
+        }
+
+        // Generate response using LLM
+        const response = await llm.generate(userInput, messages);
+
+        // Add AI response
+        const updatedSession = useAIStore.getState().currentSession;
+        if (updatedSession && response) {
+          const aiMessage: Message = {
+            id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            role: 'assistant',
+            content: response,
+            timestamp: Date.now(),
+            tokenEstimate: Math.ceil(response.length / 2.5),
+          };
+          useAIStore.setState({
+            currentSession: {
+              ...updatedSession,
+              messages: [...updatedSession.messages, aiMessage],
+              lastActivityAt: Date.now(),
+            },
+            isGenerating: false,
+          });
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.error('[AIIntervention] LLM generation error:', error);
+        }
+        useAIStore.setState({ isGenerating: false });
+        // Fall back to store's pattern matching on error
+        sendMessage(userInput);
+      }
+    } else {
+      // Fall back to store's pattern matching when LLM not ready
+      sendMessage(userInput);
+    }
+  }, [inputText, isGenerating, llm, messages, sendMessage]);
 
   // Handle proceed action
   const handleProceed = useCallback(() => {
@@ -256,12 +360,44 @@ export function AIIntervention({
     [colors, typography, spacing, borderRadius, messages.length]
   );
 
+  // Handle model download
+  const handleDownloadModel = useCallback(async () => {
+    try {
+      await llm.downloadModel();
+      setShowDownloadCard(false);
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[AIIntervention] Model download error:', error);
+      }
+    }
+  }, [llm]);
+
+  // Handle skip download
+  const handleSkipDownload = useCallback(() => {
+    setShowDownloadCard(false);
+  }, []);
+
   // Render quick action buttons
   const renderQuickActions = () => (
     <Animated.View
       entering={FadeIn.duration(400).delay(200)}
       style={styles.quickActionsContainer}
     >
+      {/* Model Download Card - shown when LLM not ready */}
+      {!llm.isReady && llm.status !== 'unavailable' && (
+        <View style={{ marginBottom: spacing.lg, width: '100%' }}>
+          <ModelDownloadCard
+            status={llm.status}
+            progress={llm.downloadProgress}
+            error={llm.error?.message}
+            onDownload={handleDownloadModel}
+            onRetry={handleDownloadModel}
+            onSkip={handleSkipDownload}
+            showSkip={true}
+          />
+        </View>
+      )}
+
       <Text
         style={[
           typography.h3,
