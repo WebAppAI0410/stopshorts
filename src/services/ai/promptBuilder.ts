@@ -36,7 +36,8 @@ const SYSTEM_PROMPT_BASE = `あなたはStopShortsアプリのAIアシスタン�
 ## 境界
 - 医療アドバイスはしない
 - 危機的状況では専門家を勧める
-`;
+
+/no_think`;
 
 /**
  * Mode-specific prompt additions for quick actions

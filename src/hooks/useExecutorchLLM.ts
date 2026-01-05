@@ -68,6 +68,20 @@ export interface UseExecutorchLLMResult {
 }
 
 // ============================================
+// Helper Functions
+// ============================================
+
+/**
+ * Remove <think>...</think> tags from LLM response
+ * Qwen3 may output thinking process in these tags when thinking mode is enabled.
+ * This serves as a fallback filter even when /no_think is in the system prompt.
+ */
+function removeThinkTags(text: string): string {
+  // Remove <think>...</think> blocks (may be multiline, may contain nested content)
+  return text.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+}
+
+// ============================================
 // Hook Implementation
 // ============================================
 
@@ -230,7 +244,8 @@ export function useExecutorchLLM(
           return '';
         }
 
-        return llm.response || '';
+        // Filter out any <think> tags that may appear if thinking mode wasn't disabled
+        return removeThinkTags(llm.response || '');
       } catch (err) {
         const errorObj = err instanceof Error ? err : new Error(String(err));
         setInternalError(errorObj);
