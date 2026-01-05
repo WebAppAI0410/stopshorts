@@ -3,7 +3,7 @@
  * Users select their preferred intervention method
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter, Href } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
@@ -12,6 +12,7 @@ import { SelectionCard } from '../../src/components/ui';
 import { OnboardingScreenTemplate } from '../../src/components/templates';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
+import { useAIStore } from '../../src/stores/useAIStore';
 import { t } from '../../src/i18n';
 import type { InterventionType } from '../../src/types';
 
@@ -23,7 +24,8 @@ interface InterventionOption {
   available: boolean;
 }
 
-const INTERVENTION_OPTIONS: InterventionOption[] = [
+// Base intervention options (AI is conditionally included based on model status)
+const BASE_INTERVENTION_OPTIONS: InterventionOption[] = [
   {
     id: 'breathing',
     icon: 'leaf-outline',
@@ -50,7 +52,7 @@ const INTERVENTION_OPTIONS: InterventionOption[] = [
     icon: 'chatbubble-outline',
     titleKey: 'onboarding.interventionSelect.options.ai.title',
     descriptionKey: 'onboarding.interventionSelect.options.ai.description',
-    available: false, // Will be enabled in Phase 5
+    available: true, // Availability controlled by model status
   },
 ];
 
@@ -58,10 +60,24 @@ export default function InterventionSelectScreen() {
   const router = useRouter();
   const { colors, typography, spacing, borderRadius } = useTheme();
   const { setSelectedInterventionType } = useAppStore();
+  const modelStatus = useAIStore((state) => state.modelStatus);
   const [selectedIntervention, setSelectedIntervention] = useState<InterventionType | null>(null);
 
+  // AI option is only shown when model is ready
+  const isAIModelReady = modelStatus === 'ready';
+
+  // Filter options - hide AI entirely if model not downloaded
+  const interventionOptions = useMemo(() => {
+    return BASE_INTERVENTION_OPTIONS.filter((option) => {
+      if (option.id === 'ai') {
+        return isAIModelReady;
+      }
+      return true;
+    });
+  }, [isAIModelReady]);
+
   const handleSelect = (type: InterventionType) => {
-    const option = INTERVENTION_OPTIONS.find((o) => o.id === type);
+    const option = interventionOptions.find((o) => o.id === type);
     if (option?.available) {
       setSelectedIntervention(type);
     }
@@ -89,7 +105,7 @@ export default function InterventionSelectScreen() {
       footerAnimationDelay={900}
     >
       <View style={styles.optionsContainer}>
-        {INTERVENTION_OPTIONS.map((option, index) => (
+        {interventionOptions.map((option, index) => (
           <Animated.View
             key={option.id}
             entering={FadeInRight.duration(500).delay(300 + index * 80)}

@@ -1409,6 +1409,10 @@
         "error": "エラー",
         "unavailable": "利用不可"
       }
-    }
+    },
+    "downloadRequired": "AIモデルのダウンロードが必要です",
+    "downloadOnAICoach": "AIコーチでダウンロード",
+    "downloadComplete": "AIモデルのダウンロードが完了しました",
+    "chatDisabled": "チャットはモデルダウンロード後に利用できます"
   }
 }

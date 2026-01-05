@@ -22,6 +22,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
@@ -50,7 +51,8 @@ export default function AIScreen() {
   const { isOffline } = useNetworkStatus();
 
   const [inputText, setInputText] = useState('');
-  const [showDownloadCard, setShowDownloadCard] = useState(true);
+  // Track previous status for download completion detection
+  const prevStatusRef = useRef<string | null>(null);
   // Standalone mode always uses 'free' conversation mode
   const conversationMode: ConversationModeId = 'free';
 
@@ -80,21 +82,25 @@ export default function AIScreen() {
     typingOpacity.value = withTiming(isGenerating ? 1 : 0, { duration: 200 });
   }, [isGenerating, typingOpacity]);
 
-  // Start session on mount with initial AI greeting
+  // Start session on mount
   useEffect(() => {
     startSession();
 
-    // AI initiates the conversation with a greeting
-    const timer = setTimeout(() => {
-      const greeting = t('ai.greeting');
-      addAIGreeting(greeting);
-    }, 500);
-
     return () => {
-      clearTimeout(timer);
       endSession('navigation_away');
     };
-  }, [startSession, endSession, addAIGreeting]);
+  }, [startSession, endSession]);
+
+  // Add AI greeting only when model is ready
+  useEffect(() => {
+    if (llm.isReady && messages.length === 0) {
+      const timer = setTimeout(() => {
+        const greeting = t('ai.greeting');
+        addAIGreeting(greeting);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [llm.isReady, messages.length, addAIGreeting]);
 
   // Scroll to bottom when new message arrives
   useEffect(() => {
@@ -111,10 +117,22 @@ export default function AIScreen() {
     llm.startDownload();
   }, [llm]);
 
-  // Handle skip download
-  const handleSkipDownload = useCallback(() => {
-    setShowDownloadCard(false);
-  }, []);
+  // Detect download completion and show toast
+  useEffect(() => {
+    const prevStatus = prevStatusRef.current;
+    const currentStatus = llm.status;
+
+    // Show toast when transitioning from downloading to ready
+    if (prevStatus === 'downloading' && currentStatus === 'ready') {
+      Alert.alert(
+        t('ai.model.ready'),
+        t('ai.downloadComplete'),
+        [{ text: 'OK' }]
+      );
+    }
+
+    prevStatusRef.current = currentStatus;
+  }, [llm.status]);
 
   // Handle send message - uses LLM when available, falls back to pattern matching
   const handleSend = useCallback(async () => {
@@ -327,8 +345,8 @@ export default function AIScreen() {
           </Animated.View>
         )}
 
-        {/* Model Download Card */}
-        {showDownloadCard && !llm.isReady && llm.status !== 'unavailable' && messages.length === 0 && (
+        {/* Model Download Card - Required before chat can be used */}
+        {!llm.isReady && llm.status !== 'unavailable' && (
           <Animated.View
             entering={FadeIn.duration(300)}
             style={{ paddingHorizontal: spacing.gutter, paddingTop: spacing.md }}
@@ -339,8 +357,7 @@ export default function AIScreen() {
               error={llm.error?.message}
               onDownload={handleDownloadModel}
               onRetry={handleDownloadModel}
-              onSkip={handleSkipDownload}
-              showSkip={true}
+              showSkip={false}
             />
           </Animated.View>
         )}
@@ -363,7 +380,7 @@ export default function AIScreen() {
               style={styles.emptyContainer}
             >
               <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center' }]}>
-                {t('ai.emptyMessage')}
+                {llm.isReady ? t('ai.emptyMessage') : t('ai.chatDisabled')}
               </Text>
             </Animated.View>
           }
@@ -387,39 +404,40 @@ export default function AIScreen() {
               styles.textInput,
               typography.body,
               {
-                backgroundColor: colors.background,
+                backgroundColor: llm.isReady ? colors.background : colors.backgroundCard,
                 color: colors.textPrimary,
                 borderRadius: borderRadius.lg,
                 paddingHorizontal: spacing.md,
                 paddingVertical: spacing.sm,
+                opacity: llm.isReady ? 1 : 0.5,
               },
             ]}
-            placeholder={t('ai.inputPlaceholder')}
+            placeholder={llm.isReady ? t('ai.inputPlaceholder') : t('ai.chatDisabled')}
             placeholderTextColor={colors.textMuted}
             value={inputText}
             onChangeText={setInputText}
             multiline
             maxLength={500}
-            editable={!isGenerating}
+            editable={llm.isReady && !isGenerating}
             returnKeyType="send"
             onSubmitEditing={handleSend}
           />
           <Pressable
             onPress={handleSend}
-            disabled={!inputText.trim() || isGenerating}
+            disabled={!llm.isReady || !inputText.trim() || isGenerating}
             style={({ pressed }) => [
               styles.sendButton,
               {
-                backgroundColor: inputText.trim() ? colors.primary : colors.backgroundCard,
+                backgroundColor: llm.isReady && inputText.trim() ? colors.primary : colors.backgroundCard,
                 borderRadius: borderRadius.full,
-                opacity: pressed ? 0.8 : 1,
+                opacity: pressed ? 0.8 : llm.isReady ? 1 : 0.5,
               },
             ]}
           >
             <Ionicons
               name="send"
               size={20}
-              color={inputText.trim() ? '#FFFFFF' : colors.textMuted}
+              color={llm.isReady && inputText.trim() ? '#FFFFFF' : colors.textMuted}
             />
           </Pressable>
         </Animated.View>

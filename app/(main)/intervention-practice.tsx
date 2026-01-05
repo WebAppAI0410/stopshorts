@@ -3,13 +3,14 @@
  * Allows users to choose which intervention type to practice
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import { useAIStore } from '../../src/stores/useAIStore';
 import { t } from '../../src/i18n';
 
 interface PracticeOption {
@@ -20,40 +21,49 @@ interface PracticeOption {
   available: boolean;
 }
 
-const PRACTICE_OPTIONS: PracticeOption[] = [
+// Base practice options (AI availability is determined dynamically)
+const BASE_PRACTICE_OPTIONS: Omit<PracticeOption, 'available'>[] = [
   {
     id: 'breathing',
     icon: 'leaf-outline',
     titleKey: 'intervention.practice.options.breathing.title',
     descriptionKey: 'intervention.practice.options.breathing.description',
-    available: true,
   },
   {
     id: 'friction',
     icon: 'time-outline',
     titleKey: 'intervention.practice.options.friction.title',
     descriptionKey: 'intervention.practice.options.friction.description',
-    available: true,
   },
   {
     id: 'mirror',
     icon: 'person-outline',
     titleKey: 'intervention.practice.options.mirror.title',
     descriptionKey: 'intervention.practice.options.mirror.description',
-    available: true,
   },
   {
     id: 'ai',
     icon: 'chatbubble-outline',
     titleKey: 'intervention.practice.options.ai.title',
     descriptionKey: 'intervention.practice.options.ai.description',
-    available: true,
   },
 ];
 
 export default function InterventionPracticeScreen() {
   const { colors, typography, spacing, borderRadius } = useTheme();
   const router = useRouter();
+  const modelStatus = useAIStore((state) => state.modelStatus);
+
+  // AI is only available when model is ready
+  const isAIModelReady = modelStatus === 'ready';
+
+  // Create practice options with dynamic AI availability
+  const practiceOptions: PracticeOption[] = useMemo(() => {
+    return BASE_PRACTICE_OPTIONS.map((option) => ({
+      ...option,
+      available: option.id === 'ai' ? isAIModelReady : true,
+    }));
+  }, [isAIModelReady]);
 
   const handleSelectOption = (option: PracticeOption) => {
     if (!option.available) return;
@@ -61,6 +71,10 @@ export default function InterventionPracticeScreen() {
       pathname: '/(main)/urge-surfing',
       params: { practiceType: option.id },
     });
+  };
+
+  const handleGoToAICoach = () => {
+    router.push('/(main)/ai');
   };
 
   const handleBack = () => {
@@ -95,7 +109,7 @@ export default function InterventionPracticeScreen() {
 
       {/* Options */}
       <View style={styles.optionsContainer}>
-        {PRACTICE_OPTIONS.map((option, index) => (
+        {practiceOptions.map((option, index) => (
           <Animated.View
             key={option.id}
             entering={FadeInDown.duration(600).delay(200 + index * 100)}
@@ -103,6 +117,7 @@ export default function InterventionPracticeScreen() {
             <View style={{ opacity: option.available ? 1 : 0.5 }}>
               <Pressable
                 onPress={() => handleSelectOption(option)}
+                disabled={!option.available}
                 style={({ pressed }) => [
                   styles.optionCard,
                   {
@@ -134,23 +149,31 @@ export default function InterventionPracticeScreen() {
                     {t(option.descriptionKey)}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={24} color={colors.textMuted} />
+                {option.available ? (
+                  <Ionicons name="chevron-forward" size={24} color={colors.textMuted} />
+                ) : (
+                  <Ionicons name="lock-closed-outline" size={24} color={colors.textMuted} />
+                )}
               </Pressable>
             </View>
-            {!option.available && (
-              <View
-                style={[
-                  styles.comingSoonBadge,
+            {/* Show download guidance for unavailable AI option */}
+            {!option.available && option.id === 'ai' && (
+              <Pressable
+                onPress={handleGoToAICoach}
+                style={({ pressed }) => [
+                  styles.downloadBadge,
                   {
-                    backgroundColor: colors.textMuted + '20',
+                    backgroundColor: colors.primary,
                     borderRadius: borderRadius.sm,
+                    opacity: pressed ? 0.8 : 1,
                   },
                 ]}
               >
-                <Text style={[typography.caption, { color: colors.textMuted }]}>
-                  {t('intervention.practice.comingSoon')}
+                <Ionicons name="download-outline" size={14} color="#FFFFFF" />
+                <Text style={[typography.caption, { color: '#FFFFFF', marginLeft: 4 }]}>
+                  {t('ai.downloadOnAICoach')}
                 </Text>
-              </View>
+              </Pressable>
             )}
           </Animated.View>
         ))}
@@ -238,5 +261,14 @@ const styles = StyleSheet.create({
     right: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
+  },
+  downloadBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
 });

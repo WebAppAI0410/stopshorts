@@ -17,6 +17,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { UrgeSurfingScreen } from '../../src/components/urge-surfing';
 import { FrictionIntervention, MirrorIntervention, AIIntervention } from '../../src/components/interventions';
 import { useAppStore } from '../../src/stores/useAppStore';
+import { useAIStore } from '../../src/stores/useAIStore';
 
 // Map package names to display names
 const PACKAGE_TO_APP_NAME: Record<string, string> = {
@@ -38,11 +39,19 @@ export default function UrgeSurfingPage() {
     practiceType?: 'breathing' | 'friction' | 'mirror' | 'ai';  // Practice mode override
   }>();
   const { selectedInterventionType } = useAppStore();
+  const modelStatus = useAIStore((state) => state.modelStatus);
+
+  // AI model must be ready to use AI intervention
+  const isAIModelReady = modelStatus === 'ready';
 
   // Determine which intervention to show:
   // 1. If practiceType is specified (from practice selection), use that
   // 2. Otherwise, use the selected intervention type from settings
-  const effectiveInterventionType = params.practiceType || selectedInterventionType;
+  // 3. If AI is selected but model not ready, fall back to friction
+  const rawInterventionType = params.practiceType || selectedInterventionType;
+  const effectiveInterventionType = rawInterventionType === 'ai' && !isAIModelReady
+    ? 'friction'
+    : rawInterventionType;
 
   // Determine app name from params
   // Priority: appName > mapped package name > default

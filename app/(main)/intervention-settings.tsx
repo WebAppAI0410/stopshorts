@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
+import { useAIStore } from '../../src/stores/useAIStore';
 import { Button, SelectionCard } from '../../src/components/ui';
 import { screenTimeService } from '../../src/native/ScreenTimeModule';
 import { t } from '../../src/i18n';
@@ -13,12 +15,17 @@ import { useSettingsBack } from '../../src/hooks/useSettingsBack';
 
 export default function InterventionSettingsScreen() {
     const { colors, typography, spacing, borderRadius } = useTheme();
+    const router = useRouter();
     const {
         interventionSettings,
         setInterventionSettings,
         selectedInterventionType,
         setSelectedInterventionType,
     } = useAppStore();
+    const modelStatus = useAIStore((state) => state.modelStatus);
+
+    // AI option requires model to be downloaded
+    const isAIModelReady = modelStatus === 'ready';
 
     const [timing, setTiming] = useState<InterventionTiming>(interventionSettings.timing);
     const [delayMinutes, setDelayMinutes] = useState<InterventionDelayMinutes>(interventionSettings.delayMinutes);
@@ -27,6 +34,11 @@ export default function InterventionSettingsScreen() {
     const handleBack = useSettingsBack();
 
     const isAndroid = Platform.OS === 'android';
+
+    // Navigate to AI Coach to download model
+    const handleGoToAICoach = () => {
+        router.push('/(main)/ai');
+    };
 
     const shortcutOptions: { key: string; labelKey: string }[] = [
         { key: 'tiktok', labelKey: 'intervention.settings.shortcuts.apps.tiktok' },
@@ -135,13 +147,33 @@ export default function InterventionSettingsScreen() {
                         icon="person"
                     />
 
-                    <SelectionCard
-                        title={t('intervention.settings.types.ai.title')}
-                        subtitle={t('intervention.settings.types.ai.description')}
-                        selected={interventionType === 'ai'}
-                        onPress={() => setInterventionType('ai')}
-                        icon="sparkles"
-                    />
+                    <View style={{ opacity: isAIModelReady ? 1 : 0.5 }}>
+                        <SelectionCard
+                            title={t('intervention.settings.types.ai.title')}
+                            subtitle={t('intervention.settings.types.ai.description')}
+                            selected={interventionType === 'ai'}
+                            onPress={() => isAIModelReady && setInterventionType('ai')}
+                            icon="sparkles"
+                        />
+                    </View>
+                    {!isAIModelReady && (
+                        <Pressable
+                            onPress={handleGoToAICoach}
+                            style={({ pressed }) => [
+                                styles.downloadBadge,
+                                {
+                                    backgroundColor: colors.primary,
+                                    borderRadius: borderRadius.sm,
+                                    opacity: pressed ? 0.8 : 1,
+                                },
+                            ]}
+                        >
+                            <Ionicons name="download-outline" size={14} color="#FFFFFF" />
+                            <Text style={[typography.caption, { color: '#FFFFFF', marginLeft: 4 }]}>
+                                {t('ai.downloadOnAICoach')}
+                            </Text>
+                        </Pressable>
+                    )}
                 </Animated.View>
 
                 {/* Timing Selection */}
@@ -343,5 +375,14 @@ const styles = StyleSheet.create({
         right: 0,
         padding: 16,
         borderTopWidth: 1,
+    },
+    downloadBadge: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
     },
 });
