@@ -114,14 +114,15 @@
 ### Task 3.2: オンボーディングフロー変更 ✅
 - [x] `intervention-select.tsx` 新規作成
 - [x] `intervention-experience.tsx` 新規作成
-- [ ] 既存の `if-then.tsx` を削除または無効化
-- [ ] ルーティング更新（if-then.tsx からの移行）
+- [x] 既存の `if-then.tsx` を削除または無効化
+- [x] ルーティング更新（if-then.tsx からの移行）
+  - `alternative.tsx` → `intervention-select.tsx` → `intervention-experience.tsx` → `how-it-works.tsx`
 
-### Task 3.3: 介入体験フローの実装（部分実装）
+### Task 3.3: 介入体験フローの実装 ✅
 - [x] 介入練習選択画面 (`intervention-practice.tsx`) を作成
-- [x] 選択した介入（呼吸ガイド / フリクション）をフルで体験できる
-- [ ] 「他の方法も試す」機能（オンボーディング用、未実装）
-- [ ] 体験完了後の次画面遷移（オンボーディング用、未実装）
+- [x] 選択した介入（呼吸ガイド / フリクション / ミラー）をフルで体験できる
+- [x] 「他の方法も試す」機能（`router.back()` で intervention-select.tsx に戻る）
+- [x] 体験完了後の次画面遷移（`how-it-works.tsx` へ）
 
 ### Task 3.4: 課金前プレビュー（部分実装）
 - [x] `ai-preview.tsx` 新規作成
