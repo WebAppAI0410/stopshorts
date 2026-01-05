@@ -5,97 +5,125 @@
 - コード内のコメントは英語でも可
 
 ## プロジェクト概要
-StopShortsは、ショート動画（TikTok、YouTube Shorts、Instagram Reels）の使用時間を制限し、ユーザーが時間を取り戻すことを支援するiOSアプリです。
+StopShortsは、ショート動画（TikTok、YouTube Shorts、Instagram Reels）の使用時間を制限し、ユーザーが時間を取り戻すことを支援するモバイルアプリです。
+
+**対応プラットフォーム**: iOS / Android（Android優先で開発）
 
 ## 技術スタック
-- React Native + Expo SDK 54
+
+### コア
+- React Native 0.81 + Expo SDK 54
 - TypeScript
-- expo-router (ファイルベースルーティング)
-- NativeWind v4 (Tailwind CSS)
-- Zustand (状態管理)
-- react-native-reanimated (アニメーション)
+- expo-router v6 (ファイルベースルーティング、タブナビ)
+- Zustand v5 (状態管理 + AsyncStorage永続化)
+
+### UI/アニメーション
+- react-native-reanimated v4 (アニメーション)
 - react-native-svg (SVGグラフィックス)
+- インラインスタイル（NativeWindは未使用）
+
+### AI機能
+- react-native-executorch (ローカルLLM)
+- Qwen3 0.6B モデル
+
+### ネイティブモジュール
+- `@stopshorts/screen-time-android` - Android UsageStats API
+- `modules/screen-time` - iOS ScreenTime API（未実装）
 
 ## デザインシステム
-- **コンセプト**: Editorial Wellness Journal
-- **カラーパレット**: Ink & Paper
-- **アクセントカラー**: テラコッタ (#C65D3B)
+
+### テーマ (`src/design/theme.ts`)
+- **ライトテーマ**: Ink & Paper（温かみのある紙色ベース）
+- **ダークテーマ**: Dark Glassmorphism
+- **アクセントカラー**: エメラルドグリーン (#10B981 / #059669)
 - ライト/ダークモード対応
+
+### カラー参照
+```typescript
+// ダークモード
+accent: '#10B981'  // エメラルド
+background: '#0D1117'
+backgroundCard: '#161B22'
+
+// ライトモード
+accent: '#059669'  // エメラルド（やや濃い）
+background: '#FAFAFA'
+backgroundCard: '#F5F5F4'
+```
 
 ## ディレクトリ構造
 ```
-app/                    # expo-router ページ
-  (onboarding)/         # オンボーディングフロー
-  (main)/               # メインアプリ画面
+app/
+  (onboarding)/       # オンボーディング (15画面)
+  (main)/             # メインアプリ
+    index.tsx         # ホーム/ダッシュボード
+    statistics.tsx    # 統計
+    ai.tsx            # AIチャット
+    training/         # 心理トレーニング
+    settings.tsx      # 設定
+    profile.tsx       # プロフィール
+    urge-surfing.tsx  # 衝動サーフィング介入
+    shield.tsx        # Shield画面
 src/
-  components/ui/        # 再利用可能なUIコンポーネント
-  contexts/             # React Context (ThemeContext等)
-  design/               # テーマ定義
-  stores/               # Zustand ストア
-  i18n/                 # 国際化 (日本語)
-  types/                # TypeScript型定義
-docs/                   # 実装仕様書
+  components/         # UIコンポーネント
+    ui/               # 汎用UI (Button, Card, Header等)
+    interventions/    # 介入系コンポーネント
+    training/         # トレーニング系コンポーネント
+  contexts/           # React Context (ThemeContext)
+  design/             # テーマ定義 (theme.ts)
+  stores/             # Zustand ストア
+    useAppStore.ts    # メインストア
+    useAIStore.ts     # AI機能ストア
+    useStatisticsStore.ts  # 統計ストア
+  services/           # ビジネスロジック
+    ai/               # AI関連サービス
+  hooks/              # カスタムフック
+  i18n/               # 国際化 (日本語)
+  types/              # TypeScript型定義
+  data/               # 静的データ (トレーニングトピック等)
+modules/              # ネイティブモジュール
+  screen-time-android/  # Android UsageStats
+.kiro/specs/          # SDD仕様書
+docs/                 # ドキュメント
 ```
 
-## コーディング規約
-- 関数コンポーネントを使用
-- TypeScriptの型を明示的に定義
-- useTheme()フックでテーマカラーを取得
-- インラインスタイルを優先（テーマ対応のため）
-- React Hooksのルールを厳守（ループ内でフック呼び出し禁止）
+## タブナビゲーション (6タブ)
 
-## 実装ドキュメント
-- `docs/IMPLEMENTATION_SPEC.md` - 詳細な実装仕様
-- `.kiro/specs/` - 機能別仕様書（SDD）
+| タブ | 画面 | アイコン |
+|------|------|---------|
+| Home | index.tsx | home |
+| Stats | statistics.tsx | stats-chart |
+| AI | ai.tsx | chatbubble-ellipses |
+| Training | training/ | book |
+| Settings | settings.tsx | settings |
+| Profile | profile.tsx | person |
+
+## コーディング規約
+- 関数コンポーネントのみ使用
+- TypeScriptの型を明示的に定義
+- `useTheme()` フックでテーマカラーを取得
+- **インラインスタイル**を使用（className/NativeWind不使用）
+- React Hooksのルールを厳守
 
 ## 仕様駆動開発 (SDD)
-
-cc-sddを使用した仕様駆動開発ワークフロー。
 
 ### ワークフロー
 ```
 Requirements → Design → Tasks → Implementation
 ```
 
-### 主要コマンド
-- `/kiro:spec-init <what>` - 新しい仕様を開始
-- `/kiro:spec-requirements` - 要件定義
-- `/kiro:spec-design` - 設計
-- `/kiro:spec-tasks` - タスク分解
-- `/kiro:spec-impl` - 実装
-- `/kiro:steering` - プロジェクトコンテキスト更新
-
 ### ディレクトリ
-- `.kiro/specs/` - 仕様書
-- `.kiro/steering/` - プロジェクトコンテキスト
+- `.kiro/specs/` - 機能別仕様書
+- `.kiro/specs/intervention-system/` - 介入システム仕様
+- `.kiro/specs/subscription-flow/` - 課金フロー仕様
+- `.kiro/specs/training-ui/` - トレーニングUI仕様
 
-## 実装ループ
-
-Zenn記事 (https://zenn.dev/mkj/articles/868e0723efa060) に基づく実装プロセス。
-
-### コマンド
-```bash
-/impl-loop <feature-name> <task-numbers>
-# 例: /impl-loop intervention-system 1.1,1.2
-```
-
-### フロー
-```
-実装 → 品質チェック → レビュー → 検証 → (問題あれば修正に戻る)
-```
-
-### Subagent連携
-| Subagent | 用途 |
-|----------|------|
-| `rn-expert` | React Native/Expo専門の実装 |
-| `pr-review-toolkit:code-reviewer` | コードレビュー |
-| `ui-reviewer` | UIデザインシステムレビュー |
+### 延期項目
+- `.kiro/specs/intervention-system/FUTURE_IMPROVEMENTS.md`
 
 ## 品質基準
 
 ### Warning/Error 0 ポリシー
-AIは「一旦無視」「後で対応」が苦手。必ず 0 にする。
-
 ```bash
 npx tsc --noEmit  # エラー 0 必須
 npm test -- --passWithNoTests  # テスト全パス
@@ -132,10 +160,21 @@ npm test -- --passWithNoTests  # テスト全パス
 
 - 全UI文字列は `src/i18n/locales/ja.json` に追加
 - `t('namespace.key')` で文字列取得
-- ハードコード禁止
+- ハードコード日本語禁止
 
 ## プラットフォーム対応
 
 - **Android優先**: デバッグ容易なためAndroidで先に実装・検証
 - **iOS後続**: Android検証後に実装
 - `Platform.OS` 分岐は最小限に
+
+## 主要な依存関係
+
+| パッケージ | 用途 |
+|-----------|------|
+| expo-router | ルーティング |
+| zustand | 状態管理 |
+| react-native-reanimated | アニメーション |
+| react-native-executorch | ローカルLLM |
+| expo-camera | カメラ（ミラー介入） |
+| expo-notifications | プッシュ通知 |
