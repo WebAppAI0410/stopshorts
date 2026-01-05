@@ -160,7 +160,7 @@ export default function StatisticsScreen() {
                         value={streakDays}
                         unit={t('statistics.days')}
                         subtitle={t('statistics.keepMomentum')}
-                        progressColor="#8B5CF6"
+                        progressColor={colors.streak}
                     />
                     <View style={{ width: spacing.md }} />
                     <StatCard
