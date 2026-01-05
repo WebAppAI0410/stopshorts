@@ -640,9 +640,6 @@
     "minutes": "{{value}} 分",
     "interventionCount": "介入回数",
     "count": "{{value}} 回",
-    "practiceIntervention": "介入を練習",
-    "practiceDescription": "呼吸ガイド・フリクションを体験",
-    "practice": "練習する",
     "newBadge": "🎉 新しいバッジを獲得！"
   },
   "shield": {
@@ -1388,6 +1385,7 @@
     "greeting": "こんにちは！今日はどんなことを話しましょうか？",
     "emptyMessage": "何でも話してください。一緒に考えましょう。",
     "inputPlaceholder": "メッセージを入力...",
+    "offlineBanner": "オフラインです。フォールバック応答を使用します。",
     "crisis": {
       "response": "あなたの気持ちを聞かせてくれてありがとうございます。今とても辛い状況にいるのですね。\n\n専門の相談窓口に連絡することをお勧めします：\n\n📞 いのちの電話: 0120-783-556\n📞 よりそいホットライン: 0120-279-338\n🌐 https://www.mhlw.go.jp/mamorouyokokoro/\n\nあなたは一人ではありません。"
     },

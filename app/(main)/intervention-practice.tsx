@@ -47,7 +47,7 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     icon: 'chatbubble-outline',
     titleKey: 'intervention.practice.options.ai.title',
     descriptionKey: 'intervention.practice.options.ai.description',
-    available: false, // Will be enabled when AI model is integrated
+    available: true,
   },
 ];
 

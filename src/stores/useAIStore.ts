@@ -524,8 +524,11 @@ function getDefaultErrorResponse(): string {
 export const selectIsSessionActive = (state: AIState): boolean =>
   state.currentSession !== null;
 
+// Stable empty array reference to prevent infinite re-renders
+const EMPTY_MESSAGES: Message[] = [];
+
 export const selectMessages = (state: AIState): Message[] =>
-  state.currentSession?.messages ?? [];
+  state.currentSession?.messages ?? EMPTY_MESSAGES;
 
 export const selectModelReady = (state: AIState): boolean =>
   state.modelStatus === 'ready';

@@ -4,9 +4,11 @@
  *
  * Features:
  * - Chat interface with AI assistant
+ * - Local LLM inference (Qwen 3 0.6B via react-native-executorch)
+ * - Pattern-based fallback when LLM not available
  * - Session management with memory
- * - Quick action buttons (placeholder for future features)
- * - No intervention buttons (unlike AIIntervention component)
+ * - Crisis detection (mental health keywords)
+ * - Offline detection with banner
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
@@ -35,14 +37,22 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAIStore, selectMessages } from '../../src/stores/useAIStore';
+import { useNetworkStatus } from '../../src/hooks/useNetworkStatus';
+import { useExecutorchLLM } from '../../src/hooks/useExecutorchLLM';
+import { handleCrisisIfDetected } from '../../src/services/ai';
+import { ModelDownloadCard } from '../../src/components/ai/ModelDownloadCard';
 import { t } from '../../src/i18n';
-import type { Message } from '../../src/types/ai';
+import type { Message, ConversationModeId } from '../../src/types/ai';
 
 export default function AIScreen() {
   const { colors, typography, spacing, borderRadius } = useTheme();
   const flatListRef = useRef<FlatList>(null);
+  const { isOffline } = useNetworkStatus();
 
   const [inputText, setInputText] = useState('');
+  const [showDownloadCard, setShowDownloadCard] = useState(true);
+  // Standalone mode always uses 'free' conversation mode
+  const conversationMode: ConversationModeId = 'free';
 
   // AI Store
   const startSession = useAIStore((state) => state.startSession);
@@ -51,6 +61,13 @@ export default function AIScreen() {
   const addAIGreeting = useAIStore((state) => state.addAIGreeting);
   const isGenerating = useAIStore((state) => state.isGenerating);
   const messages = useAIStore(selectMessages);
+  const personaId = useAIStore((state) => state.personaId);
+
+  // LLM Hook - integrates with local Qwen 3 0.6B model
+  const llm = useExecutorchLLM({
+    personaId,
+    modeId: conversationMode,
+  });
 
   // Animation for typing indicator
   const typingOpacity = useSharedValue(0);
@@ -82,20 +99,129 @@ export default function AIScreen() {
   // Scroll to bottom when new message arrives
   useEffect(() => {
     if (messages.length > 0) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
+      return () => clearTimeout(timer);
     }
   }, [messages.length]);
 
-  // Handle send message
-  const handleSend = useCallback(() => {
-    if (!inputText.trim() || isGenerating) return;
+  // Handle model download
+  const handleDownloadModel = useCallback(() => {
+    llm.startDownload();
+  }, [llm]);
 
-    sendMessage(inputText.trim());
+  // Handle skip download
+  const handleSkipDownload = useCallback(() => {
+    setShowDownloadCard(false);
+  }, []);
+
+  // Handle send message - uses LLM when available, falls back to pattern matching
+  const handleSend = useCallback(async () => {
+    if (!inputText.trim() || isGenerating || llm.isGenerating) return;
+
+    const userInput = inputText.trim();
     setInputText('');
     Keyboard.dismiss();
-  }, [inputText, isGenerating, sendMessage]);
+
+    // Check for crisis keywords FIRST - before any LLM processing
+    const crisisResponse = handleCrisisIfDetected(userInput);
+    if (crisisResponse) {
+      // Add user message to session
+      const session = useAIStore.getState().currentSession;
+      if (session) {
+        const userMessage: Message = {
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          role: 'user',
+          content: userInput,
+          timestamp: Date.now(),
+          tokenEstimate: Math.ceil(userInput.length / 2.5),
+        };
+        const aiMessage: Message = {
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          role: 'assistant',
+          content: crisisResponse,
+          timestamp: Date.now(),
+          tokenEstimate: Math.ceil(crisisResponse.length / 2.5),
+        };
+        useAIStore.setState({
+          currentSession: {
+            ...session,
+            messages: [...session.messages, userMessage, aiMessage],
+            lastActivityAt: Date.now(),
+          },
+        });
+      }
+      return;
+    }
+
+    // If LLM is ready, use it for generation
+    if (llm.isReady) {
+      try {
+        // Add user message first
+        const session = useAIStore.getState().currentSession;
+        if (session) {
+          const userMessage: Message = {
+            id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            role: 'user',
+            content: userInput,
+            timestamp: Date.now(),
+            tokenEstimate: Math.ceil(userInput.length / 2.5),
+          };
+          useAIStore.setState({
+            currentSession: {
+              ...session,
+              messages: [...session.messages, userMessage],
+              lastActivityAt: Date.now(),
+            },
+            isGenerating: true,
+          });
+        }
+
+        // Generate response using LLM
+        const response = await llm.generate(userInput, messages);
+
+        // Add AI response
+        const updatedSession = useAIStore.getState().currentSession;
+        if (updatedSession) {
+          if (response) {
+            const aiMessage: Message = {
+              id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+              role: 'assistant',
+              content: response,
+              timestamp: Date.now(),
+              tokenEstimate: Math.ceil(response.length / 2.5),
+            };
+            useAIStore.setState({
+              currentSession: {
+                ...updatedSession,
+                messages: [...updatedSession.messages, aiMessage],
+                lastActivityAt: Date.now(),
+              },
+              isGenerating: false,
+            });
+          } else {
+            // Empty response - still need to reset isGenerating
+            useAIStore.setState({ isGenerating: false });
+            // Fall back to pattern matching for empty responses
+            sendMessage(userInput);
+          }
+        } else {
+          useAIStore.setState({ isGenerating: false });
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.error('[AIScreen] LLM generation error:', error);
+        }
+        useAIStore.setState({ isGenerating: false });
+        // Fall back to store's pattern matching on error
+        sendMessage(userInput);
+      }
+    } else {
+      // Fall back to store's pattern matching when LLM not ready
+      sendMessage(userInput);
+    }
+  }, [inputText, isGenerating, llm, messages, sendMessage]);
 
   // Render message bubble
   const renderMessage = useCallback(
@@ -180,6 +306,44 @@ export default function AIScreen() {
             </Text>
           </View>
         </Animated.View>
+
+        {/* Offline Banner */}
+        {isOffline && (
+          <Animated.View
+            entering={FadeIn.duration(300)}
+            style={[
+              styles.offlineBanner,
+              {
+                backgroundColor: colors.warning + '20',
+                borderBottomColor: colors.warning + '40',
+                paddingHorizontal: spacing.gutter,
+              },
+            ]}
+          >
+            <Ionicons name="cloud-offline-outline" size={16} color={colors.warning} />
+            <Text style={[typography.caption, { color: colors.warning, marginLeft: spacing.xs }]}>
+              {t('ai.offlineBanner')}
+            </Text>
+          </Animated.View>
+        )}
+
+        {/* Model Download Card */}
+        {showDownloadCard && !llm.isReady && llm.status !== 'unavailable' && messages.length === 0 && (
+          <Animated.View
+            entering={FadeIn.duration(300)}
+            style={{ paddingHorizontal: spacing.gutter, paddingTop: spacing.md }}
+          >
+            <ModelDownloadCard
+              status={llm.status}
+              progress={llm.downloadProgress}
+              error={llm.error?.message}
+              onDownload={handleDownloadModel}
+              onRetry={handleDownloadModel}
+              onSkip={handleSkipDownload}
+              showSkip={true}
+            />
+          </Animated.View>
+        )}
 
         {/* Messages List */}
         <FlatList
@@ -275,6 +439,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
     borderBottomWidth: 1,
   },
   headerIcon: {
