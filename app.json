@@ -17,6 +17,7 @@
       "bundleIdentifier": "com.stopshorts.app",
       "infoPlist": {
         "NSUserTrackingUsageDescription": "アプリの使用状況を分析し、より良い体験を提供するために使用します。",
+        "NSCameraUsageDescription": "自分の顔を見て目標を思い出すために、カメラへのアクセスが必要です。",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -37,8 +38,16 @@
       "expo-router",
       "expo-localization",
       "expo-dev-client",
+      "expo-camera",
+      [
+        "expo-notifications",
+        {
+          "color": "#C65D3B"
+        }
+      ],
       "./modules/screen-time/plugin/withScreenTime",
-      "./modules/detox/plugin/withDetox"
+      "./modules/detox/plugin/withDetox",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

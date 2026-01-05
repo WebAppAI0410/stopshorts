@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,8 @@ import {
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
 import { useScreenTimeData } from '../../src/hooks/useScreenTimeData';
+import { useAppStore } from '../../src/stores/useAppStore';
+import { TRAINING_TOPICS } from '../../src/data/trainingTopics';
 import { t } from '../../src/i18n';
 
 export default function DashboardScreen() {
@@ -23,6 +25,12 @@ export default function DashboardScreen() {
 
     // Get real screen time data from Android native module
     const { todayData, loading: screenTimeLoading, isMockData } = useScreenTimeData();
+
+    // Get training progress data
+    const completedTopicIds = useAppStore((state) => state.getCompletedTopicIds());
+    const totalTopics = TRAINING_TOPICS.length;
+    const completedTopicsCount = completedTopicIds.length;
+    const trainingProgress = totalTopics > 0 ? (completedTopicsCount / totalTopics) * 100 : 0;
 
     // Get statistics from intervention store
     const todayStatsNew = getTodayStats();
@@ -162,6 +170,53 @@ export default function DashboardScreen() {
                     <ProgressCard
                         onPress={() => router.push('/(main)/statistics')}
                     />
+                </Animated.View>
+
+                {/* Training Progress Card */}
+                <Animated.View entering={FadeInDown.duration(600).delay(250)}>
+                    <Pressable
+                        onPress={() => router.push('/(main)/training')}
+                        style={[
+                            styles.trainingCard,
+                            {
+                                backgroundColor: colors.backgroundCard,
+                                borderRadius: borderRadius.xl,
+                                borderWidth: 1,
+                                borderColor: colors.accent + '40',
+                                marginTop: spacing.lg,
+                            }
+                        ]}
+                    >
+                        <View style={styles.trainingCardContent}>
+                            <View style={[styles.trainingIcon, { backgroundColor: colors.accent + '20' }]}>
+                                <Ionicons name="school-outline" size={28} color={colors.accent} />
+                            </View>
+                            <View style={styles.trainingInfo}>
+                                <Text style={[typography.h3, { color: colors.textPrimary }]}>
+                                    {t('home.training.title')}
+                                </Text>
+                                <Text style={[typography.bodySmall, { color: colors.textSecondary, marginTop: spacing.xs }]}>
+                                    {t('home.training.progress', { completed: completedTopicsCount, total: totalTopics })} {t('home.training.completed')}
+                                </Text>
+                            </View>
+                            <View style={styles.trainingArrow}>
+                                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                            </View>
+                        </View>
+                        {trainingProgress > 0 && (
+                            <View style={[styles.trainingProgressBar, { backgroundColor: colors.surface, marginTop: spacing.md }]}>
+                                <View
+                                    style={[
+                                        styles.trainingProgressFill,
+                                        {
+                                            backgroundColor: colors.accent,
+                                            width: `${trainingProgress}%`,
+                                        },
+                                    ]}
+                                />
+                            </View>
+                        )}
+                    </Pressable>
                 </Animated.View>
 
                 {/* Urge Surfing Card */}
@@ -370,5 +425,35 @@ const styles = StyleSheet.create({
     },
     badgeItem: {
         alignItems: 'center',
+    },
+    trainingCard: {
+        padding: 16,
+    },
+    trainingCardContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    trainingIcon: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    trainingInfo: {
+        flex: 1,
+        marginLeft: 16,
+    },
+    trainingArrow: {
+        marginLeft: 8,
+    },
+    trainingProgressBar: {
+        height: 4,
+        borderRadius: 2,
+        overflow: 'hidden',
+    },
+    trainingProgressFill: {
+        height: '100%',
+        borderRadius: 2,
     },
 });
