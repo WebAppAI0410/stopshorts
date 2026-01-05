@@ -6,6 +6,7 @@
 import type { PersonaId, LongTermMemory, Message, ConversationModeId } from '../../types/ai';
 import { TOKEN_BUDGET, MAX_CONTEXT_TOKENS } from '../../types/ai';
 import { useAppStore } from '../../stores/useAppStore';
+import { useAIStore } from '../../stores/useAIStore';
 import { TRAINING_TOPICS } from '../../data/trainingTopics';
 
 // ============================================
@@ -139,11 +140,18 @@ const TOPIC_TITLES: Record<string, string> = {
 };
 
 /**
+ * Maximum number of recent session insights to include in context
+ */
+const MAX_RECENT_SESSION_INSIGHTS = 5;
+
+/**
  * Build training context from user's progress
- * Returns formatted string with completed and not-started topics
+ * Returns formatted string with completed and not-started topics,
+ * plus recent insights from past sessions for AI context
  */
 export function buildTrainingContext(): string {
   const { trainingProgress, getCompletedTopicIds } = useAppStore.getState();
+  const { sessionSummaries } = useAIStore.getState();
   const completedIds = getCompletedTopicIds();
 
   const completedTopics = TRAINING_TOPICS
@@ -158,12 +166,56 @@ export function buildTrainingContext(): string {
     .filter((t) => trainingProgress[t.id] && !completedIds.includes(t.id))
     .map((t) => TOPIC_TITLES[t.id] || t.id);
 
-  return `
+  // Extract recent insights from past session summaries
+  const recentInsights = extractRecentSessionInsights(sessionSummaries);
+
+  let context = `
 ## ユーザーのトレーニング進捗
 - 完了済み: ${completedTopics.join(', ') || 'なし'}
 - 学習中: ${inProgressTopics.join(', ') || 'なし'}
 - 未開始: ${notStartedTopics.join(', ') || 'なし'}
 `;
+
+  // Add recent session insights if available
+  if (recentInsights.length > 0) {
+    context += `
+## 過去の会話で発見したこと
+${recentInsights.map((insight) => `- ${insight}`).join('\n')}
+`;
+  }
+
+  return context;
+}
+
+/**
+ * Extract recent insights from session summaries
+ * Returns the most recent unique insights from past sessions
+ *
+ * @param sessionSummaries - Array of past session summaries
+ * @returns Array of insight strings (max MAX_RECENT_SESSION_INSIGHTS)
+ */
+function extractRecentSessionInsights(
+  sessionSummaries: Array<{ insights: string[] }>
+): string[] {
+  const seenInsights = new Set<string>();
+  const insights: string[] = [];
+
+  // Process from most recent to oldest
+  for (let i = sessionSummaries.length - 1; i >= 0; i--) {
+    const session = sessionSummaries[i];
+    for (const insight of session.insights) {
+      if (!seenInsights.has(insight)) {
+        seenInsights.add(insight);
+        insights.push(insight);
+
+        if (insights.length >= MAX_RECENT_SESSION_INSIGHTS) {
+          return insights;
+        }
+      }
+    }
+  }
+
+  return insights;
 }
 
 /**

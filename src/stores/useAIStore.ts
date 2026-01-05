@@ -16,6 +16,7 @@ import {
 } from '../types/ai';
 import { handleCrisisIfDetected } from '../services/ai/mentalHealthHandler';
 import { buildTrainingContext } from '../services/ai/promptBuilder';
+import { extractInsights } from '../services/ai/insightExtractor';
 import { secureStorage, migrateToSecureStorage } from '../utils/secureStorage';
 
 // Utility to generate unique IDs
@@ -493,14 +494,6 @@ async function generateSessionSummary(messages: Message[]): Promise<string> {
   const messageCount = messages.length;
   const firstTopic = messages[0]?.content.slice(0, 50) || '';
   return `${messageCount}回のやりとり。話題: ${firstTopic}...`;
-}
-
-/**
- * Extract insights from messages (placeholder - will use LLM)
- */
-function extractInsights(_messages: Message[]): string[] {
-  // Placeholder - actual implementation will use LLM to extract insights
-  return [];
 }
 
 /**
