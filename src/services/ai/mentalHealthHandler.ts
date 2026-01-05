@@ -8,8 +8,10 @@ import i18n from '../../i18n';
 /**
  * Crisis keywords that indicate potential mental health emergency
  * These are commonly used expressions in Japanese that may indicate suicidal ideation or severe distress
+ * Includes both kanji and hiragana representations to catch all variations (Codex P1 fix)
  */
 const CRISIS_KEYWORDS = [
+  // Kanji representations
   '死にたい',
   '自殺',
   '消えたい',
@@ -20,6 +22,17 @@ const CRISIS_KEYWORDS = [
   '生きる意味',
   '死んでしまいたい',
   '自分を傷つけたい',
+  // Hiragana representations for comprehensive detection
+  'しにたい',
+  'じさつ',
+  'きえたい',
+  'もうむり',
+  'いきていたくない',
+  'らくになりたい',
+  'おわりにしたい',
+  'いきるいみ',
+  'しんでしまいたい',
+  'じぶんをきずつけたい',
 ] as const;
 
 /**
