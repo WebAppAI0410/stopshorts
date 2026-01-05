@@ -804,13 +804,6 @@
     "settings": "設定",
     "profile": "プロフィール"
   },
-  "ai": {
-    "screenTitle": "AIコーチ",
-    "subtitle": "何でも相談してください",
-    "greeting": "こんにちは！今日はどんなことを話しましょうか？",
-    "emptyMessage": "何でも話してください。一緒に考えましょう。",
-    "inputPlaceholder": "メッセージを入力..."
-  },
   "statistics": {
     "title": "統計",
     "savedThisWeek": "今週の節約時間",
@@ -1390,6 +1383,11 @@
     }
   },
   "ai": {
+    "screenTitle": "AIコーチ",
+    "subtitle": "何でも相談してください",
+    "greeting": "こんにちは！今日はどんなことを話しましょうか？",
+    "emptyMessage": "何でも話してください。一緒に考えましょう。",
+    "inputPlaceholder": "メッセージを入力...",
     "crisis": {
       "response": "あなたの気持ちを聞かせてくれてありがとうございます。今とても辛い状況にいるのですね。\n\n専門の相談窓口に連絡することをお勧めします：\n\n📞 いのちの電話: 0120-783-556\n📞 よりそいホットライン: 0120-279-338\n🌐 https://www.mhlw.go.jp/mamorouyokokoro/\n\nあなたは一人ではありません。"
     },
