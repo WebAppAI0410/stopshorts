@@ -22,8 +22,11 @@ import {
   buildSystemPrompt,
   buildTrainingContext,
   handleCrisisIfDetected,
+  type TrainingContextInput,
 } from '../services/ai';
 import type { Message, PersonaId, ConversationModeId } from '../types/ai';
+import { useAppStore } from '../stores/useAppStore';
+import { useAIStore } from '../stores/useAIStore';
 
 // ============================================
 // Types
@@ -97,7 +100,15 @@ export function useExecutorchLLM(
   // Build system prompt with training context
   const systemPrompt = useMemo(() => {
     const basePrompt = buildSystemPrompt(personaId, modeId);
-    const trainingContext = buildTrainingContext();
+    // Get data from stores and pass as arguments to avoid circular dependency
+    const { trainingProgress, getCompletedTopicIds } = useAppStore.getState();
+    const { sessionSummaries } = useAIStore.getState();
+    const trainingContextInput: TrainingContextInput = {
+      trainingProgress,
+      completedTopicIds: getCompletedTopicIds(),
+      sessionSummaries,
+    };
+    const trainingContext = buildTrainingContext(trainingContextInput);
     return basePrompt + '\n' + trainingContext;
   }, [personaId, modeId]);
 

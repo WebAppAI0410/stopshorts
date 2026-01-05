@@ -45,8 +45,9 @@ export type { CrisisDetectionResult } from './mentalHealthHandler';
 export type {
   UserStats,
   UserGoals,
-  TrainingProgress,
+  TrainingProgressContext,
   FullPromptResult,
+  TrainingContextInput,
 } from './promptBuilder';
 
 // Re-export LLM service type for consumers
