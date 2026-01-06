@@ -1,12 +1,12 @@
 /**
  * FeaturedBreathingCard - Hero card for the recommended Breathing Guide intervention
- * Features gradient background, SVG pattern, and prominent CTA
+ * Features gradient background with wave pattern and SVG leaf illustration
  */
 
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import Svg, { Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient, Stop, Rect, Path, G } from 'react-native-svg';
 import { useTheme } from '../../contexts/ThemeContext';
 import { palette } from '../../design/theme';
 import { t } from '../../i18n';
@@ -16,14 +16,41 @@ export interface FeaturedBreathingCardProps {
   testID?: string;
 }
 
+// SVG Leaf illustration component
+const LeafIllustration: React.FC = () => (
+  <Svg width={70} height={70} viewBox="0 0 70 70">
+    {/* Outer glow circle */}
+    <Circle cx="35" cy="35" r="30" fill="rgba(255,255,255,0.1)" />
+    {/* Main leaf */}
+    <G transform="translate(20, 15)">
+      <Path
+        d="M15 0C15 0 30 10 30 25C30 40 15 45 15 45C15 45 0 40 0 25C0 10 15 0 15 0Z"
+        fill="rgba(255,255,255,0.9)"
+      />
+      {/* Leaf vein */}
+      <Path
+        d="M15 8L15 40M15 15L8 22M15 22L22 29M15 30L10 35"
+        stroke={palette.teal[500]}
+        strokeWidth="2"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </G>
+    {/* Small decorative circles */}
+    <Circle cx="52" cy="20" r="3" fill="rgba(255,255,255,0.4)" />
+    <Circle cx="58" cy="32" r="2" fill="rgba(255,255,255,0.3)" />
+    <Circle cx="50" cy="50" r="2.5" fill="rgba(255,255,255,0.25)" />
+  </Svg>
+);
+
 export const FeaturedBreathingCard: React.FC<FeaturedBreathingCardProps> = ({
   onPress,
   testID,
 }) => {
-  const { borderRadius, spacing } = useTheme();
+  const { borderRadius } = useTheme();
 
   return (
-    <Animated.View entering={FadeInDown.duration(600).delay(100)}>
+    <Animated.View entering={FadeInDown.duration(500).delay(100)}>
       <Pressable
         onPress={onPress}
         testID={testID}
@@ -43,7 +70,7 @@ export const FeaturedBreathingCard: React.FC<FeaturedBreathingCardProps> = ({
           <Defs>
             <LinearGradient id="cardGradient" x1="0%" y1="100%" x2="100%" y2="0%">
               <Stop offset="0%" stopColor={palette.emerald[500]} />
-              <Stop offset="100%" stopColor={palette.teal[600]} />
+              <Stop offset="100%" stopColor={palette.teal[500]} />
             </LinearGradient>
           </Defs>
           <Rect
@@ -56,56 +83,63 @@ export const FeaturedBreathingCard: React.FC<FeaturedBreathingCardProps> = ({
           />
         </Svg>
 
-        {/* Concentric Circles Pattern */}
-        <Svg style={styles.pattern} viewBox="0 0 100 100">
-          <Circle cx="50" cy="50" r="45" stroke="white" strokeWidth="0.5" fill="none" opacity={0.15} />
-          <Circle cx="50" cy="50" r="35" stroke="white" strokeWidth="1" fill="none" opacity={0.12} />
-          <Circle cx="50" cy="50" r="25" stroke="white" strokeWidth="1.5" fill="none" opacity={0.08} />
-          <Circle cx="50" cy="50" r="15" stroke="white" strokeWidth="2" fill="none" opacity={0.05} />
+        {/* Wave Pattern Background */}
+        <Svg style={styles.wavePattern} viewBox="0 0 400 200" preserveAspectRatio="none">
+          <Path
+            d="M0,100 Q100,50 200,100 T400,100 L400,200 L0,200 Z"
+            fill="rgba(255,255,255,0.05)"
+          />
+          <Path
+            d="M0,120 Q100,70 200,120 T400,120 L400,200 L0,200 Z"
+            fill="rgba(255,255,255,0.03)"
+          />
         </Svg>
 
         {/* Content */}
         <View style={styles.content}>
-          {/* Badge */}
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>
-              {t('intervention.practice.recommended')}
+          {/* Left side content */}
+          <View style={styles.leftContent}>
+            {/* Recommended Badge */}
+            <View style={[styles.badge, { borderRadius: borderRadius.full }]}>
+              <Text style={styles.badgeText}>
+                {t('intervention.practice.recommended')}
+              </Text>
+            </View>
+
+            {/* Title */}
+            <Text style={styles.title}>
+              {t('intervention.practice.options.breathing.title')}
             </Text>
+
+            {/* Tagline */}
+            <Text style={styles.tagline}>
+              {t('intervention.practice.options.breathing.tagline')}
+            </Text>
+
+            {/* Description */}
+            <Text style={styles.description}>
+              {t('intervention.practice.options.breathing.descriptionShort')}
+            </Text>
+
+            {/* Bottom Row: Duration + CTA */}
+            <View style={styles.bottomRow}>
+              <View style={[styles.durationBadge, { borderRadius: borderRadius.full }]}>
+                <Text style={styles.durationText}>
+                  {t('intervention.practice.options.breathing.duration')}
+                </Text>
+              </View>
+
+              <View style={[styles.ctaButton, { borderRadius: borderRadius.full }]}>
+                <Text style={[styles.ctaText, { color: palette.emerald[600] }]}>
+                  {t('intervention.practice.tryIt')} →
+                </Text>
+              </View>
+            </View>
           </View>
 
-          {/* Leaf Icon */}
-          <View style={styles.iconContainer}>
-            <Text style={styles.leafIcon}>{'\uD83C\uDF3F'}</Text>
-          </View>
-
-          {/* Title */}
-          <Text style={styles.title}>
-            {t('intervention.practice.options.breathing.title')}
-          </Text>
-
-          {/* Tagline */}
-          <Text style={styles.tagline}>
-            {t('intervention.practice.options.breathing.tagline')}
-          </Text>
-
-          {/* Description */}
-          <Text style={styles.description}>
-            {t('intervention.practice.options.breathing.description')}
-          </Text>
-
-          {/* Bottom Row: Duration + CTA */}
-          <View style={styles.bottomRow}>
-            <View style={styles.durationBadge}>
-              <Text style={styles.durationText}>
-                {'\u23F1\uFE0F'} {t('intervention.practice.options.breathing.duration')}
-              </Text>
-            </View>
-
-            <View style={[styles.ctaButton, { borderRadius: borderRadius.md }]}>
-              <Text style={[styles.ctaText, { color: palette.emerald[600] }]}>
-                {t('intervention.practice.tryIt')} {'\u2192'}
-              </Text>
-            </View>
+          {/* Right side - Leaf illustration */}
+          <View style={styles.illustrationContainer}>
+            <LeafIllustration />
           </View>
         </View>
       </Pressable>
@@ -115,98 +149,86 @@ export const FeaturedBreathingCard: React.FC<FeaturedBreathingCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    height: 220,
+    height: 200,
     overflow: 'hidden',
-    // shadowColor is set inline with palette.emerald[500]
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
     elevation: 8,
   },
-  pattern: {
+  wavePattern: {
     position: 'absolute',
-    top: -30,
-    right: -30,
-    width: 180,
-    height: 180,
-    opacity: 1,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
   },
   content: {
     flex: 1,
-    padding: 24,
+    flexDirection: 'row',
+    padding: 20,
+  },
+  leftContent: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
   badge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginBottom: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
   },
   badgeText: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
   },
-  iconContainer: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-  },
-  leafIcon: {
-    fontSize: 40,
-  },
   title: {
     color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 8,
   },
   tagline: {
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
     fontWeight: '500',
-    marginBottom: 8,
+    marginTop: 2,
   },
   description: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 13,
-    lineHeight: 18,
-    maxWidth: '80%',
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontSize: 14,
+    marginTop: 4,
   },
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 'auto',
+    gap: 12,
+    marginTop: 12,
   },
   durationBadge: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   durationText: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 12,
+    color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '500',
   },
   ctaButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
   },
   ctaText: {
-    // color is set inline with palette.emerald[600]
     fontSize: 14,
     fontWeight: '700',
+  },
+  illustrationContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
   },
 });
