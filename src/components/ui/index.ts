@@ -10,3 +10,6 @@ export * from './StreakIndicator';
 export * from './ProgressCard';
 export * from './StatCard';
 export * from './WeeklyBarChart';
+export * from './BadgeAwardDialog';
+export * from './Score100CelebrationDialog';
+export * from './BadgeWithNewMark';
