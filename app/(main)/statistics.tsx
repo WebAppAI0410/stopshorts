@@ -15,7 +15,6 @@ import {
 } from '../../src/components/statistics';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
-import { useScreenTimeData } from '../../src/hooks/useScreenTimeData';
 import { t } from '../../src/i18n';
 
 export default function StatisticsScreen() {
@@ -32,16 +31,11 @@ export default function StatisticsScreen() {
         getBaselineDailyMinutes,
     } = useStatisticsStore();
 
-    const { isMockData } = useScreenTimeData();
-
     const weeklyStats = getWeeklyStats();
     const earnedBadges = getEarnedBadges();
     const dailyComparison = getDailyComparison();
     const weeklyComparison = getWeeklyComparison();
     const baselineDailyMinutes = getBaselineDailyMinutes();
-
-    const hasRealScreenTimeData = !isMockData;
-    const hasRealData = hasRealScreenTimeData || lifetime.totalUrgeSurfingCompleted > 0;
 
     // Calculate baseline reduction percentage
     const baselineReduction = useMemo(() => {
@@ -96,34 +90,6 @@ export default function StatisticsScreen() {
                         {t('statistics.title')}
                     </Text>
                 </Animated.View>
-
-                {/* Demo Mode Banner */}
-                {!hasRealData && (
-                    <Animated.View
-                        entering={FadeInDown.duration(600).delay(50)}
-                        style={[
-                            styles.demoBanner,
-                            {
-                                backgroundColor: colors.warning + '20',
-                                borderRadius: borderRadius.lg,
-                                borderWidth: 1,
-                                borderColor: colors.warning + '40',
-                            }
-                        ]}
-                    >
-                        <View style={styles.demoIconContainer}>
-                            <Ionicons name="flask-outline" size={18} color={colors.warning} />
-                        </View>
-                        <View style={styles.demoTextContainer}>
-                            <Text style={[typography.label, { color: colors.warning }]}>
-                                {t('statistics.demoMode')}
-                            </Text>
-                            <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>
-                                {t('statistics.demoModeDescription')}
-                            </Text>
-                        </View>
-                    </Animated.View>
-                )}
 
                 {/* Tab Selector */}
                 <Animated.View entering={FadeInDown.duration(600).delay(100)}>
@@ -310,18 +276,6 @@ const styles = StyleSheet.create({
     header: {
         alignItems: 'center',
         marginBottom: 24,
-    },
-    demoBanner: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 12,
-        marginBottom: 16,
-    },
-    demoIconContainer: {
-        marginRight: 12,
-    },
-    demoTextContainer: {
-        flex: 1,
     },
     chartCard: {
         padding: 16,
