@@ -3,34 +3,46 @@
  * Provides subscription status checks for access control
  *
  * @description
- * This hook centralizes subscription access logic following the design spec (Section 10.2).
- * Key principle: `subscriptionStatus` is the source of truth for expiration, not date calculations.
+ * This hook centralizes subscription access logic following the design spec.
+ * Reference: .kiro/specs/subscription-flow/requirements.md
+ *
+ * Access Control Rules:
+ * - Full access: trial, trialGrace, active, cancelled, billingIssue
+ * - Limited access (Home + Stats only): expired
  *
  * @example
  * ```tsx
  * function PremiumFeature() {
- *   const { hasFullAccess, isExpired, daysRemaining } = useSubscriptionAccess();
+ *   const { hasFullAccess, isExpired, showTrialWarning } = useSubscriptionAccess();
  *
  *   if (!hasFullAccess) {
  *     return <PaywallScreen />;
  *   }
  *
- *   return <FeatureContent daysRemaining={daysRemaining} />;
+ *   return <FeatureContent showWarning={showTrialWarning} />;
  * }
  * ```
  */
 
 import { useAppStore } from '../stores/useAppStore';
-import type { SubscriptionPlan } from '../types';
+import type { SubscriptionPlan, RevenueCatSubscriptionState } from '../types';
 
 export interface SubscriptionAccessResult {
-  /** User has full access (trial or paid) */
+  /** User has full access (trial, grace, paid, billing issue) */
   hasFullAccess: boolean;
+  /** User can only access Home and Stats */
+  hasLimitedAccess: boolean;
   /** User is on trial period */
   isTrialing: boolean;
+  /** User is in trial grace period (1 day after trial ended) */
+  isInTrialGrace: boolean;
   /** User has active paid subscription */
   isPaid: boolean;
-  /** Subscription has expired (source of truth: subscriptionStatus) */
+  /** User has cancelled but still active until period end */
+  isCancelled: boolean;
+  /** User has billing issue (RevenueCat grace period) */
+  hasBillingIssue: boolean;
+  /** Subscription has expired (no premium access) */
   isExpired: boolean;
   /** Expiry date has passed (for display only, not authoritative) */
   isExpiryDatePassed: boolean;
@@ -38,12 +50,16 @@ export interface SubscriptionAccessResult {
   subscriptionPlan: SubscriptionPlan;
   /** Days remaining in subscription (null if no expiry set, 0 if expired) */
   daysRemaining: number | null;
+  /** Should show trial warning banner (last day of trial grace) */
+  showTrialWarning: boolean;
+  /** Should show resubscribe prompt (expired) */
+  showResubscribePrompt: boolean;
+  /** Derived RevenueCat state for display */
+  revenueCatState: RevenueCatSubscriptionState;
 }
 
 /**
  * Safely parse a date string and check if it's in the past
- * @param dateString - ISO date string or null
- * @returns true if the date is valid and in the past
  */
 function isDatePassed(dateString: string | null): boolean {
   if (!dateString) return false;
@@ -58,8 +74,6 @@ function isDatePassed(dateString: string | null): boolean {
 
 /**
  * Calculate days remaining from a date string
- * @param dateString - ISO date string or null
- * @returns Days remaining (0 if past), or null if no date
  */
 function calculateDaysRemaining(dateString: string | null): number | null {
   if (!dateString) return null;
@@ -73,41 +87,109 @@ function calculateDaysRemaining(dateString: string | null): number | null {
   }
 }
 
+/**
+ * Derive RevenueCat state from store values
+ * This provides a unified state for access control
+ */
+function deriveRevenueCatState(
+  plan: SubscriptionPlan,
+  status: string,
+  daysRemaining: number | null,
+  trialStartDate: string | null
+): RevenueCatSubscriptionState {
+  // Expired status is authoritative
+  if (status === 'expired') {
+    return 'expired';
+  }
+
+  // Check if in trial
+  if (plan === 'trial' && trialStartDate) {
+    const trialStart = new Date(trialStartDate);
+    const trialEnd = new Date(trialStart.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const graceEnd = new Date(trialEnd.getTime() + 1 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+
+    if (now <= trialEnd) {
+      return 'trial';
+    } else if (now <= graceEnd) {
+      return 'trialGrace';
+    } else {
+      return 'expired';
+    }
+  }
+
+  // Cancelled status
+  if (status === 'cancelled') {
+    return 'cancelled';
+  }
+
+  // Active paid subscription
+  if (['monthly', 'quarterly', 'annual'].includes(plan)) {
+    return 'active';
+  }
+
+  // Free/no subscription
+  if (plan === 'free') {
+    return 'expired';
+  }
+
+  return 'expired';
+}
+
 export function useSubscriptionAccess(): SubscriptionAccessResult {
   const {
     subscriptionPlan,
     subscriptionStatus,
     subscriptionExpiry,
+    trialStartDate,
+    revenueCatState: storedRevenueCatState,
   } = useAppStore();
 
-  // Active subscription status
-  const isActive = subscriptionStatus === 'active';
+  // Calculate days remaining
+  const daysRemaining = calculateDaysRemaining(subscriptionExpiry);
 
-  // Trial status
-  const isTrialing = subscriptionPlan === 'trial' && isActive;
+  // Use stored RevenueCat state (from real RevenueCat data) if available,
+  // otherwise derive it (for local trial handling without RevenueCat)
+  const revenueCatState = storedRevenueCatState ?? deriveRevenueCatState(
+    subscriptionPlan,
+    subscriptionStatus,
+    daysRemaining,
+    trialStartDate
+  );
 
-  // Paid subscription status
-  const isPaid = ['monthly', 'quarterly', 'annual'].includes(subscriptionPlan) && isActive;
+  // State checks
+  const isTrialing = revenueCatState === 'trial';
+  const isInTrialGrace = revenueCatState === 'trialGrace';
+  const isPaid = revenueCatState === 'active';
+  const isCancelled = revenueCatState === 'cancelled';
+  const hasBillingIssue = revenueCatState === 'billingIssue';
+  const isExpired = revenueCatState === 'expired';
 
-  // Full access = trial OR paid
-  const hasFullAccess = isTrialing || isPaid;
+  // Access levels
+  const hasFullAccess = isTrialing || isInTrialGrace || isPaid || isCancelled || hasBillingIssue;
+  const hasLimitedAccess = isExpired;
 
-  // Expired check - subscriptionStatus is the source of truth (per design spec Section 10.2)
-  const isExpired = subscriptionStatus === 'expired';
-
-  // Calculate expiry date passed (for display only, not authoritative)
+  // Calculate expiry date passed (for display only)
   const isExpiryDatePassed = isDatePassed(subscriptionExpiry);
 
-  // Calculate days remaining with safe parsing
-  const daysRemaining = calculateDaysRemaining(subscriptionExpiry);
+  // UI hints
+  const showTrialWarning = isInTrialGrace;
+  const showResubscribePrompt = isExpired;
 
   return {
     hasFullAccess,
+    hasLimitedAccess,
     isTrialing,
+    isInTrialGrace,
     isPaid,
+    isCancelled,
+    hasBillingIssue,
     isExpired,
     isExpiryDatePassed,
     subscriptionPlan,
     daysRemaining,
+    showTrialWarning,
+    showResubscribePrompt,
+    revenueCatState,
   };
 }

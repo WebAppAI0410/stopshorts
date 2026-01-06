@@ -16,12 +16,16 @@ import { useScreenTimeData } from '../../src/hooks/useScreenTimeData';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { TRAINING_TOPICS } from '../../src/data/trainingTopics';
 import { t } from '../../src/i18n';
+import { useSubscriptionAccess } from '../../src/hooks/useSubscriptionAccess';
+import { TrialWarningBanner, ResubscribeBanner } from '../../src/components/subscription';
 
 export default function DashboardScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
     // Consolidated: use only useStatisticsStore for intervention/urge surfing stats
     const { getTodayStats, lifetime, getNewBadges } = useStatisticsStore();
+    // Subscription status for banners
+    const { showTrialWarning, showResubscribePrompt } = useSubscriptionAccess();
 
     // Get real screen time data from Android native module
     const { todayData, loading: screenTimeLoading, isMockData } = useScreenTimeData();
@@ -84,6 +88,20 @@ export default function DashboardScreen() {
                         <Ionicons name="person" size={20} color={colors.textInverse} />
                     </View>
                 </Animated.View>
+
+                {/* Trial Warning Banner */}
+                {showTrialWarning && (
+                    <Animated.View entering={FadeInDown.duration(600).delay(25)} style={styles.bannerContainer}>
+                        <TrialWarningBanner />
+                    </Animated.View>
+                )}
+
+                {/* Resubscribe Banner */}
+                {showResubscribePrompt && (
+                    <Animated.View entering={FadeInDown.duration(600).delay(25)} style={styles.bannerContainer}>
+                        <ResubscribeBanner />
+                    </Animated.View>
+                )}
 
                 {/* Demo/Mock Mode Banner */}
                 {(isMockData || !hasRealData) && (
@@ -325,6 +343,10 @@ const styles = StyleSheet.create({
     },
     scrollView: {
         flex: 1,
+    },
+    bannerContainer: {
+        marginHorizontal: -16,
+        marginBottom: 8,
     },
     header: {
         flexDirection: 'row',

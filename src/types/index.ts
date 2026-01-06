@@ -85,6 +85,18 @@ export type SubscriptionPlan = 'free' | 'trial' | 'monthly' | 'quarterly' | 'ann
 
 export type SubscriptionStatus = 'active' | 'expired' | 'cancelled';
 
+/**
+ * RevenueCat-based subscription state
+ * More granular than SubscriptionStatus for proper access control
+ */
+export type RevenueCatSubscriptionState =
+  | 'trial'        // 3-day trial active
+  | 'trialGrace'   // Trial ended, 1-day grace period
+  | 'active'       // Paid subscription active
+  | 'cancelled'    // Cancellation scheduled (still active until period end)
+  | 'expired'      // Subscription expired (no access)
+  | 'billingIssue';// Payment failed (grace period from RevenueCat)
+
 // Sleep Profile
 export interface SleepProfile {
   bedtime: string; // HH:mm format
