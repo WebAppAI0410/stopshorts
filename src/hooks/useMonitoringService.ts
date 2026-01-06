@@ -271,8 +271,10 @@ export function useMonitoringService() {
             // Record intervention in statistics store with full details
             // proceeded=true means user continued to the app (less successful)
             // proceeded=false means user went back (successful intervention)
+            // Native monitoring service triggers friction intervention by default
             recordIntervention({
               proceeded: event.proceeded,
+              type: 'friction',
               appPackage: event.appPackage || '',
               timestamp: event.timestamp || Date.now(),
             });

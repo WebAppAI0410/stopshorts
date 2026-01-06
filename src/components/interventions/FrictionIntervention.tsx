@@ -100,7 +100,7 @@ export function FrictionIntervention({
     if (selectedIntention) {
       recordIntention(selectedIntention, true, customText, appPackage);
     }
-    recordIntervention({ proceeded: true, appPackage });
+    recordIntervention({ proceeded: true, type: 'friction', appPackage, intention: selectedIntention ?? undefined });
     onProceed();
   }, [selectedIntention, customText, appPackage, recordIntention, recordIntervention, onProceed]);
 
@@ -109,7 +109,7 @@ export function FrictionIntervention({
     if (selectedIntention) {
       recordIntention(selectedIntention, false, customText, appPackage);
     }
-    recordIntervention({ proceeded: false, appPackage });
+    recordIntervention({ proceeded: false, type: 'friction', appPackage, intention: selectedIntention ?? undefined });
     onDismiss();
   }, [selectedIntention, customText, appPackage, recordIntention, recordIntervention, onDismiss]);
 

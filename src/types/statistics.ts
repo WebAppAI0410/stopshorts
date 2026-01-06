@@ -61,12 +61,17 @@ export interface LifetimeStatistics {
   badges: Badge[];
 }
 
+// Intervention Types
+export type InterventionType = 'breathing' | 'friction' | 'mirror' | 'ai';
+
 // Badge Types
 export type BadgeCondition =
   | { type: 'first_surf' }
-  | { type: 'streak'; days: number }
   | { type: 'total_surfs'; count: number }
-  | { type: 'saved_hours'; hours: number };
+  | { type: 'saved_hours'; hours: number }
+  | { type: 'reduction'; percent: number }
+  | { type: 'intervention_success'; count: number }
+  | { type: 'habit_score'; score: number };
 
 export interface Badge {
   id: string;

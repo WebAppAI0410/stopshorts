@@ -885,7 +885,47 @@
       "fri": "金",
       "sat": "土",
       "sun": "日"
-    }
+    },
+    "habitScore": "習慣スコア",
+    "habitScoreEncouragement": "大丈夫、ここから始めよう",
+    "interventionSuccess": "介入成功率",
+    "interventionSuccessDetail": "{{success}}回成功 / {{total}}回発動",
+    "details": {
+      "title": "詳細統計",
+      "habitScoreSection": "習慣スコア",
+      "thisWeekChange": "今週: {{sign}}{{points}}pts",
+      "interventionByType": "介入タイプ別成功率",
+      "breathing": "呼吸ガイド",
+      "friction": "フリクション",
+      "mirror": "ミラー",
+      "ai": "AIコーチ",
+      "notUsed": "未使用",
+      "intentionPattern": "意図パターン",
+      "timeOfDayPattern": "時間帯別傾向",
+      "interventionTime": "介入発生",
+      "usageTime": "使用時間"
+    },
+    "badges": {
+      "reduction_25": "25%削減達成",
+      "reduction_50": "50%削減達成",
+      "reduction_75": "75%削減達成",
+      "intervention_success_50": "介入50回成功",
+      "intervention_success_100": "介入100回成功",
+      "habit_score_70": "習慣スコア70",
+      "habit_score_90": "習慣スコア90"
+    },
+    "badgeDialog": {
+      "title": "バッジ獲得！",
+      "multipleTitle": "{{count}}個のバッジを獲得！",
+      "dismiss": "閉じる"
+    },
+    "score100Celebration": {
+      "title": "完璧な習慣を達成！",
+      "message": "習慣スコアが100に到達しました。素晴らしい継続力です！",
+      "dismiss": "ありがとう！"
+    },
+    "loading": "読み込み中...",
+    "error": "データの読み込みに失敗しました"
   },
   "profile": {
     "title": "プロフィール",
