@@ -1,14 +1,12 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Rect, Text as SvgText, G, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useTheme } from '../../contexts/ThemeContext';
+import { t } from '../../i18n';
 
 export interface TrendChartProps {
     weeklyTotals: number[];  // 4 weeks, oldest to newest
-    labels?: string[];
 }
-
-const DEFAULT_LABELS = ['4週前', '3週前', '2週前', '先週'];
 
 /**
  * TrendChart - 4-week trend mini chart for Week tab
@@ -16,12 +14,11 @@ const DEFAULT_LABELS = ['4週前', '3週前', '2週前', '先週'];
  */
 export function TrendChart({
     weeklyTotals,
-    labels = DEFAULT_LABELS,
 }: TrendChartProps) {
     const { colors, isDark } = useTheme();
+    const { width: screenWidth } = useWindowDimensions();
 
     const chartHeight = 100;
-    const screenWidth = Dimensions.get('window').width;
     const chartWidth = screenWidth - 80; // More padding for mini chart
     const bottomPadding = 24;
 
@@ -124,7 +121,7 @@ export function TrendChart({
                                 fontSize={9}
                                 textAnchor="middle"
                             >
-                                {labels[index] ?? `W${index + 1}`}
+                                {t('statistics.weeksAgo', { count: weeklyTotals.length - index })}
                             </SvgText>
                         </G>
                     );

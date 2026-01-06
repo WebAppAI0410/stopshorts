@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet, Dimensions, Text } from 'react-native';
+import { View, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import Svg, { Rect, Line, Text as SvgText, G, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useTheme } from '../../contexts/ThemeContext';
+import { t } from '../../i18n';
 
 /**
  * Time of day breakdown for usage statistics
@@ -19,12 +20,7 @@ export interface DailyComparisonChartProps {
     baselineDailyMinutes?: number;
 }
 
-const TIME_SLOTS = [
-    { key: 'morning' as const, label: '朝' },
-    { key: 'daytime' as const, label: '昼' },
-    { key: 'evening' as const, label: '夕' },
-    { key: 'night' as const, label: '夜' },
-];
+const TIME_SLOT_KEYS = ['morning', 'daytime', 'evening', 'night'] as const;
 
 /**
  * DailyComparisonChart - Time-of-day comparison chart for Day tab
@@ -36,9 +32,9 @@ export function DailyComparisonChart({
     baselineDailyMinutes,
 }: DailyComparisonChartProps) {
     const { colors } = useTheme();
+    const { width: screenWidth } = useWindowDimensions();
 
     const chartHeight = 160;
-    const screenWidth = Dimensions.get('window').width;
     const chartWidth = screenWidth - 48;
     const yAxisWidth = 35;
     const availableWidth = chartWidth - yAxisWidth;
@@ -51,7 +47,7 @@ export function DailyComparisonChart({
         const maxValue = Math.max(...allValues, baselineDailyMinutes ? baselineDailyMinutes / 4 : 0, 15);
 
         // Calculate bar dimensions for grouped bars (2 bars per slot with gap)
-        const numSlots = TIME_SLOTS.length;
+        const numSlots = TIME_SLOT_KEYS.length;
         const groupGap = 16; // Gap between time slot groups
         const barGap = 4; // Gap between bars within a group
         const totalGroupSpace = availableWidth - groupGap * (numSlots + 1);
@@ -88,11 +84,11 @@ export function DailyComparisonChart({
             <View style={styles.legend}>
                 <View style={styles.legendItem}>
                     <View style={[styles.legendColor, { backgroundColor: colors.accent }]} />
-                    <Text style={[styles.legendText, { color: colors.textSecondary }]}>今日</Text>
+                    <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('statistics.legendToday')}</Text>
                 </View>
                 <View style={styles.legendItem}>
                     <View style={[styles.legendColor, { backgroundColor: colors.textSecondary }]} />
-                    <Text style={[styles.legendText, { color: colors.textSecondary }]}>昨日</Text>
+                    <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('statistics.legendYesterday')}</Text>
                 </View>
             </View>
 
@@ -145,9 +141,9 @@ export function DailyComparisonChart({
                 )}
 
                 {/* Grouped bars for each time slot */}
-                {TIME_SLOTS.map((slot, index) => {
-                    const todayValue = today[slot.key];
-                    const yesterdayValue = yesterday[slot.key];
+                {TIME_SLOT_KEYS.map((slotKey, index) => {
+                    const todayValue = today[slotKey];
+                    const yesterdayValue = yesterday[slotKey];
 
                     const groupX = yAxisWidth + chartData.groupGap + index * (chartData.groupWidth + chartData.groupGap);
                     const groupCenter = groupX + chartData.groupWidth / 2;
@@ -191,7 +187,7 @@ export function DailyComparisonChart({
                                 fontSize={12}
                                 textAnchor="middle"
                             >
-                                {slot.label}
+                                {t(`statistics.${slotKey}`)}
                             </SvgText>
                         </G>
                     );

@@ -46,8 +46,8 @@ export function ComparisonHero({
     const absChangePercent = Math.abs(Math.round(changePercent));
 
     const periodLabel = mode === 'day'
-        ? t('statistics.comparison.vsYesterday')
-        : t('statistics.comparison.vsLastWeek');
+        ? t('statistics.vsYesterday')
+        : t('statistics.vsLastWeek');
 
     return (
         <Animated.View
@@ -72,8 +72,8 @@ export function ComparisonHero({
                     ]}
                 >
                     {mode === 'day'
-                        ? t('statistics.comparison.todayUsage')
-                        : t('statistics.comparison.thisWeekUsage')}
+                        ? t('statistics.todayUsage')
+                        : t('statistics.weeklyUsage')}
                 </Text>
                 <Text
                     style={[
@@ -108,8 +108,8 @@ export function ComparisonHero({
                         ]}
                         accessibilityLabel={
                             isDecrease
-                                ? t('statistics.comparison.decreased', { percent: absChangePercent })
-                                : t('statistics.comparison.increased', { percent: absChangePercent })
+                                ? t('statistics.reduction', { percent: absChangePercent })
+                                : t('statistics.increase', { percent: absChangePercent })
                         }
                     >
                         {changeIcon} {absChangePercent}%
@@ -134,8 +134,8 @@ export function ComparisonHero({
                     ]}
                 >
                     {mode === 'day'
-                        ? t('statistics.comparison.yesterday')
-                        : t('statistics.comparison.lastWeek')}
+                        ? t('statistics.yesterday')
+                        : t('statistics.lastWeek')}
                     {': '}
                     <Text style={{ color: colors.textSecondary }}>
                         {formatTime(previousMinutes)}
@@ -162,15 +162,18 @@ export function ComparisonHero({
                             { color: colors.textMuted },
                         ]}
                     >
-                        {t('statistics.comparison.fromBaseline')}
+                        {t('statistics.fromBaseline')}
                     </Text>
                     <Text
                         style={[
                             typography.button,
-                            { color: colors.success, marginLeft: spacing.xs },
+                            {
+                                color: baselineReduction <= 0 ? colors.success : colors.error,
+                                marginLeft: spacing.xs
+                            },
                         ]}
                     >
-                        ↓ {Math.abs(Math.round(baselineReduction))}%
+                        {baselineReduction <= 0 ? '↓' : '↑'} {Math.abs(Math.round(baselineReduction))}%
                     </Text>
                 </View>
             )}

@@ -1,12 +1,9 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet, Dimensions, Text } from 'react-native';
+import { View, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import Svg, { Rect, Line, Text as SvgText, G, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useTheme } from '../../contexts/ThemeContext';
-
-export interface DayData {
-    day: string;  // 'MON', 'TUE', etc.
-    value: number;
-}
+import { t } from '../../i18n';
+import type { DayData } from '../../types/statistics';
 
 export interface WeeklyComparisonChartProps {
     currentWeek: DayData[];
@@ -14,7 +11,7 @@ export interface WeeklyComparisonChartProps {
     baselineDailyMinutes?: number;
 }
 
-const DAYS_SHORT = ['月', '火', '水', '木', '金', '土', '日'];
+const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
 /**
  * WeeklyComparisonChart - Daily comparison chart for Week tab
@@ -26,16 +23,16 @@ export function WeeklyComparisonChart({
     baselineDailyMinutes,
 }: WeeklyComparisonChartProps) {
     const { colors } = useTheme();
+    const { width: screenWidth } = useWindowDimensions();
 
     const chartHeight = 160;
-    const screenWidth = Dimensions.get('window').width;
     const chartWidth = screenWidth - 48;
     const yAxisWidth = 35;
     const availableWidth = chartWidth - yAxisWidth;
 
     const chartData = useMemo(() => {
-        const allCurrentValues = currentWeek.map(d => d.value);
-        const allPreviousValues = previousWeek.map(d => d.value);
+        const allCurrentValues = currentWeek.map(d => d.minutes);
+        const allPreviousValues = previousWeek.map(d => d.minutes);
         const allValues = [...allCurrentValues, ...allPreviousValues];
         const maxValue = Math.max(...allValues, baselineDailyMinutes ?? 0, 30);
 
@@ -77,11 +74,11 @@ export function WeeklyComparisonChart({
             <View style={styles.legend}>
                 <View style={styles.legendItem}>
                     <View style={[styles.legendColor, { backgroundColor: colors.accent }]} />
-                    <Text style={[styles.legendText, { color: colors.textSecondary }]}>今週</Text>
+                    <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('statistics.legendThisWeek')}</Text>
                 </View>
                 <View style={styles.legendItem}>
                     <View style={[styles.legendColor, { backgroundColor: colors.textSecondary }]} />
-                    <Text style={[styles.legendText, { color: colors.textSecondary }]}>先週</Text>
+                    <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('statistics.legendLastWeek')}</Text>
                 </View>
             </View>
 
@@ -134,9 +131,9 @@ export function WeeklyComparisonChart({
                 )}
 
                 {/* Grouped bars for each day */}
-                {DAYS_SHORT.map((dayLabel, index) => {
-                    const currentValue = currentWeek[index]?.value ?? 0;
-                    const previousValue = previousWeek[index]?.value ?? 0;
+                {DAY_KEYS.map((dayKey, index) => {
+                    const currentValue = currentWeek[index]?.minutes ?? 0;
+                    const previousValue = previousWeek[index]?.minutes ?? 0;
 
                     const groupX = yAxisWidth + chartData.groupGap + index * (chartData.groupWidth + chartData.groupGap);
                     const groupCenter = groupX + chartData.groupWidth / 2;
@@ -180,7 +177,7 @@ export function WeeklyComparisonChart({
                                 fontSize={10}
                                 textAnchor="middle"
                             >
-                                {dayLabel}
+                                {t(`statistics.dayShort.${dayKey}`)}
                             </SvgText>
                         </G>
                     );

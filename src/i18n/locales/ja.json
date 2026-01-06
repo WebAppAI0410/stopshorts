@@ -855,8 +855,6 @@
     "mindfulPauses": "意識的な休憩を取りました。",
     "demoMode": "デモモード",
     "demoModeDescription": "スクリーンタイム機能が有効になると、実際のデータが表示されます",
-    "day": "日",
-    "week": "週",
     "today": "今日",
     "yesterday": "昨日",
     "thisWeek": "今週",
@@ -878,7 +876,16 @@
     "legendThisWeek": "今週",
     "legendLastWeek": "先週",
     "trendTitle": "過去4週間",
-    "weeksAgo": "{{count}}週前"
+    "weeksAgo": "{{count}}週前",
+    "dayShort": {
+      "mon": "月",
+      "tue": "火",
+      "wed": "水",
+      "thu": "木",
+      "fri": "金",
+      "sat": "土",
+      "sun": "日"
+    }
   },
   "profile": {
     "title": "プロフィール",
