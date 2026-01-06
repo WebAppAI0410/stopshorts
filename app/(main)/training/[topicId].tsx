@@ -17,6 +17,7 @@ import { getTopicById } from '../../../src/data/trainingTopics';
 import type { TrainingContent } from '../../../src/types/training';
 
 type ContentPhase = 'list' | 'article' | 'quiz' | 'worksheet' | 'complete';
+type ContentState = 'completed' | 'active' | 'locked';
 
 export default function TopicDetailScreen() {
   const router = useRouter();
@@ -113,6 +114,54 @@ export default function TopicDetailScreen() {
       setPhase('list');
     }
   }, [phase, router]);
+
+  // Helper function to determine content state for timeline
+  const getContentState = useCallback((contentId: string, index: number): ContentState => {
+    const completed = topicId ? isContentCompleted(topicId, contentId) : false;
+    if (completed) return 'completed';
+
+    const firstIncompleteIndex = topic?.contents.findIndex(
+      (c) => !isContentCompleted(topicId || '', c.id)
+    ) ?? 0;
+
+    if (index === (firstIncompleteIndex === -1 ? 0 : firstIncompleteIndex)) return 'active';
+    return 'locked';
+  }, [topicId, topic, isContentCompleted]);
+
+  // Render timeline left side (vertical line + node)
+  const renderTimelineLeft = useCallback((state: ContentState, index: number, isLast: boolean) => (
+    <View style={styles.timelineLeft}>
+      {/* Upper vertical line */}
+      {index > 0 && (
+        <View style={[
+          styles.timelineLine,
+          state === 'completed' && { backgroundColor: colors.success },
+        ]} />
+      )}
+      {/* Node */}
+      <View style={[
+        styles.timelineNode,
+        state === 'completed' && styles.timelineNodeCompleted,
+        state === 'active' && styles.timelineNodeActive,
+        state === 'locked' && styles.timelineNodeLocked,
+      ]}>
+        {state === 'completed' ? (
+          <Ionicons name="checkmark" size={14} color={colors.success} />
+        ) : state === 'locked' ? (
+          <Ionicons name="lock-closed" size={12} color={colors.textMuted} />
+        ) : (
+          <Text style={[styles.nodeNumber, { color: colors.primary }]}>{index + 1}</Text>
+        )}
+      </View>
+      {/* Lower vertical line */}
+      {!isLast && (
+        <View style={[
+          styles.timelineLine,
+          state === 'completed' && { backgroundColor: colors.success },
+        ]} />
+      )}
+    </View>
+  ), [colors]);
 
   // Early return for error state - must be after all hooks
   if (!topic) {
@@ -553,5 +602,42 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Timeline styles (Task A)
+  timelineLeft: {
+    width: 40,
+    alignItems: 'center',
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: '#E5E7EB', // Default border color
+  },
+  timelineNode: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F9FAFB', // Default surface
+    borderWidth: 2,
+    borderColor: '#E5E7EB', // Default border
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timelineNodeCompleted: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)', // success + 20%
+    borderColor: '#10B981', // success
+  },
+  timelineNodeActive: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)', // primary + 20%
+    borderColor: '#10B981', // primary
+    borderWidth: 3,
+  },
+  timelineNodeLocked: {
+    backgroundColor: '#F9FAFB', // surface
+    borderColor: '#E5E7EB', // border
+  },
+  nodeNumber: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
