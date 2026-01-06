@@ -1,136 +1,106 @@
-/**
- * Intervention Practice Selection Page
- * Allows users to choose which intervention type to practice
- * Design based on Gemini mockup with hero card and glassmorphism mini cards
- */
-
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { Header } from '../../src/components/ui';
+import { FeaturedBreathingCard } from '../../src/components/intervention-practice/FeaturedBreathingCard';
+import { MiniInterventionCard } from '../../src/components/intervention-practice/MiniInterventionCard';
 import { useTheme } from '../../src/contexts/ThemeContext';
-import { useAIStore } from '../../src/stores/useAIStore';
 import { t } from '../../src/i18n';
-import {
-  FeaturedBreathingCard,
-  MiniInterventionCard,
-} from '../../src/components/intervention-practice';
+import { palette } from '../../src/design/theme';
 
 export default function InterventionPracticeScreen() {
-  const { colors, spacing, borderRadius } = useTheme();
   const router = useRouter();
-  const modelStatus = useAIStore((state) => state.modelStatus);
+  const { colors, spacing, borderRadius } = useTheme();
 
-  const isAIModelReady = modelStatus === 'ready';
-
-  const handleBreathingPress = () => {
-    router.push({
-      pathname: '/(main)/urge-surfing',
-      params: { practiceType: 'breathing' },
-    });
-  };
-
-  const handleFrictionPress = () => {
-    router.push({
-      pathname: '/(main)/urge-surfing',
-      params: { practiceType: 'friction' },
-    });
-  };
-
-  const handleMirrorPress = () => {
-    router.push({
-      pathname: '/(main)/urge-surfing',
-      params: { practiceType: 'mirror' },
-    });
-  };
-
-  const handleAIPress = () => {
-    if (isAIModelReady) {
-      router.push({
-        pathname: '/(main)/urge-surfing',
-        params: { practiceType: 'ai' },
-      });
-    } else {
-      router.push('/(main)/ai');
-    }
-  };
-
-  const handleBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(main)');
-    }
+  const handlePracticeStart = (type: string) => {
+    // console.log(`Starting practice: ${type}`);
+    // In a real app, this would navigate to the specific practice screen
+    // For now, we just log it or maybe show an alert
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header with back button */}
-      <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-        <Pressable
-          onPress={handleBack}
-          style={[styles.backButton, { borderRadius: borderRadius.full }]}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.back')}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </Pressable>
-      </Animated.View>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.dark[900] }]}>
 
-      {/* Title Section - Left aligned as per mockup */}
-      <Animated.View
-        entering={FadeInDown.duration(500).delay(50)}
-        style={[styles.titleSection, { paddingHorizontal: spacing.gutter }]}
+      {/* Header */}
+      <Header
+        title=""
+        showBack
+        variant="ghost"
+        onBack={() => router.back()}
+      />
+
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.gutter }]}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {t('intervention.practice.title')}
-        </Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          {t('intervention.practice.subtitle')}
-        </Text>
-      </Animated.View>
+        <Animated.View entering={FadeIn.duration(500)}>
+          {/* Title Section */}
+          <View style={[styles.titleSection, { marginBottom: spacing.xl }]}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              {t('intervention.practice.title')}
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              {t('intervention.practice.subtitle')}
+            </Text>
+          </View>
 
-      {/* Featured Breathing Card */}
-      <View style={[styles.featuredSection, { paddingHorizontal: spacing.gutter }]}>
-        <FeaturedBreathingCard onPress={handleBreathingPress} />
-      </View>
+          {/* Hero Card */}
+          <View style={{ marginBottom: spacing.xl }}>
+            <FeaturedBreathingCard onPress={() => handlePracticeStart('breathing')} />
+          </View>
 
-      {/* Mini Cards Grid - 3 columns */}
-      <View style={[styles.miniCardsSection, { paddingHorizontal: spacing.gutter }]}>
-        <View style={styles.miniCardsGrid}>
-          <MiniInterventionCard
-            type="friction"
-            title={t('intervention.practice.options.friction.title')}
-            onPress={handleFrictionPress}
-            index={0}
-          />
-          <MiniInterventionCard
-            type="mirror"
-            title={t('intervention.practice.options.mirror.title')}
-            onPress={handleMirrorPress}
-            index={1}
-          />
-          <MiniInterventionCard
-            type="ai"
-            title={t('intervention.practice.options.ai.title')}
-            locked={!isAIModelReady}
-            onPress={handleAIPress}
-            index={2}
-          />
-        </View>
-      </View>
+          {/* Mini Cards Grid */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              Other Interventions
+            </Text>
+          </View>
 
-      {/* Footer - Simple centered text as per mockup */}
-      <Animated.View
-        entering={FadeInUp.duration(400).delay(400)}
-        style={styles.footer}
-      >
-        <Text style={[styles.footerText, { color: colors.textMuted }]}>
-          {t('intervention.practice.infoSimple')}
-        </Text>
-      </Animated.View>
+          <View style={[styles.grid, { gap: spacing.md }]}>
+            <MiniInterventionCard
+              title={t('intervention.practice.options.friction.title')}
+              subtitle={t('intervention.practice.title') === "介入を練習" ? "待機と意図" : "Wait & Intent"} // Fallback or strict translation
+              iconName="hourglass-outline"
+              iconColor={palette.orange[500]}
+              iconBgColor={palette.orange[500] + '20'}
+              index={0}
+              onPress={() => handlePracticeStart('friction')}
+            />
+            <MiniInterventionCard
+              title={t('intervention.practice.options.mirror.title')}
+              subtitle={t('intervention.practice.title') === "介入を練習" ? "自分を見つめる" : "Reflect"}
+              iconName="person-outline"
+              iconColor={palette.purple[500]}
+              iconBgColor={palette.purple[500] + '20'}
+              index={1}
+              onPress={() => handlePracticeStart('mirror')}
+            />
+            <MiniInterventionCard
+              title={t('intervention.practice.options.ai.title')}
+              subtitle={t('intervention.practice.locked')}
+              iconName="logo-android" // Robot-ish icon
+              iconColor={palette.emerald[500]}
+              iconBgColor={palette.emerald[500] + '10'}
+              index={2}
+              isLocked={true}
+              onPress={() => { }}
+            />
+          </View>
+
+          {/* Footer Info */}
+          <View style={[styles.footer, { marginTop: spacing['2xl'] }]}>
+            <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+            <Text style={[styles.footerText, { color: colors.textMuted }]}>
+              {t('intervention.practice.infoSimple')}
+            </Text>
+          </View>
+
+        </Animated.View>
+      </ScrollView>
+
     </SafeAreaView>
   );
 }
@@ -139,49 +109,45 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -8,
+  scrollContent: {
+    paddingBottom: 40,
   },
   titleSection: {
-    marginBottom: 24,
+    marginTop: 8,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
-    letterSpacing: -0.5,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
   },
-  featuredSection: {
-    marginBottom: 20,
+  sectionHeader: {
+    marginBottom: 12,
   },
-  miniCardsSection: {
-    marginBottom: 24,
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  miniCardsGrid: {
+  grid: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
   },
   footer: {
-    marginTop: 'auto',
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    padding: 12,
+    borderRadius: 12,
   },
   footerText: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
+    fontSize: 12,
+  }
 });
