@@ -11,7 +11,7 @@
  * - Offline detection with banner
  */
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,8 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import type { Href } from 'expo-router';
 import Animated, {
   FadeIn,
   FadeInUp,
@@ -37,16 +39,44 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
-import { useAIStore, selectMessages } from '../../src/stores/useAIStore';
+import {
+  useAIStore,
+  selectMessages,
+  selectIsGuidedConversationActive,
+  selectGuidedConversation,
+} from '../../src/stores/useAIStore';
+import { useAppStore } from '../../src/stores/useAppStore';
+import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
 import { useNetworkStatus } from '../../src/hooks/useNetworkStatus';
 import { useExecutorchLLM } from '../../src/hooks/useExecutorchLLM';
 import { handleCrisisIfDetected } from '../../src/services/ai';
-import { ModelDownloadCard } from '../../src/components/ai/ModelDownloadCard';
+import {
+  getContextualSuggestions,
+  buildSuggestionContext,
+  getSuggestionActionHandler,
+} from '../../src/services/ai/suggestionEngine';
+import {
+  getConversationStarters,
+  getTimeOfDay,
+  getDefaultStarters,
+} from '../../src/data/conversationStarters';
+import {
+  ModelDownloadCard,
+  EmptyStateView,
+  GuidedConversation,
+} from '../../src/components/ai';
 import { t } from '../../src/i18n';
-import type { Message, ConversationModeId } from '../../src/types/ai';
+import type {
+  Message,
+  ConversationModeId,
+  ContextualSuggestion,
+  ConversationStarter,
+  GuidedConversationState,
+} from '../../src/types/ai';
 
 export default function AIScreen() {
   const { colors, typography, spacing, borderRadius } = useTheme();
+  const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
   const { isOffline } = useNetworkStatus();
 
@@ -64,6 +94,83 @@ export default function AIScreen() {
   const isGenerating = useAIStore((state) => state.isGenerating);
   const messages = useAIStore(selectMessages);
   const personaId = useAIStore((state) => state.personaId);
+
+  // Guided conversation state
+  const isGuidedActive = useAIStore(selectIsGuidedConversationActive);
+  const guidedConversation = useAIStore(selectGuidedConversation);
+  const startGuidedConversation = useAIStore((state) => state.startGuidedConversation);
+  const advanceGuidedStep = useAIStore((state) => state.advanceGuidedStep);
+  const completeGuidedConversation = useAIStore((state) => state.completeGuidedConversation);
+  const cancelGuidedConversation = useAIStore((state) => state.cancelGuidedConversation);
+
+  // App Store (for suggestion context)
+  const trainingProgress = useAppStore((state) => state.trainingProgress);
+  const ifThenPlan = useAppStore((state) => state.ifThenPlan);
+  const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
+  const dailyGoalMinutes = useAppStore((state) => state.dailyGoalMinutes);
+
+  // Statistics Store
+  const getTodayStats = useStatisticsStore((state) => state.getTodayStats);
+  const getWeeklyStats = useStatisticsStore((state) => state.getWeeklyStats);
+  const getStreak = useStatisticsStore((state) => state.getStreak);
+  const lastSessionDate = useAIStore((state) => state.currentSession?.startedAt);
+
+  // Build suggestion context
+  const suggestionContext = useMemo(() => {
+    const todayStats = getTodayStats();
+    const weeklyStats = getWeeklyStats();
+
+    // Calculate total usage minutes from weekly stats
+    const weeklyTotalMinutes = weeklyStats.dailyStats.reduce(
+      (sum, day) => sum + day.totalUsageMinutes,
+      0
+    );
+
+    return buildSuggestionContext({
+      todayStats: {
+        interventionCount: todayStats.interventions.triggered,
+        blockedCount: todayStats.interventions.dismissed,
+        totalMinutes: todayStats.totalUsageMinutes,
+        goalMinutes: dailyGoalMinutes,
+      },
+      weeklyStats: {
+        totalMinutes: weeklyTotalMinutes,
+        previousWeekMinutes: weeklyTotalMinutes * 0.9, // Approximate
+      },
+      trainingProgress: Object.fromEntries(
+        Object.entries(trainingProgress).map(([k, v]) => [k, {
+          isCompleted: v.isCompleted,
+          completedContents: v.completedContents,
+        }])
+      ),
+      ifThenPlan: ifThenPlan?.action || null,
+      lastSessionDate: lastSessionDate ? new Date(lastSessionDate).toISOString() : null,
+      onboardingCompletedAt: hasCompletedOnboarding ? new Date().toISOString() : null,
+      streakDays: getStreak(),
+    });
+  }, [getTodayStats, getWeeklyStats, trainingProgress, ifThenPlan, lastSessionDate, hasCompletedOnboarding, dailyGoalMinutes, getStreak]);
+
+  // Get contextual suggestions
+  const suggestions = useMemo(
+    () => getContextualSuggestions(suggestionContext, 2),
+    [suggestionContext]
+  );
+
+  // Get conversation starters
+  const starters = useMemo(() => {
+    const todayStats = getTodayStats();
+    const starterContext = {
+      todayStats: {
+        interventionCount: todayStats.interventions.triggered,
+        blockedCount: todayStats.interventions.dismissed,
+      },
+      trainingProgress: Object.fromEntries(
+        Object.entries(trainingProgress).map(([k, v]) => [k, { isCompleted: v.isCompleted }])
+      ),
+      timeOfDay: getTimeOfDay(new Date().getHours()),
+    };
+    return getConversationStarters(starterContext, 6);
+  }, [getTodayStats, trainingProgress]);
 
   // LLM Hook - integrates with local Qwen 3 0.6B model
   const llm = useExecutorchLLM({
@@ -241,6 +348,99 @@ export default function AIScreen() {
     }
   }, [inputText, isGenerating, llm, messages, sendMessage]);
 
+  // Handle suggestion press
+  const handleSuggestionPress = useCallback((suggestion: ContextualSuggestion) => {
+    const handler = getSuggestionActionHandler(suggestion.action, {
+      startMode: (modeId) => {
+        // Send a mode-appropriate message to start conversation
+        const modeMessages: Record<string, string> = {
+          explore: t('ai.quickActions.explore'),
+          plan: t('ai.quickActions.plan'),
+          training: t('ai.quickActions.training'),
+          reflect: t('ai.quickActions.reflect'),
+        };
+        setInputText(modeMessages[modeId] || '');
+      },
+      startGuided: (templateId) => {
+        startGuidedConversation(templateId as 'if-then' | 'trigger-analysis');
+      },
+      navigate: (route) => {
+        router.push(route as Href);
+      },
+      startFreeChat: () => {
+        // Focus input for free chat
+        setInputText('');
+      },
+    });
+    handler();
+  }, [router, startGuidedConversation]);
+
+  // Handle quick action press
+  const handleQuickAction = useCallback((modeId: ConversationModeId) => {
+    // Map mode IDs to conversation starters
+    const modePrompts: Record<string, string> = {
+      explore: t('ai.quickActions.explorePrompt'),
+      plan: t('ai.quickActions.planPrompt'),
+      training: t('ai.quickActions.trainingPrompt'),
+      reflect: t('ai.quickActions.reflectPrompt'),
+    };
+    const prompt = modePrompts[modeId];
+    if (prompt) {
+      setInputText(prompt);
+    }
+  }, []);
+
+  // Handle starter press
+  const handleStarterPress = useCallback((starter: ConversationStarter) => {
+    const text = t(starter.textKey);
+    setInputText(text);
+    // Auto-send if LLM is ready
+    if (llm.isReady && text) {
+      setTimeout(() => {
+        // Need to manually trigger send with the starter text
+        const userInput = text;
+        const session = useAIStore.getState().currentSession;
+        if (session) {
+          const userMessage: Message = {
+            id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            role: 'user',
+            content: userInput,
+            timestamp: Date.now(),
+            tokenEstimate: Math.ceil(userInput.length / 2.5),
+          };
+          useAIStore.setState({
+            currentSession: {
+              ...session,
+              messages: [...session.messages, userMessage],
+              lastActivityAt: Date.now(),
+            },
+          });
+          setInputText('');
+        }
+      }, 100);
+    }
+  }, [llm.isReady]);
+
+  // Handle guided conversation option select
+  const handleGuidedOptionSelect = useCallback((value: string) => {
+    advanceGuidedStep(value);
+  }, [advanceGuidedStep]);
+
+  // Handle guided conversation free input
+  const handleGuidedFreeInput = useCallback((text: string) => {
+    advanceGuidedStep(text);
+  }, [advanceGuidedStep]);
+
+  // Handle guided conversation cancel
+  const handleGuidedCancel = useCallback(() => {
+    cancelGuidedConversation();
+  }, [cancelGuidedConversation]);
+
+  // Handle guided conversation complete
+  const handleGuidedComplete = useCallback(() => {
+    completeGuidedConversation();
+  }, [completeGuidedConversation]);
+
   // Render message bubble
   const renderMessage = useCallback(
     ({ item, index }: { item: Message; index: number }) => {
@@ -362,29 +562,54 @@ export default function AIScreen() {
           </Animated.View>
         )}
 
-        {/* Messages List */}
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={[
-            styles.messagesList,
-            { paddingHorizontal: spacing.gutter, paddingBottom: spacing.lg },
-          ]}
-          showsVerticalScrollIndicator={false}
-          ListFooterComponent={isGenerating ? renderTypingIndicator : null}
-          ListEmptyComponent={
-            <Animated.View
-              entering={FadeIn.duration(400).delay(200)}
-              style={styles.emptyContainer}
-            >
-              <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center' }]}>
-                {llm.isReady ? t('ai.emptyMessage') : t('ai.chatDisabled')}
-              </Text>
-            </Animated.View>
-          }
-        />
+        {/* Guided Conversation Mode */}
+        {isGuidedActive && guidedConversation && (
+          <View style={[styles.guidedContainer, { paddingHorizontal: spacing.gutter }]}>
+            <GuidedConversation
+              state={guidedConversation}
+              onOptionSelect={handleGuidedOptionSelect}
+              onFreeInput={handleGuidedFreeInput}
+              onCancel={handleGuidedCancel}
+              onComplete={handleGuidedComplete}
+            />
+          </View>
+        )}
+
+        {/* Messages List - Hidden during guided conversation */}
+        {!isGuidedActive && (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={[
+              styles.messagesList,
+              { paddingHorizontal: spacing.gutter, paddingBottom: spacing.lg },
+            ]}
+            showsVerticalScrollIndicator={false}
+            ListFooterComponent={isGenerating ? renderTypingIndicator : null}
+            ListEmptyComponent={
+              llm.isReady ? (
+                <EmptyStateView
+                  suggestions={suggestions}
+                  starters={starters}
+                  onSuggestionPress={handleSuggestionPress}
+                  onQuickAction={handleQuickAction}
+                  onStarterPress={handleStarterPress}
+                />
+              ) : (
+                <Animated.View
+                  entering={FadeIn.duration(400).delay(200)}
+                  style={styles.emptyContainer}
+                >
+                  <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center' }]}>
+                    {t('ai.chatDisabled')}
+                  </Text>
+                </Animated.View>
+              )
+            }
+          />
+        )}
 
         {/* Input Area */}
         <Animated.View
@@ -520,6 +745,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
+  },
+  guidedContainer: {
+    flex: 1,
+    paddingTop: 16,
   },
   inputContainer: {
     flexDirection: 'row',
