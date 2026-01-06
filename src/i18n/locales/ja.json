@@ -894,6 +894,16 @@
       "interventionTime": "介入発生",
       "usageTime": "使用時間",
       "noIntentionData": "意図データがありません"
+    },
+    "badgeDialog": {
+      "title": "バッジ獲得！",
+      "multipleTitle": "{{count}}個のバッジを獲得！",
+      "dismiss": "閉じる"
+    },
+    "score100Celebration": {
+      "title": "スコア100達成！",
+      "message": "素晴らしい！習慣スコアが最高点に到達しました。この調子を維持しましょう！",
+      "dismiss": "閉じる"
     }
   },
   "profile": {
