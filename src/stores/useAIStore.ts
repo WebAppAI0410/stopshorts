@@ -474,14 +474,15 @@ export const useAIStore = create<AIStore>()(
 
         // Check if this is the last step
         if (isLastStep(guidedConversation.templateId, guidedConversation.currentStepIndex)) {
-          // Mark as complete but keep responses
+          // Update responses first, then trigger completion
           set({
             guidedConversation: {
               ...guidedConversation,
               responses: updatedResponses,
-              isActive: false,
             },
           });
+          // Call completeGuidedConversation to persist data
+          get().completeGuidedConversation();
         } else {
           // Move to next step
           set({
