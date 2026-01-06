@@ -116,6 +116,130 @@ export default function TopicDetailScreen() {
     }
   }, [phase, router]);
 
+  // Helper function to determine content state for timeline
+  const getContentState = useCallback((contentId: string, index: number): ContentState => {
+    const completed = topicId ? isContentCompleted(topicId, contentId) : false;
+    if (completed) return 'completed';
+
+    const firstIncompleteIndex = topic?.contents.findIndex(
+      (c) => !isContentCompleted(topicId || '', c.id)
+    ) ?? 0;
+
+    if (index === (firstIncompleteIndex === -1 ? 0 : firstIncompleteIndex)) return 'active';
+    return 'locked';
+  }, [topicId, topic, isContentCompleted]);
+
+  // Render timeline left side (vertical line + node)
+  const renderTimelineLeft = useCallback((state: ContentState, index: number, isLast: boolean) => (
+    <View style={styles.timelineLeft}>
+      {/* Upper vertical line */}
+      {index > 0 && (
+        <View style={[
+          styles.timelineLine,
+          state === 'completed' && { backgroundColor: colors.success },
+        ]} />
+      )}
+      {/* Node */}
+      <View style={[
+        styles.timelineNode,
+        state === 'completed' && styles.timelineNodeCompleted,
+        state === 'active' && styles.timelineNodeActive,
+        state === 'locked' && styles.timelineNodeLocked,
+      ]}>
+        {state === 'completed' ? (
+          <Ionicons name="checkmark" size={14} color={colors.success} />
+        ) : state === 'locked' ? (
+          <Ionicons name="lock-closed" size={12} color={colors.textMuted} />
+        ) : (
+          <Text style={[styles.nodeNumber, { color: colors.primary }]}>{index + 1}</Text>
+        )}
+      </View>
+      {/* Lower vertical line */}
+      {!isLast && (
+        <View style={[
+          styles.timelineLine,
+          state === 'completed' && { backgroundColor: colors.success },
+        ]} />
+      )}
+    </View>
+  ), [colors]);
+
+  // Active Card for Focus Timeline UI
+  const renderActiveCard = (content: TrainingContent, onPress: () => void) => {
+    const iconName = content.type === 'article' ? 'book-outline' :
+                     content.type === 'quiz' ? 'flask-outline' : 'document-text-outline';
+
+    return (
+      <View style={[
+        styles.activeCard,
+        {
+          backgroundColor: colors.backgroundCard,
+          shadowColor: colors.primary,
+          borderColor: colors.primary + '40',
+        }
+      ]}>
+        {/* Header */}
+        <View style={styles.activeCardHeader}>
+          <Ionicons name={iconName} size={20} color={colors.primary} />
+          <Text style={[styles.activeCardType, { color: colors.primary }]}>
+            {t(`training.contentTypes.${content.type}`)}
+          </Text>
+        </View>
+
+        {/* Title */}
+        <Text style={[styles.activeCardTitle, { color: colors.textPrimary }]}>
+          {t(content.titleKey)}
+        </Text>
+
+        {/* Meta */}
+        <View style={styles.activeCardMeta}>
+          <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+          <Text style={[styles.activeCardTime, { color: colors.textSecondary }]}>
+            5{t('training.minutes')}
+          </Text>
+        </View>
+
+        {/* Start Button */}
+        <Button
+          title={t('training.startLearning')}
+          onPress={onPress}
+          size="md"
+        />
+      </View>
+    );
+  };
+
+  // Compact row for completed/locked items
+  const renderCompactRow = (
+    content: TrainingContent,
+    state: ContentState,
+    index: number,
+    onPress: () => void
+  ) => {
+    const isDisabled = state === 'locked';
+
+    return (
+      <Pressable
+        onPress={isDisabled ? undefined : onPress}
+        disabled={isDisabled}
+        style={({ pressed }) => [
+          styles.compactRow,
+          { opacity: pressed && !isDisabled ? 0.7 : 1 },
+        ]}
+      >
+        <Text
+          style={[
+            styles.compactTitle,
+            { color: state === 'completed' ? colors.textSecondary : colors.textMuted },
+          ]}
+          numberOfLines={1}
+        >
+          {index + 1}. {t(content.titleKey)}
+        </Text>
+      </Pressable>
+    );
+  };
+
   // Early return for error state - must be after all hooks
   if (!topic) {
     return (
@@ -132,7 +256,7 @@ export default function TopicDetailScreen() {
 
   const currentContent = topic.contents[currentContentIndex];
 
-  // Content List Phase
+  // Content List Phase - Focus Timeline UI
   const renderContentList = () => (
     <ScrollView
       style={styles.scrollView}
@@ -155,106 +279,27 @@ export default function TopicDetailScreen() {
         </View>
       </Animated.View>
 
-      {/* Step-based Content List */}
-      <View style={[styles.stepList, { marginTop: spacing.xl, backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg, overflow: 'hidden' }]}>
+      {/* Focus Timeline Content List */}
+      <View style={{ marginTop: spacing.xl }}>
         {topic.contents.map((content, index) => {
-          const isCompleted = topicId ? isContentCompleted(topicId, content.id) : false;
-          // Find the first incomplete index for lock logic
-          const firstIncompleteIndex = topic.contents.findIndex(
-            (c) => !isContentCompleted(topicId || '', c.id)
-          );
-          const isActive = !isCompleted && index === (firstIncompleteIndex === -1 ? 0 : firstIncompleteIndex);
-          const isLocked = firstIncompleteIndex !== -1 && index > firstIncompleteIndex;
-
-          const iconName = content.type === 'article' ? 'book-outline' :
-                          content.type === 'quiz' ? 'flask-outline' : 'document-text-outline';
-          const typeColor = content.type === 'article' ? colors.primary :
-                           content.type === 'quiz' ? colors.accent : colors.success;
+          const state = getContentState(content.id, index);
+          const isLast = index === topic.contents.length - 1;
 
           return (
             <Animated.View
               key={content.id}
               entering={FadeInUp.duration(400).delay(200 + index * 100)}
+              style={styles.timelineItem}
             >
-              <Pressable
-                onPress={() => !isLocked && handleContentPress(content)}
-                disabled={isLocked}
-                style={({ pressed }) => [
-                  styles.stepItem,
-                  {
-                    backgroundColor: isActive ? colors.primary + '08' : 'transparent',
-                    borderBottomWidth: index < topic.contents.length - 1 ? 1 : 0,
-                    borderBottomColor: colors.border,
-                    opacity: isLocked ? 0.5 : (pressed ? 0.8 : 1),
-                  },
-                ]}
-              >
-                {/* Step Number Badge */}
-                <View
-                  style={[
-                    styles.stepBadge,
-                    {
-                      backgroundColor: isCompleted
-                        ? colors.success + '20'
-                        : isActive
-                          ? colors.primary + '15'
-                          : colors.surface,
-                    },
-                  ]}
-                >
-                  {isCompleted ? (
-                    <Ionicons name="checkmark" size={16} color={colors.success} />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.stepNumber,
-                        { color: isActive ? colors.primary : colors.textMuted },
-                      ]}
-                    >
-                      {index + 1}
-                    </Text>
-                  )}
-                </View>
+              {/* Timeline Left (vertical line + node) */}
+              {renderTimelineLeft(state, index, isLast)}
 
-                {/* Content Info */}
-                <View style={styles.stepContent}>
-                  <View style={styles.stepHeader}>
-                    <Ionicons
-                      name={iconName}
-                      size={16}
-                      color={isLocked ? colors.textMuted : typeColor}
-                    />
-                    <Text
-                      style={[
-                        styles.stepType,
-                        { color: isLocked ? colors.textMuted : typeColor },
-                      ]}
-                    >
-                      {t(`training.contentTypes.${content.type}`)}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[
-                      styles.stepTitle,
-                      { color: isLocked ? colors.textMuted : colors.textPrimary },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {t(content.titleKey)}
-                  </Text>
-                </View>
-
-                {/* Status Icon */}
-                <View style={styles.stepStatus}>
-                  {isCompleted ? (
-                    <Ionicons name="checkmark-circle" size={24} color={colors.success} />
-                  ) : isActive ? (
-                    <Ionicons name="chevron-forward-circle" size={24} color={colors.primary} />
-                  ) : (
-                    <Ionicons name="lock-closed" size={20} color={colors.textMuted} />
-                  )}
-                </View>
-              </Pressable>
+              {/* Timeline Content (right side) */}
+              {state === 'active' ? (
+                renderActiveCard(content, () => handleContentPress(content))
+              ) : (
+                renderCompactRow(content, state, index, () => handleContentPress(content))
+              )}
             </Animated.View>
           );
         })}
