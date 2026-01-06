@@ -11,9 +11,14 @@ import type {
   WeeklyStatistics,
   LifetimeStatistics,
   Badge,
+  TimeOfDayBreakdown,
+  DayData,
+  DailyComparisonResult,
+  WeeklyComparisonResult,
 } from '../types/statistics';
 import type { IntentionLog, IntentionId } from '../types';
 import { getDateKey, getTimeOfDay } from '../types/statistics';
+import { useAppStore } from './useAppStore';
 import { BADGE_DEFINITIONS, checkBadges, calculateStreak } from '../services/badges';
 
 // Record type for store actions (excludes timestamp which is auto-generated)
@@ -77,6 +82,12 @@ interface StatisticsState {
   };
   getReductionRate: (baselineMonthlyMinutes: number | null, selectedPackages?: string[]) => number | null;
   getWeeklyTrend: (selectedPackages?: string[]) => number[]; // Last 4 weeks usage in minutes
+
+  // New data layer methods for statistics UI
+  getDailyComparison: () => DailyComparisonResult;
+  getWeeklyComparison: () => WeeklyComparisonResult;
+  getBaselineDailyMinutes: () => number | null;
+  getPreviousWeekData: () => DayData[];
 
   // Utilities
   resetDailyStats: () => void;
@@ -626,6 +637,116 @@ export const useStatisticsStore = create<StatisticsState>()(
         }
 
         return weeklyTotals;
+      },
+
+      getDailyComparison: (): DailyComparisonResult => {
+        const state = get();
+        const todayKey = getDateKey();
+        const yesterdayKey = getYesterdayKey();
+
+        const todayStats = state.dailyStats[todayKey] || createEmptyDailyStats(todayKey);
+        const yesterdayStats = state.dailyStats[yesterdayKey] || createEmptyDailyStats(yesterdayKey);
+
+        const todayTotal = todayStats.totalUsageMinutes;
+        const yesterdayTotal = yesterdayStats.totalUsageMinutes;
+
+        // Calculate change percent (positive = increase, negative = decrease)
+        const changePercent = yesterdayTotal > 0
+          ? ((todayTotal - yesterdayTotal) / yesterdayTotal) * 100
+          : 0;
+
+        return {
+          today: {
+            total: todayTotal,
+            byTimeOfDay: { ...todayStats.timeOfDayBreakdown },
+          },
+          yesterday: {
+            total: yesterdayTotal,
+            byTimeOfDay: { ...yesterdayStats.timeOfDayBreakdown },
+          },
+          changePercent: Math.round(changePercent * 10) / 10, // Round to 1 decimal
+        };
+      },
+
+      getWeeklyComparison: (): WeeklyComparisonResult => {
+        const state = get();
+        const today = new Date();
+
+        // Get current week data (Monday start)
+        const currentWeekStart = getMondayWeekStart(today);
+        const currentWeekData: DayData[] = [];
+        let currentWeekTotal = 0;
+
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(currentWeekStart);
+          date.setDate(currentWeekStart.getDate() + i);
+          const dateKey = getDateKey(date);
+          const stats = state.dailyStats[dateKey];
+          const minutes = stats?.totalUsageMinutes || 0;
+          currentWeekTotal += minutes;
+          currentWeekData.push({ date: dateKey, minutes });
+        }
+
+        // Get previous week data
+        const prevWeekStart = new Date(currentWeekStart);
+        prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+        const prevWeekData: DayData[] = [];
+        let prevWeekTotal = 0;
+
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(prevWeekStart);
+          date.setDate(prevWeekStart.getDate() + i);
+          const dateKey = getDateKey(date);
+          const stats = state.dailyStats[dateKey];
+          const minutes = stats?.totalUsageMinutes || 0;
+          prevWeekTotal += minutes;
+          prevWeekData.push({ date: dateKey, minutes });
+        }
+
+        // Calculate change percent
+        const changePercent = prevWeekTotal > 0
+          ? ((currentWeekTotal - prevWeekTotal) / prevWeekTotal) * 100
+          : 0;
+
+        return {
+          currentWeek: {
+            total: currentWeekTotal,
+            dailyAvg: Math.round((currentWeekTotal / 7) * 10) / 10,
+            data: currentWeekData,
+          },
+          previousWeek: {
+            total: prevWeekTotal,
+            dailyAvg: Math.round((prevWeekTotal / 7) * 10) / 10,
+            data: prevWeekData,
+          },
+          changePercent: Math.round(changePercent * 10) / 10,
+        };
+      },
+
+      getBaselineDailyMinutes: (): number | null => {
+        const baselineMonthlyMinutes = useAppStore.getState().baselineMonthlyMinutes;
+        if (baselineMonthlyMinutes === null || baselineMonthlyMinutes <= 0) {
+          return null;
+        }
+        return Math.round((baselineMonthlyMinutes / 30) * 10) / 10; // Round to 1 decimal
+      },
+
+      getPreviousWeekData: (): DayData[] => {
+        const state = get();
+        const today = new Date();
+        const result: DayData[] = [];
+
+        // Get data from 7-14 days ago (previous week)
+        for (let i = 14; i > 7; i--) {
+          const date = new Date(today);
+          date.setDate(today.getDate() - i);
+          const dateKey = getDateKey(date);
+          const stats = state.dailyStats[dateKey];
+          const minutes = stats?.totalUsageMinutes || 0;
+          result.push({ date: dateKey, minutes });
+        }
+
+        return result;
       },
 
       resetDailyStats: () => {

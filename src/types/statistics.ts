@@ -108,3 +108,45 @@ export function getTimeOfDay(hour: number): TimeOfDay {
 export function getDateKey(date: Date = new Date()): string {
   return date.toISOString().split('T')[0];
 }
+
+// Time of Day Breakdown type (extracted from DailyStatistics for reuse)
+export interface TimeOfDayBreakdown {
+  morning: number; // 6-9
+  daytime: number; // 9-17
+  evening: number; // 17-21
+  night: number; // 21-6
+}
+
+// Day data for weekly comparison
+export interface DayData {
+  date: string; // YYYY-MM-DD
+  minutes: number;
+}
+
+// Daily comparison result
+export interface DailyComparisonResult {
+  today: {
+    total: number;
+    byTimeOfDay: TimeOfDayBreakdown;
+  };
+  yesterday: {
+    total: number;
+    byTimeOfDay: TimeOfDayBreakdown;
+  };
+  changePercent: number; // positive = increase, negative = decrease
+}
+
+// Weekly comparison result
+export interface WeeklyComparisonResult {
+  currentWeek: {
+    total: number;
+    dailyAvg: number;
+    data: DayData[];
+  };
+  previousWeek: {
+    total: number;
+    dailyAvg: number;
+    data: DayData[];
+  };
+  changePercent: number;
+}
