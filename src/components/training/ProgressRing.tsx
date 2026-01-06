@@ -13,6 +13,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { useTheme } from '../../contexts/ThemeContext';
+import { t } from '../../i18n';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -92,7 +93,7 @@ export function ProgressRing({
           {completed}/{total}
         </Text>
         <Text style={[typography.caption, { color: colors.textMuted }]}>
-          完了
+          {t('training.completed')}
         </Text>
       </View>
     </View>
