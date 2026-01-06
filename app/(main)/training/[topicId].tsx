@@ -600,49 +600,97 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  // Step-based content list styles
-  stepList: {
-    // Inline styles for borderRadius and backgroundColor
-  },
-  stepItem: {
+  // Focus Timeline styles
+  timelineItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    minHeight: 48,
   },
-  stepBadge: {
+  timelineLeft: {
+    width: 40,
+    alignItems: 'center',
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: '#E5E7EB',
+  },
+  timelineNode: {
     width: 32,
     height: 32,
     borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
   },
-  stepNumber: {
+  timelineNodeCompleted: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: '#10B981',
+  },
+  timelineNodeActive: {
+    backgroundColor: 'rgba(198, 93, 59, 0.15)',
+    borderColor: '#C65D3B',
+    borderWidth: 3,
+  },
+  timelineNodeLocked: {
+    backgroundColor: '#F9FAFB',
+    borderColor: '#E5E7EB',
+  },
+  nodeNumber: {
     fontSize: 14,
     fontWeight: '700',
   },
-  stepContent: {
+  // Active card styles
+  activeCard: {
     flex: 1,
-    marginRight: 8,
+    borderRadius: 16,
+    padding: 20,
+    marginLeft: 12,
+    marginVertical: 8,
+    // Glow effect (iOS)
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    // Android
+    elevation: 8,
+    // Border accent
+    borderWidth: 1,
   },
-  stepHeader: {
+  activeCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  stepType: {
+  activeCardType: {
     fontSize: 12,
     marginLeft: 6,
-  },
-  stepTitle: {
-    fontSize: 15,
     fontWeight: '600',
   },
-  stepStatus: {
-    width: 32,
+  activeCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  activeCardMeta: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  activeCardTime: {
+    fontSize: 13,
+    marginLeft: 4,
+  },
+  // Compact row styles
+  compactRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingLeft: 12,
+  },
+  compactTitle: {
+    fontSize: 14,
   },
   questionCard: {
     // inline styles
