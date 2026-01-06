@@ -89,6 +89,13 @@ interface StatisticsState {
   getBaselineDailyMinutes: () => number | null;
   getPreviousWeekData: () => DayData[];
 
+  // Details screen methods
+  getIntentionPatternStats: () => Array<{ intentionId: IntentionId; count: number; proceeded: number }>;
+  getTimeOfDayPatterns: () => {
+    interventions: TimeOfDayBreakdown;
+    usage: TimeOfDayBreakdown;
+  };
+
   // Utilities
   resetDailyStats: () => void;
   resetAllStats: () => void;
@@ -747,6 +754,71 @@ export const useStatisticsStore = create<StatisticsState>()(
         }
 
         return result;
+      },
+
+      getIntentionPatternStats: () => {
+        const state = get();
+        const intentionCounts: Record<IntentionId, { count: number; proceeded: number }> = {
+          dm: { count: 0, proceeded: 0 },
+          specific: { count: 0, proceeded: 0 },
+          bored: { count: 0, proceeded: 0 },
+          random: { count: 0, proceeded: 0 },
+          other: { count: 0, proceeded: 0 },
+        };
+
+        for (const log of state.intentionHistory) {
+          const entry = intentionCounts[log.intentionId];
+          if (entry) {
+            entry.count += 1;
+            if (log.proceeded) {
+              entry.proceeded += 1;
+            }
+          }
+        }
+
+        // Convert to array, filter out 0 counts, sort by count descending
+        return Object.entries(intentionCounts)
+          .filter(([, data]) => data.count > 0)
+          .map(([intentionId, data]) => ({
+            intentionId: intentionId as IntentionId,
+            count: data.count,
+            proceeded: data.proceeded,
+          }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5); // Max 5 items
+      },
+
+      getTimeOfDayPatterns: () => {
+        const state = get();
+
+        // Aggregate intervention time of day from history
+        const interventions: TimeOfDayBreakdown = {
+          morning: 0,
+          daytime: 0,
+          evening: 0,
+          night: 0,
+        };
+
+        for (const record of state.interventionHistory) {
+          interventions[record.timeOfDay] += 1;
+        }
+
+        // Aggregate usage time of day from all daily stats
+        const usage: TimeOfDayBreakdown = {
+          morning: 0,
+          daytime: 0,
+          evening: 0,
+          night: 0,
+        };
+
+        for (const stats of Object.values(state.dailyStats)) {
+          usage.morning += stats.timeOfDayBreakdown.morning;
+          usage.daytime += stats.timeOfDayBreakdown.daytime;
+          usage.evening += stats.timeOfDayBreakdown.evening;
+          usage.night += stats.timeOfDayBreakdown.night;
+        }
+
+        return { interventions, usage };
       },
 
       resetDailyStats: () => {

@@ -885,6 +885,15 @@
       "fri": "金",
       "sat": "土",
       "sun": "日"
+    },
+    "details": {
+      "title": "詳細統計",
+      "thisWeekChange": "今週は{{sign}}{{points}}ポイント",
+      "intentionPattern": "使用意図パターン",
+      "timeOfDayBreakdown": "時間帯別傾向",
+      "interventionTime": "介入発生",
+      "usageTime": "使用時間",
+      "noIntentionData": "意図データがありません"
     }
   },
   "profile": {
