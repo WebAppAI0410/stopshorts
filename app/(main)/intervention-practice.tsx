@@ -8,17 +8,47 @@ import { Header } from '../../src/components/ui';
 import { FeaturedBreathingCard } from '../../src/components/intervention-practice/FeaturedBreathingCard';
 import { MiniInterventionCard } from '../../src/components/intervention-practice/MiniInterventionCard';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import { useAIStore } from '../../src/stores/useAIStore';
 import { t } from '../../src/i18n';
 import { palette } from '../../src/design/theme';
 
 export default function InterventionPracticeScreen() {
   const router = useRouter();
   const { colors, spacing, borderRadius } = useTheme();
+  const modelStatus = useAIStore((state) => state.modelStatus);
+  const isAIModelReady = modelStatus === 'ready';
 
-  const handlePracticeStart = (type: string) => {
-    // console.log(`Starting practice: ${type}`);
-    // In a real app, this would navigate to the specific practice screen
-    // For now, we just log it or maybe show an alert
+  const handleBreathingPress = () => {
+    router.push({
+      pathname: '/(main)/urge-surfing',
+      params: { practiceType: 'breathing', source: 'training' },
+    });
+  };
+
+  const handleFrictionPress = () => {
+    router.push({
+      pathname: '/(main)/urge-surfing',
+      params: { practiceType: 'friction', source: 'training' },
+    });
+  };
+
+  const handleMirrorPress = () => {
+    router.push({
+      pathname: '/(main)/urge-surfing',
+      params: { practiceType: 'mirror', source: 'training' },
+    });
+  };
+
+  const handleAIPress = () => {
+    if (isAIModelReady) {
+      router.push({
+        pathname: '/(main)/urge-surfing',
+        params: { practiceType: 'ai', source: 'training' },
+      });
+    } else {
+      // Navigate to AI setup page
+      router.push('/(main)/ai');
+    }
   };
 
   return (
@@ -49,44 +79,50 @@ export default function InterventionPracticeScreen() {
 
           {/* Hero Card */}
           <View style={{ marginBottom: spacing.xl }}>
-            <FeaturedBreathingCard onPress={() => handlePracticeStart('breathing')} />
+            <FeaturedBreathingCard
+              onPress={handleBreathingPress}
+              testID="featured-breathing-card"
+            />
           </View>
 
           {/* Mini Cards Grid */}
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-              Other Interventions
+              {t('intervention.practice.otherOptions')}
             </Text>
           </View>
 
           <View style={[styles.grid, { gap: spacing.md }]}>
             <MiniInterventionCard
               title={t('intervention.practice.options.friction.title')}
-              subtitle={t('intervention.practice.title') === "介入を練習" ? "待機と意図" : "Wait & Intent"} // Fallback or strict translation
+              subtitle={t('intervention.practice.options.friction.description')}
               iconName="hourglass-outline"
               iconColor={palette.orange[500]}
               iconBgColor={palette.orange[500] + '20'}
               index={0}
-              onPress={() => handlePracticeStart('friction')}
+              onPress={handleFrictionPress}
+              testID="mini-card-friction"
             />
             <MiniInterventionCard
               title={t('intervention.practice.options.mirror.title')}
-              subtitle={t('intervention.practice.title') === "介入を練習" ? "自分を見つめる" : "Reflect"}
+              subtitle={t('intervention.practice.options.mirror.description')}
               iconName="person-outline"
               iconColor={palette.purple[500]}
               iconBgColor={palette.purple[500] + '20'}
               index={1}
-              onPress={() => handlePracticeStart('mirror')}
+              onPress={handleMirrorPress}
+              testID="mini-card-mirror"
             />
             <MiniInterventionCard
               title={t('intervention.practice.options.ai.title')}
-              subtitle={t('intervention.practice.locked')}
-              iconName="logo-android" // Robot-ish icon
+              subtitle={isAIModelReady ? t('intervention.practice.options.ai.description') : t('intervention.practice.locked')}
+              iconName="logo-android"
               iconColor={palette.emerald[500]}
               iconBgColor={palette.emerald[500] + '10'}
               index={2}
-              isLocked={true}
-              onPress={() => { }}
+              isLocked={!isAIModelReady}
+              onPress={handleAIPress}
+              testID="mini-card-ai"
             />
           </View>
 

@@ -10,6 +10,7 @@ import { t } from '../../i18n';
 
 type FeaturedBreathingCardProps = {
   onPress: () => void;
+  testID?: string;
 };
 
 // Simple Leaf Icon SVG
@@ -36,12 +37,12 @@ const LeafIllustration = () => (
   </Svg>
 );
 
-export const FeaturedBreathingCard = ({ onPress }: FeaturedBreathingCardProps) => {
+export const FeaturedBreathingCard = ({ onPress, testID }: FeaturedBreathingCardProps) => {
   const { borderRadius, spacing, colors } = useTheme();
 
   return (
     <Animated.View entering={FadeInDown.duration(800).delay(200)}>
-      <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}>
+      <Pressable onPress={onPress} testID={testID} style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}>
         <View style={[styles.container, { borderRadius: borderRadius['2xl'] }]}>
           {/* Gradient Background */}
           <LinearGradient

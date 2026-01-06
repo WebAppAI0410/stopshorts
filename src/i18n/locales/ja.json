@@ -985,6 +985,7 @@
       "recommended": "おすすめ",
       "tryIt": "試してみる",
       "locked": "ロック中",
+      "otherOptions": "その他の介入",
       "options": {
         "breathing": {
           "title": "呼吸ガイド",

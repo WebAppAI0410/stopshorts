@@ -14,6 +14,7 @@ type MiniInterventionCardProps = {
   onPress: () => void;
   index: number;
   isLocked?: boolean;
+  testID?: string;
 };
 
 export const MiniInterventionCard = ({
@@ -25,6 +26,7 @@ export const MiniInterventionCard = ({
   onPress,
   index,
   isLocked = false,
+  testID,
 }: MiniInterventionCardProps) => {
   const { colors, borderRadius, spacing } = useTheme();
 
@@ -36,6 +38,7 @@ export const MiniInterventionCard = ({
       <Pressable
         onPress={onPress}
         disabled={isLocked}
+        testID={testID}
         style={({ pressed }) => [
           styles.card,
           {
