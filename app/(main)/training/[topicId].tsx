@@ -10,6 +10,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Header, Button, GlowOrb } from '../../../src/components/ui';
+import { MarkdownContent, FeatureLinkSection } from '../../../src/components/training';
 import { useTheme } from '../../../src/contexts/ThemeContext';
 import { t } from '../../../src/i18n';
 import { useAppStore } from '../../../src/stores/useAppStore';
@@ -153,12 +154,21 @@ export default function TopicDetailScreen() {
         </View>
       </Animated.View>
 
-      {/* Content Items */}
-      <View style={[styles.contentsList, { marginTop: spacing.xl }]}>
+      {/* Step-based Content List */}
+      <View style={[styles.stepList, { marginTop: spacing.xl, backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg, overflow: 'hidden' }]}>
         {topic.contents.map((content, index) => {
-          const contentCompleted = topicId ? isContentCompleted(topicId, content.id) : false;
-          const iconName = content.type === 'article' ? 'document-text-outline' :
-                          content.type === 'quiz' ? 'help-circle-outline' : 'create-outline';
+          const isCompleted = topicId ? isContentCompleted(topicId, content.id) : false;
+          // Find the first incomplete index for lock logic
+          const firstIncompleteIndex = topic.contents.findIndex(
+            (c) => !isContentCompleted(topicId || '', c.id)
+          );
+          const isActive = !isCompleted && index === (firstIncompleteIndex === -1 ? 0 : firstIncompleteIndex);
+          const isLocked = firstIncompleteIndex !== -1 && index > firstIncompleteIndex;
+
+          const iconName = content.type === 'article' ? 'book-outline' :
+                          content.type === 'quiz' ? 'flask-outline' : 'document-text-outline';
+          const typeColor = content.type === 'article' ? colors.primary :
+                           content.type === 'quiz' ? colors.accent : colors.success;
 
           return (
             <Animated.View
@@ -166,37 +176,83 @@ export default function TopicDetailScreen() {
               entering={FadeInUp.duration(400).delay(200 + index * 100)}
             >
               <Pressable
-                onPress={() => handleContentPress(content)}
+                onPress={() => !isLocked && handleContentPress(content)}
+                disabled={isLocked}
                 style={({ pressed }) => [
-                  styles.contentCard,
+                  styles.stepItem,
                   {
-                    backgroundColor: colors.backgroundCard,
-                    borderRadius: borderRadius.lg,
-                    opacity: pressed ? 0.8 : 1,
+                    backgroundColor: isActive ? colors.primary + '08' : 'transparent',
+                    borderBottomWidth: index < topic.contents.length - 1 ? 1 : 0,
+                    borderBottomColor: colors.border,
+                    opacity: isLocked ? 0.5 : (pressed ? 0.8 : 1),
                   },
                 ]}
               >
+                {/* Step Number Badge */}
                 <View
                   style={[
-                    styles.contentIcon,
-                    { backgroundColor: contentCompleted ? colors.success + '20' : colors.primary + '20' },
+                    styles.stepBadge,
+                    {
+                      backgroundColor: isCompleted
+                        ? colors.success + '20'
+                        : isActive
+                          ? colors.primary + '15'
+                          : colors.surface,
+                    },
                   ]}
                 >
-                  <Ionicons
-                    name={contentCompleted ? 'checkmark-circle' : iconName}
-                    size={24}
-                    color={contentCompleted ? colors.success : colors.primary}
-                  />
+                  {isCompleted ? (
+                    <Ionicons name="checkmark" size={16} color={colors.success} />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.stepNumber,
+                        { color: isActive ? colors.primary : colors.textMuted },
+                      ]}
+                    >
+                      {index + 1}
+                    </Text>
+                  )}
                 </View>
-                <View style={styles.contentInfo}>
-                  <Text style={[typography.label, { color: colors.textMuted, textTransform: 'uppercase' }]}>
-                    {t(`training.contentTypes.${content.type}`)}
-                  </Text>
-                  <Text style={[typography.h3, { color: colors.textPrimary, marginTop: 2, fontSize: 16 }]}>
+
+                {/* Content Info */}
+                <View style={styles.stepContent}>
+                  <View style={styles.stepHeader}>
+                    <Ionicons
+                      name={iconName}
+                      size={16}
+                      color={isLocked ? colors.textMuted : typeColor}
+                    />
+                    <Text
+                      style={[
+                        styles.stepType,
+                        { color: isLocked ? colors.textMuted : typeColor },
+                      ]}
+                    >
+                      {t(`training.contentTypes.${content.type}`)}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepTitle,
+                      { color: isLocked ? colors.textMuted : colors.textPrimary },
+                    ]}
+                    numberOfLines={1}
+                  >
                     {t(content.titleKey)}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+
+                {/* Status Icon */}
+                <View style={styles.stepStatus}>
+                  {isCompleted ? (
+                    <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+                  ) : isActive ? (
+                    <Ionicons name="chevron-forward-circle" size={24} color={colors.primary} />
+                  ) : (
+                    <Ionicons name="lock-closed" size={20} color={colors.textMuted} />
+                  )}
+                </View>
               </Pressable>
             </Animated.View>
           );
@@ -219,9 +275,13 @@ export default function TopicDetailScreen() {
           <Text style={[typography.h2, { color: colors.textPrimary, marginBottom: spacing.lg }]}>
             {t(currentContent.titleKey)}
           </Text>
-          <Text style={[typography.body, { color: colors.textSecondary, lineHeight: 26 }]}>
-            {t(currentContent.bodyKey)}
-          </Text>
+          {/* Markdown content with note.com-style typography */}
+          <MarkdownContent content={t(currentContent.bodyKey)} />
+
+          {/* Related app features section */}
+          {topic.relatedFeatures && topic.relatedFeatures.length > 0 && (
+            <FeatureLinkSection features={topic.relatedFeatures} />
+          )}
         </Animated.View>
 
         <View style={[styles.buttonContainer, { marginTop: spacing['2xl'] }]}>
@@ -494,24 +554,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  contentsList: {
-    gap: 12,
+  // Step-based content list styles
+  stepList: {
+    // Inline styles for borderRadius and backgroundColor
   },
-  contentCard: {
+  stepItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
-  contentIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  stepBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
-  contentInfo: {
+  stepNumber: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  stepContent: {
     flex: 1,
+    marginRight: 8,
+  },
+  stepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  stepType: {
+    fontSize: 12,
+    marginLeft: 6,
+  },
+  stepTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  stepStatus: {
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   questionCard: {
     // inline styles

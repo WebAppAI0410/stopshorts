@@ -8,3 +8,5 @@ export { FeatureTopicCard } from './FeatureTopicCard';
 export { TopicGridCard } from './TopicGridCard';
 export { ContentListItem } from './ContentListItem';
 export { CategorySection } from './CategorySection';
+export { MarkdownContent } from './MarkdownContent';
+export { FeatureLinkSection } from './FeatureLinkSection';

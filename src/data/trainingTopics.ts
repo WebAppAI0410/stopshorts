@@ -3,7 +3,48 @@
  * Psychological training content for habit change support
  */
 
-import type { TrainingTopic } from '../types/training';
+import type { TrainingTopic, RelatedFeature } from '../types/training';
+
+/**
+ * Reusable related feature definitions
+ */
+const RELATED_FEATURES: Record<string, RelatedFeature> = {
+  ifThenSettings: {
+    id: 'if-then-settings',
+    titleKey: 'training.relatedFeatures.ifThenSettings.title',
+    descriptionKey: 'training.relatedFeatures.ifThenSettings.description',
+    route: '/(main)/if-then-settings',
+    icon: 'git-branch-outline',
+  },
+  urgeSurfing: {
+    id: 'urge-surfing',
+    titleKey: 'training.relatedFeatures.urgeSurfing.title',
+    descriptionKey: 'training.relatedFeatures.urgeSurfing.description',
+    route: '/(main)/urge-surfing',
+    icon: 'water-outline',
+  },
+  alternativeSettings: {
+    id: 'alternative-settings',
+    titleKey: 'training.relatedFeatures.alternativeSettings.title',
+    descriptionKey: 'training.relatedFeatures.alternativeSettings.description',
+    route: '/(main)/alternative-settings',
+    icon: 'shuffle-outline',
+  },
+  interventionSettings: {
+    id: 'intervention-settings',
+    titleKey: 'training.relatedFeatures.interventionSettings.title',
+    descriptionKey: 'training.relatedFeatures.interventionSettings.description',
+    route: '/(main)/intervention-settings',
+    icon: 'shield-outline',
+  },
+  goalSettings: {
+    id: 'goal-settings',
+    titleKey: 'training.relatedFeatures.goalSettings.title',
+    descriptionKey: 'training.relatedFeatures.goalSettings.description',
+    route: '/(main)/goal-settings',
+    icon: 'flag-outline',
+  },
+};
 
 /**
  * All available training topics
@@ -74,6 +115,7 @@ export const TRAINING_TOPICS: TrainingTopic[] = [
         ],
       },
     ],
+    relatedFeatures: [RELATED_FEATURES.alternativeSettings],
   },
 
   {
@@ -136,6 +178,7 @@ export const TRAINING_TOPICS: TrainingTopic[] = [
         ],
       },
     ],
+    relatedFeatures: [RELATED_FEATURES.ifThenSettings],
   },
 
   {
@@ -209,6 +252,7 @@ export const TRAINING_TOPICS: TrainingTopic[] = [
         ],
       },
     ],
+    relatedFeatures: [RELATED_FEATURES.urgeSurfing],
   },
 
   {
@@ -271,6 +315,7 @@ export const TRAINING_TOPICS: TrainingTopic[] = [
         ],
       },
     ],
+    relatedFeatures: [RELATED_FEATURES.interventionSettings],
   },
 
   {
@@ -333,6 +378,7 @@ export const TRAINING_TOPICS: TrainingTopic[] = [
         ],
       },
     ],
+    relatedFeatures: [RELATED_FEATURES.interventionSettings],
   },
 
   // ============================================
@@ -399,6 +445,7 @@ export const TRAINING_TOPICS: TrainingTopic[] = [
         ],
       },
     ],
+    relatedFeatures: [RELATED_FEATURES.alternativeSettings],
   },
 
   {
@@ -472,6 +519,7 @@ export const TRAINING_TOPICS: TrainingTopic[] = [
         ],
       },
     ],
+    relatedFeatures: [RELATED_FEATURES.goalSettings],
   },
 
   // ============================================
@@ -538,6 +586,7 @@ export const TRAINING_TOPICS: TrainingTopic[] = [
         ],
       },
     ],
+    relatedFeatures: [RELATED_FEATURES.interventionSettings, RELATED_FEATURES.goalSettings],
   },
 
   {
@@ -611,6 +660,7 @@ export const TRAINING_TOPICS: TrainingTopic[] = [
         ],
       },
     ],
+    relatedFeatures: [RELATED_FEATURES.goalSettings, RELATED_FEATURES.alternativeSettings],
   },
 ];
 
