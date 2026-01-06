@@ -63,11 +63,7 @@ function HistogramRow({ label, data, color, maxValue }: HistogramRowProps) {
   );
 }
 
-export interface TimeOfDayBreakdownProps {
-  // No props needed - uses store directly
-}
-
-export function TimeOfDayBreakdown(_props: TimeOfDayBreakdownProps) {
+export function TimeOfDayBreakdown() {
   const { colors, typography, spacing, borderRadius } = useTheme();
   const { getTimeOfDayPatterns } = useStatisticsStore();
 

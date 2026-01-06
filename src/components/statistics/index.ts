@@ -15,4 +15,3 @@ export { IntentionPatternChart } from './IntentionPatternChart';
 export type { IntentionPatternChartProps } from './IntentionPatternChart';
 
 export { TimeOfDayBreakdown } from './TimeOfDayBreakdown';
-export type { TimeOfDayBreakdownProps } from './TimeOfDayBreakdown';
