@@ -102,7 +102,7 @@ export default function StatisticsDetailsScreen() {
     return { sign, points };
   }, [weeklyComparison.changePercent]);
 
-  const hasIntentionData = intentionStats.length > 0;
+  const hasIntentionData = Object.keys(intentionStats).length > 0;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>

@@ -71,10 +71,10 @@ export function TimeOfDayBreakdown() {
 
   // Calculate max values for scaling
   const maxIntervention = Math.max(
-    patterns.interventions.morning,
-    patterns.interventions.daytime,
-    patterns.interventions.evening,
-    patterns.interventions.night,
+    patterns.intervention.morning,
+    patterns.intervention.daytime,
+    patterns.intervention.evening,
+    patterns.intervention.night,
     1
   );
   const maxUsage = Math.max(
@@ -124,7 +124,7 @@ export function TimeOfDayBreakdown() {
       {/* Intervention row */}
       <HistogramRow
         label={t('statistics.details.interventionTime')}
-        data={patterns.interventions}
+        data={patterns.intervention}
         color={colors.warning}
         maxValue={maxIntervention}
       />

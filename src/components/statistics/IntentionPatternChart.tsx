@@ -13,7 +13,17 @@ export function IntentionPatternChart({ maxItems = 5 }: IntentionPatternChartPro
   const { colors, typography, spacing, borderRadius } = useTheme();
   const { getIntentionPatternStats } = useStatisticsStore();
 
-  const stats = getIntentionPatternStats();
+  const statsRecord = getIntentionPatternStats();
+
+  // Convert Record to array for rendering
+  const stats = Object.entries(statsRecord)
+    .map(([intentionId, data]) => ({
+      intentionId: intentionId as IntentionId,
+      count: data.count,
+      percentage: data.percentage,
+      proceeded: 0, // Not tracked separately in store
+    }))
+    .sort((a, b) => b.count - a.count);
 
   // Return null if no data
   if (stats.length === 0) {

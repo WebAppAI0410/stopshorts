@@ -1,23 +1,22 @@
 /**
  * Badge System for StopShorts
- * Based on HABIT_COACHING_FEATURE.md v3.0
+ * Based on Statistics v2 specification
  */
 
 import type { Badge, BadgeCondition, LifetimeStatistics, DailyStatistics } from '../types/statistics';
 
-/**
- * Badges that trigger confetti celebration when earned
- */
-export const CONFETTI_BADGES: readonly string[] = [
-  'reduction_75',
-  'intervention_success_100',
-  'habit_score_90',
-  'streak_21', // 21-day streak is also a major achievement
-  'streak_66', // 66-day streak is legendary
-];
+// Additional context for badge evaluation
+export interface BadgeEvaluationContext {
+  habitScore: number;
+  interventionSuccessCount: number;  // Total dismissed interventions
+  reductionPercent: number | null;   // Reduction from baseline (null if no baseline)
+}
+
+// High-rank badges that should show confetti
+export const CONFETTI_BADGES = ['reduction_75', 'intervention_success_100', 'habit_score_90'];
 
 /**
- * Check if a badge should show confetti animation
+ * Check if a badge should show confetti when earned
  */
 export function shouldShowConfetti(badgeId: string): boolean {
   return CONFETTI_BADGES.includes(badgeId);
@@ -25,6 +24,7 @@ export function shouldShowConfetti(badgeId: string): boolean {
 
 // Badge Definitions (without earnedAt)
 export const BADGE_DEFINITIONS: Omit<Badge, 'earnedAt'>[] = [
+  // First surf badge
   {
     id: 'first_wave',
     name: '初めての波',
@@ -32,41 +32,7 @@ export const BADGE_DEFINITIONS: Omit<Badge, 'earnedAt'>[] = [
     icon: '🌊',
     condition: { type: 'first_surf' },
   },
-  {
-    id: 'streak_3',
-    name: '3日連続',
-    description: '習慣の芽が出てきました',
-    icon: '🔥',
-    condition: { type: 'streak', days: 3 },
-  },
-  {
-    id: 'streak_7',
-    name: '1週間サーファー',
-    description: '波乗りが上手になってきました',
-    icon: '💪',
-    condition: { type: 'streak', days: 7 },
-  },
-  {
-    id: 'streak_14',
-    name: '2週間マスター',
-    description: '衝動をコントロールできています',
-    icon: '⭐',
-    condition: { type: 'streak', days: 14 },
-  },
-  {
-    id: 'streak_21',
-    name: '21日チャンピオン',
-    description: '新しい習慣が形成されました！',
-    icon: '🏆',
-    condition: { type: 'streak', days: 21 },
-  },
-  {
-    id: 'streak_66',
-    name: '66日レジェンド',
-    description: '科学的に習慣が定着',
-    icon: '👑',
-    condition: { type: 'streak', days: 66 },
-  },
+  // Total surfs badge
   {
     id: 'surfs_100',
     name: '100回サーファー',
@@ -74,12 +40,65 @@ export const BADGE_DEFINITIONS: Omit<Badge, 'earnedAt'>[] = [
     icon: '🏄',
     condition: { type: 'total_surfs', count: 100 },
   },
+  // Saved hours badge
   {
     id: 'saved_10h',
     name: '10時間救済者',
     description: '貴重な時間を取り戻しました',
     icon: '⏰',
     condition: { type: 'saved_hours', hours: 10 },
+  },
+  // Reduction badges (requires baseline)
+  {
+    id: 'reduction_25',
+    name: '25%削減達成',
+    description: 'ベースラインから25%削減',
+    icon: '📉',
+    condition: { type: 'reduction', percent: 25 },
+  },
+  {
+    id: 'reduction_50',
+    name: '50%削減達成',
+    description: 'ベースラインから50%削減',
+    icon: '📊',
+    condition: { type: 'reduction', percent: 50 },
+  },
+  {
+    id: 'reduction_75',
+    name: '75%削減達成',
+    description: 'ベースラインから75%削減！',
+    icon: '🎯',
+    condition: { type: 'reduction', percent: 75 },
+  },
+  // Intervention success badges
+  {
+    id: 'intervention_success_50',
+    name: '介入50回成功',
+    description: '誘惑に打ち勝った50回',
+    icon: '💪',
+    condition: { type: 'intervention_success', count: 50 },
+  },
+  {
+    id: 'intervention_success_100',
+    name: '介入100回成功',
+    description: '誘惑を完全に制御',
+    icon: '🏆',
+    condition: { type: 'intervention_success', count: 100 },
+  },
+  // Habit score badges
+  {
+    id: 'habit_score_70',
+    name: '習慣スコア70',
+    description: '良好な習慣を形成中',
+    icon: '⭐',
+    condition: { type: 'habit_score', score: 70 },
+  },
+  {
+    id: 'habit_score_90',
+    name: '習慣スコア90',
+    description: '素晴らしい習慣を達成！',
+    icon: '👑',
+    condition: { type: 'habit_score', score: 90 },
   },
 ];
 
@@ -89,20 +108,37 @@ export const BADGE_DEFINITIONS: Omit<Badge, 'earnedAt'>[] = [
 function checkCondition(
   condition: BadgeCondition,
   lifetime: LifetimeStatistics,
-  _dailyStats: Record<string, DailyStatistics>
+  _dailyStats: Record<string, DailyStatistics>,
+  context?: BadgeEvaluationContext
 ): boolean {
   switch (condition.type) {
     case 'first_surf':
       return lifetime.totalUrgeSurfingCompleted >= 1;
-
-    case 'streak':
-      return lifetime.currentStreak >= condition.days;
 
     case 'total_surfs':
       return lifetime.totalUrgeSurfingCompleted >= condition.count;
 
     case 'saved_hours':
       return lifetime.totalSavedHours >= condition.hours;
+
+    case 'reduction':
+      // Requires baseline to be set
+      if (!context || context.reductionPercent === null) {
+        return false;
+      }
+      return context.reductionPercent >= condition.percent;
+
+    case 'intervention_success':
+      if (!context) {
+        return false;
+      }
+      return context.interventionSuccessCount >= condition.count;
+
+    case 'habit_score':
+      if (!context) {
+        return false;
+      }
+      return context.habitScore >= condition.score;
 
     default:
       return false;
@@ -114,7 +150,8 @@ function checkCondition(
  */
 export function checkBadges(
   lifetime: LifetimeStatistics,
-  dailyStats: Record<string, DailyStatistics>
+  dailyStats: Record<string, DailyStatistics>,
+  context?: BadgeEvaluationContext
 ): Badge[] {
   const now = new Date().toISOString();
 
@@ -124,7 +161,7 @@ export function checkBadges(
       return badge;
     }
 
-    const earned = checkCondition(badge.condition, lifetime, dailyStats);
+    const earned = checkCondition(badge.condition, lifetime, dailyStats, context);
 
     if (earned) {
       return { ...badge, earnedAt: now };
@@ -136,6 +173,7 @@ export function checkBadges(
 
 /**
  * Calculate current streak from daily statistics
+ * Note: Streak is still calculated but not displayed in v2 UI
  */
 export function calculateStreak(
   dailyStats: Record<string, DailyStatistics>,
@@ -195,7 +233,8 @@ export function getEarnedBadgesCount(badges: Badge[]): number {
  */
 export function getBadgeProgress(
   badge: Badge,
-  lifetime: LifetimeStatistics
+  lifetime: LifetimeStatistics,
+  context?: BadgeEvaluationContext
 ): { current: number; target: number; percentage: number } {
   if (badge.earnedAt) {
     return { current: 1, target: 1, percentage: 100 };
@@ -208,16 +247,6 @@ export function getBadgeProgress(
         target: 1,
         percentage: lifetime.totalUrgeSurfingCompleted >= 1 ? 100 : 0,
       };
-
-    case 'streak': {
-      const target = badge.condition.days;
-      const current = Math.min(lifetime.currentStreak, target);
-      return {
-        current,
-        target,
-        percentage: Math.round((current / target) * 100),
-      };
-    }
 
     case 'total_surfs': {
       const target = badge.condition.count;
@@ -232,6 +261,39 @@ export function getBadgeProgress(
     case 'saved_hours': {
       const target = badge.condition.hours;
       const current = Math.min(lifetime.totalSavedHours, target);
+      return {
+        current,
+        target,
+        percentage: Math.round((current / target) * 100),
+      };
+    }
+
+    case 'reduction': {
+      const target = badge.condition.percent;
+      if (!context || context.reductionPercent === null) {
+        return { current: 0, target, percentage: 0 };
+      }
+      const current = Math.min(Math.max(context.reductionPercent, 0), target);
+      return {
+        current,
+        target,
+        percentage: Math.round((current / target) * 100),
+      };
+    }
+
+    case 'intervention_success': {
+      const target = badge.condition.count;
+      const current = context ? Math.min(context.interventionSuccessCount, target) : 0;
+      return {
+        current,
+        target,
+        percentage: Math.round((current / target) * 100),
+      };
+    }
+
+    case 'habit_score': {
+      const target = badge.condition.score;
+      const current = context ? Math.min(context.habitScore, target) : 0;
       return {
         current,
         target,

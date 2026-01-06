@@ -15,3 +15,9 @@ export { IntentionPatternChart } from './IntentionPatternChart';
 export type { IntentionPatternChartProps } from './IntentionPatternChart';
 
 export { TimeOfDayBreakdown } from './TimeOfDayBreakdown';
+
+export { CircularGauge } from './CircularGauge';
+export type { CircularGaugeProps } from './CircularGauge';
+
+export { HabitScoreCard } from './HabitScoreCard';
+export type { HabitScoreCardProps } from './HabitScoreCard';

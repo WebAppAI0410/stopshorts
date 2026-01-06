@@ -842,6 +842,8 @@
     "streak": "連続日数",
     "days": "日",
     "keepMomentum": "この調子で続けましょう！",
+    "habitScore": "習慣スコア",
+    "habitScoreEncouragement": "まずは目標を達成してみましょう",
     "interventions": "介入回数",
     "times": "回",
     "surfing": "サーフィング",
@@ -886,14 +888,35 @@
       "sat": "土",
       "sun": "日"
     },
+    "habitScore": "習慣スコア",
+    "habitScoreEncouragement": "大丈夫、ここから始めよう",
+    "interventionSuccess": "介入成功率",
+    "interventionSuccessDetail": "{{success}}回成功 / {{total}}回発動",
     "details": {
       "title": "詳細統計",
-      "thisWeekChange": "今週は{{sign}}{{points}}ポイント",
+      "habitScoreSection": "習慣スコア",
+      "thisWeekChange": "今週: {{sign}}{{points}}pts",
+      "interventionByType": "介入タイプ別成功率",
+      "breathing": "呼吸ガイド",
+      "friction": "フリクション",
+      "mirror": "ミラー",
+      "ai": "AIコーチ",
+      "notUsed": "未使用",
       "intentionPattern": "使用意図パターン",
+      "timeOfDayPattern": "時間帯別傾向",
       "timeOfDayBreakdown": "時間帯別傾向",
       "interventionTime": "介入発生",
       "usageTime": "使用時間",
       "noIntentionData": "意図データがありません"
+    },
+    "badges": {
+      "reduction_25": "25%削減達成",
+      "reduction_50": "50%削減達成",
+      "reduction_75": "75%削減達成",
+      "intervention_success_50": "介入50回成功",
+      "intervention_success_100": "介入100回成功",
+      "habit_score_70": "習慣スコア70",
+      "habit_score_90": "習慣スコア90"
     },
     "badgeDialog": {
       "title": "バッジ獲得！",
@@ -904,7 +927,9 @@
       "title": "スコア100達成！",
       "message": "素晴らしい！習慣スコアが最高点に到達しました。この調子を維持しましょう！",
       "dismiss": "閉じる"
-    }
+    },
+    "loading": "読み込み中...",
+    "error": "データの読み込みに失敗しました"
   },
   "profile": {
     "title": "プロフィール",
