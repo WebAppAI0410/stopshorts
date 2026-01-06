@@ -12,6 +12,8 @@ interface MockStoreState {
   subscriptionPlan: SubscriptionPlan;
   subscriptionStatus: SubscriptionStatus;
   subscriptionExpiry: string | null;
+  trialStartDate?: string | null;
+  revenueCatState?: string | null;
 }
 
 function setupMockStore(state: MockStoreState) {
@@ -35,6 +37,8 @@ describe('useSubscriptionAccess', () => {
         subscriptionPlan: 'trial',
         subscriptionStatus: 'active',
         subscriptionExpiry: '2025-01-18T00:00:00',
+        trialStartDate: '2025-01-12T00:00:00', // 3 days before current date
+        revenueCatState: 'trial',
       });
 
       const { result } = renderHook(() => useSubscriptionAccess());
@@ -80,6 +84,7 @@ describe('useSubscriptionAccess', () => {
         subscriptionPlan: 'trial',
         subscriptionStatus: 'expired',
         subscriptionExpiry: '2025-01-10T00:00:00',
+        revenueCatState: 'expired',
       });
 
       const { result } = renderHook(() => useSubscriptionAccess());
@@ -109,6 +114,7 @@ describe('useSubscriptionAccess', () => {
         subscriptionPlan: 'trial',
         subscriptionStatus: 'expired',
         subscriptionExpiry: '2025-01-10T00:00:00',
+        revenueCatState: 'expired',
       });
 
       const { result } = renderHook(() => useSubscriptionAccess());
@@ -147,6 +153,7 @@ describe('useSubscriptionAccess', () => {
         subscriptionPlan: 'trial',
         subscriptionStatus: 'expired',
         subscriptionExpiry: '2025-01-10T00:00:00',
+        revenueCatState: 'expired',
       });
 
       const { result } = renderHook(() => useSubscriptionAccess());
@@ -171,6 +178,7 @@ describe('useSubscriptionAccess', () => {
         subscriptionPlan: 'trial',
         subscriptionStatus: 'active',
         subscriptionExpiry: 'invalid-date',
+        revenueCatState: 'trial',
       });
 
       const { result } = renderHook(() => useSubscriptionAccess());
