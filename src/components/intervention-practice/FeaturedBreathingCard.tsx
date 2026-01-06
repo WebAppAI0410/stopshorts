@@ -1,13 +1,14 @@
 /**
  * FeaturedBreathingCard - Hero card for the recommended Breathing Guide intervention
  * Features gradient background with wave pattern and SVG leaf illustration
- * Matches the mockup design with emerald/teal gradient and circular glow effect
+ * Uses expo-linear-gradient for reliable Android rendering
  */
 
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import Svg, { Circle, Defs, LinearGradient, Stop, Rect, Path, G } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle, Path, G } from 'react-native-svg';
 import { useTheme } from '../../contexts/ThemeContext';
 import { palette } from '../../design/theme';
 import { t } from '../../i18n';
@@ -21,27 +22,27 @@ export interface FeaturedBreathingCardProps {
 const LeafIllustration: React.FC = () => (
   <Svg width={90} height={90} viewBox="0 0 90 90">
     {/* Outer glow circles - concentric rings */}
-    <Circle cx="45" cy="45" r="44" fill="rgba(255,255,255,0.03)" />
-    <Circle cx="45" cy="45" r="38" fill="rgba(255,255,255,0.05)" />
-    <Circle cx="45" cy="45" r="32" fill="rgba(255,255,255,0.07)" />
+    <Circle cx="45" cy="45" r="44" fill="rgba(255,255,255,0.05)" />
+    <Circle cx="45" cy="45" r="36" fill="rgba(255,255,255,0.08)" />
+    <Circle cx="45" cy="45" r="28" fill="rgba(255,255,255,0.12)" />
 
     {/* Main leaf group */}
     <G transform="translate(28, 18)">
       {/* Left leaf */}
       <Path
         d="M17 5C17 5 5 15 5 30C5 40 12 48 17 50"
-        fill="rgba(255,255,255,0.9)"
+        fill="rgba(255,255,255,0.95)"
       />
       {/* Right leaf */}
       <Path
         d="M17 5C17 5 29 15 29 30C29 40 22 48 17 50"
-        fill="rgba(255,255,255,0.9)"
+        fill="rgba(255,255,255,0.95)"
       />
       {/* Center vein */}
       <Path
         d="M17 10L17 50"
         stroke={palette.teal[500]}
-        strokeWidth="2"
+        strokeWidth="2.5"
         strokeLinecap="round"
         fill="none"
       />
@@ -64,9 +65,33 @@ const LeafIllustration: React.FC = () => (
     </G>
 
     {/* Small decorative water drops */}
-    <Circle cx="68" cy="25" r="4" fill="rgba(255,255,255,0.4)" />
-    <Circle cx="75" cy="40" r="3" fill="rgba(255,255,255,0.3)" />
-    <Circle cx="70" cy="60" r="2.5" fill="rgba(255,255,255,0.25)" />
+    <Circle cx="70" cy="22" r="4" fill="rgba(255,255,255,0.5)" />
+    <Circle cx="76" cy="38" r="3" fill="rgba(255,255,255,0.4)" />
+    <Circle cx="72" cy="55" r="2.5" fill="rgba(255,255,255,0.3)" />
+  </Svg>
+);
+
+// Wave pattern overlay
+const WavePattern: React.FC = () => (
+  <Svg
+    width="100%"
+    height={80}
+    viewBox="0 0 400 80"
+    preserveAspectRatio="none"
+    style={styles.wavePattern}
+  >
+    <Path
+      d="M0,30 Q80,10 160,30 T320,30 T480,30 L480,80 L0,80 Z"
+      fill="rgba(255,255,255,0.04)"
+    />
+    <Path
+      d="M0,45 Q100,25 200,45 T400,45 L400,80 L0,80 Z"
+      fill="rgba(255,255,255,0.03)"
+    />
+    <Path
+      d="M0,60 Q120,40 240,60 T480,60 L480,80 L0,80 Z"
+      fill="rgba(255,255,255,0.02)"
+    />
   </Svg>
 );
 
@@ -87,45 +112,20 @@ export const FeaturedBreathingCard: React.FC<FeaturedBreathingCardProps> = ({
           styles.card,
           {
             borderRadius: borderRadius.xl,
-            shadowColor: palette.emerald[500],
             transform: [{ scale: pressed ? 0.98 : 1 }],
           },
         ]}
       >
-        {/* Gradient Background */}
-        <Svg style={StyleSheet.absoluteFill}>
-          <Defs>
-            <LinearGradient id="cardGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-              <Stop offset="0%" stopColor={palette.emerald[500]} />
-              <Stop offset="50%" stopColor={palette.teal[500]} />
-              <Stop offset="100%" stopColor={palette.teal[400]} />
-            </LinearGradient>
-          </Defs>
-          <Rect
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            fill="url(#cardGradient)"
-            rx={borderRadius.xl}
-          />
-        </Svg>
+        {/* Gradient Background using expo-linear-gradient */}
+        <LinearGradient
+          colors={[palette.teal[400], palette.teal[500], palette.emerald[500]]}
+          start={{ x: 1, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={[StyleSheet.absoluteFill, { borderRadius: borderRadius.xl }]}
+        />
 
-        {/* Wave Pattern Background */}
-        <Svg style={styles.wavePattern} viewBox="0 0 400 200" preserveAspectRatio="none">
-          <Path
-            d="M0,80 Q80,40 160,80 T320,80 T480,80 L480,200 L0,200 Z"
-            fill="rgba(255,255,255,0.04)"
-          />
-          <Path
-            d="M0,100 Q100,60 200,100 T400,100 L400,200 L0,200 Z"
-            fill="rgba(255,255,255,0.03)"
-          />
-          <Path
-            d="M0,130 Q120,90 240,130 T480,130 L480,200 L0,200 Z"
-            fill="rgba(255,255,255,0.02)"
-          />
-        </Svg>
+        {/* Wave Pattern Overlay */}
+        <WavePattern />
 
         {/* Content */}
         <View style={styles.content}>
@@ -169,7 +169,7 @@ export const FeaturedBreathingCard: React.FC<FeaturedBreathingCardProps> = ({
             </View>
           </View>
 
-          {/* Right side - Leaf illustration with circular glow */}
+          {/* Right side - Leaf illustration */}
           <View style={styles.illustrationContainer}>
             <LeafIllustration />
           </View>
@@ -183,9 +183,10 @@ const styles = StyleSheet.create({
   card: {
     height: 220,
     overflow: 'hidden',
+    shadowColor: palette.emerald[500],
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
-    shadowRadius: 24,
+    shadowRadius: 16,
     elevation: 8,
   },
   wavePattern: {
@@ -193,7 +194,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 120,
   },
   content: {
     flex: 1,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     paddingHorizontal: 14,
     paddingVertical: 6,
   },
@@ -217,10 +217,10 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '700',
-    marginTop: 10,
-    letterSpacing: -0.5,
+    marginTop: 8,
+    letterSpacing: -0.3,
   },
   tagline: {
     color: 'rgba(255, 255, 255, 0.9)',
@@ -229,22 +229,22 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   description: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 15,
-    marginTop: 6,
-    lineHeight: 22,
+    marginTop: 4,
+    lineHeight: 20,
   },
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginTop: 16,
+    marginTop: 12,
   },
   durationBadge: {
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.5)',
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
   durationText: {
     color: '#FFFFFF',
@@ -253,16 +253,16 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
   },
   ctaText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
   illustrationContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
+    marginLeft: 4,
   },
 });
