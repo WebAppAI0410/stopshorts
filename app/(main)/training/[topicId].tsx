@@ -18,6 +18,7 @@ import { getTopicById } from '../../../src/data/trainingTopics';
 import type { TrainingContent } from '../../../src/types/training';
 
 type ContentPhase = 'list' | 'article' | 'quiz' | 'worksheet' | 'complete';
+type ContentState = 'completed' | 'active' | 'locked';
 
 export default function TopicDetailScreen() {
   const router = useRouter();
