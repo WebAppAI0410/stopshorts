@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Header } from '../../src/components/ui';
 import { FeaturedInterventionCard, MiniInterventionCard } from '../../src/components/intervention-practice';
@@ -12,6 +13,56 @@ import { useAIStore } from '../../src/stores/useAIStore';
 import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
 import { t } from '../../src/i18n';
 import { palette } from '../../src/design/theme';
+
+// Mini card configuration for each intervention type
+type MiniCardConfig = {
+  type: InterventionType;
+  titleKey: string;
+  subtitleKey: string;
+  iconName: ComponentProps<typeof Ionicons>['name'];
+  iconColor: string;
+  iconBgColor: string;
+  testID: string;
+};
+
+const MINI_CARD_CONFIGS: Record<InterventionType, MiniCardConfig> = {
+  breathing: {
+    type: 'breathing',
+    titleKey: 'intervention.practice.options.breathing.title',
+    subtitleKey: 'intervention.practice.options.breathing.tagline',
+    iconName: 'leaf',
+    iconColor: palette.emerald[500],
+    iconBgColor: palette.emerald[500] + '20',
+    testID: 'mini-card-breathing',
+  },
+  friction: {
+    type: 'friction',
+    titleKey: 'intervention.practice.options.friction.title',
+    subtitleKey: 'intervention.practice.options.friction.description',
+    iconName: 'hourglass-outline',
+    iconColor: palette.orange[500],
+    iconBgColor: palette.orange[500] + '20',
+    testID: 'mini-card-friction',
+  },
+  mirror: {
+    type: 'mirror',
+    titleKey: 'intervention.practice.options.mirror.title',
+    subtitleKey: 'intervention.practice.options.mirror.description',
+    iconName: 'person-outline',
+    iconColor: palette.purple[500],
+    iconBgColor: palette.purple[500] + '20',
+    testID: 'mini-card-mirror',
+  },
+  ai: {
+    type: 'ai',
+    titleKey: 'intervention.practice.options.ai.title',
+    subtitleKey: 'intervention.practice.options.ai.description',
+    iconName: 'logo-android',
+    iconColor: palette.emerald[500],
+    iconBgColor: palette.emerald[500] + '10',
+    testID: 'mini-card-ai',
+  },
+};
 
 // Get recommended intervention based on success rate
 const getRecommendedIntervention = (
@@ -66,36 +117,21 @@ export default function InterventionPracticeScreen() {
     });
   };
 
-  const handleBreathingPress = () => {
-    router.push({
-      pathname: '/(main)/urge-surfing',
-      params: { practiceType: 'breathing', source: 'training' },
-    });
-  };
+  // Get mini cards to display (excluding the recommended type)
+  const otherInterventions = useMemo(() => {
+    const allTypes: InterventionType[] = ['breathing', 'friction', 'mirror', 'ai'];
+    return allTypes.filter(type => type !== recommendedType);
+  }, [recommendedType]);
 
-  const handleFrictionPress = () => {
-    router.push({
-      pathname: '/(main)/urge-surfing',
-      params: { practiceType: 'friction', source: 'training' },
-    });
-  };
-
-  const handleMirrorPress = () => {
-    router.push({
-      pathname: '/(main)/urge-surfing',
-      params: { practiceType: 'mirror', source: 'training' },
-    });
-  };
-
-  const handleAIPress = () => {
-    if (isAIModelReady) {
-      router.push({
-        pathname: '/(main)/urge-surfing',
-        params: { practiceType: 'ai', source: 'training' },
-      });
-    } else {
+  const handleMiniCardPress = (type: InterventionType) => {
+    if (type === 'ai' && !isAIModelReady) {
       // Navigate to AI setup page
       router.push('/(main)/ai');
+    } else {
+      router.push({
+        pathname: '/(main)/urge-surfing',
+        params: { practiceType: type, source: 'training' },
+      });
     }
   };
 
@@ -143,37 +179,26 @@ export default function InterventionPracticeScreen() {
           </View>
 
           <View style={[styles.grid, { gap: spacing.md }]}>
-            <MiniInterventionCard
-              title={t('intervention.practice.options.friction.title')}
-              subtitle={t('intervention.practice.options.friction.description')}
-              iconName="hourglass-outline"
-              iconColor={palette.orange[500]}
-              iconBgColor={palette.orange[500] + '20'}
-              index={0}
-              onPress={handleFrictionPress}
-              testID="mini-card-friction"
-            />
-            <MiniInterventionCard
-              title={t('intervention.practice.options.mirror.title')}
-              subtitle={t('intervention.practice.options.mirror.description')}
-              iconName="person-outline"
-              iconColor={palette.purple[500]}
-              iconBgColor={palette.purple[500] + '20'}
-              index={1}
-              onPress={handleMirrorPress}
-              testID="mini-card-mirror"
-            />
-            <MiniInterventionCard
-              title={t('intervention.practice.options.ai.title')}
-              subtitle={isAIModelReady ? t('intervention.practice.options.ai.description') : t('intervention.practice.locked')}
-              iconName="logo-android"
-              iconColor={palette.emerald[500]}
-              iconBgColor={palette.emerald[500] + '10'}
-              index={2}
-              isLocked={!isAIModelReady}
-              onPress={handleAIPress}
-              testID="mini-card-ai"
-            />
+            {otherInterventions.map((type, index) => {
+              const config = MINI_CARD_CONFIGS[type];
+              const isAI = type === 'ai';
+              const isLocked = isAI && !isAIModelReady;
+
+              return (
+                <MiniInterventionCard
+                  key={type}
+                  title={t(config.titleKey)}
+                  subtitle={isLocked ? t('intervention.practice.locked') : t(config.subtitleKey)}
+                  iconName={config.iconName}
+                  iconColor={config.iconColor}
+                  iconBgColor={config.iconBgColor}
+                  index={index}
+                  isLocked={isLocked}
+                  onPress={() => handleMiniCardPress(type)}
+                  testID={config.testID}
+                />
+              );
+            })}
           </View>
 
           {/* Footer Info */}
