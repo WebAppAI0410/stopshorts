@@ -142,13 +142,15 @@ export function useSubscriptionAccess(): SubscriptionAccessResult {
     subscriptionStatus,
     subscriptionExpiry,
     trialStartDate,
+    revenueCatState: storedRevenueCatState,
   } = useAppStore();
 
   // Calculate days remaining
   const daysRemaining = calculateDaysRemaining(subscriptionExpiry);
 
-  // Derive RevenueCat state
-  const revenueCatState = deriveRevenueCatState(
+  // Use stored RevenueCat state (from real RevenueCat data) if available,
+  // otherwise derive it (for local trial handling without RevenueCat)
+  const revenueCatState = storedRevenueCatState ?? deriveRevenueCatState(
     subscriptionPlan,
     subscriptionStatus,
     daysRemaining,

@@ -93,7 +93,8 @@ export function usePurchase(): UsePurchaseResult {
     const status = stateToStatus(info.state);
     const expiry = info.expirationDate?.toISOString() ?? null;
 
-    setSubscription(plan, status, expiry);
+    // Pass the detailed RevenueCat state to the store for proper access control
+    setSubscription(plan, status, expiry, info.state);
   }, [setSubscription]);
 
   /**

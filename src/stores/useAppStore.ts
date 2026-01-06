@@ -6,6 +6,7 @@ import {
   type ManagedApp,
   type SubscriptionPlan,
   type SubscriptionStatus,
+  type RevenueCatSubscriptionState,
   type SleepProfile,
   type ImplementationIntentConfig,
   type AddictionAssessment,
@@ -51,6 +52,7 @@ interface AppState {
   subscriptionStatus: SubscriptionStatus;
   subscriptionExpiry: string | null;
   trialStartDate: string | null;
+  revenueCatState: RevenueCatSubscriptionState | null;
   interventionDurationMinutes: number;
   urgeSurfingDurationSeconds: UrgeSurfingDurationSeconds;
   implementationIntent: ImplementationIntentConfig | null;
@@ -109,7 +111,8 @@ interface AppState {
   setSubscription: (
     plan: SubscriptionPlan,
     status: SubscriptionStatus,
-    expiry: string | null
+    expiry: string | null,
+    revenueCatState?: RevenueCatSubscriptionState
   ) => void;
   startTrial: () => void;
   setInterventionDuration: (minutes: number) => void;
@@ -189,6 +192,7 @@ const initialState = {
   subscriptionStatus: 'active' as SubscriptionStatus,
   subscriptionExpiry: null,
   trialStartDate: null,
+  revenueCatState: null as RevenueCatSubscriptionState | null,
   interventionDurationMinutes: 5,
   urgeSurfingDurationSeconds: 30 as UrgeSurfingDurationSeconds,
   implementationIntent: null,
@@ -259,11 +263,12 @@ export const useAppStore = create<AppState>()(
       setSleepProfile: (profile) =>
         set({ sleepProfile: profile }),
 
-      setSubscription: (plan, status, expiry) =>
+      setSubscription: (plan, status, expiry, revenueCatState) =>
         set({
           subscriptionPlan: plan,
           subscriptionStatus: status,
           subscriptionExpiry: expiry,
+          revenueCatState: revenueCatState ?? null,
         }),
 
       startTrial: () => {
