@@ -1,32 +1,26 @@
 /**
  * Training Topic Selection Screen
- * Shows available psychological training topics organized by category
+ * Redesigned with card-based UI, progress ring, and featured recommendations
  */
 
 import React, { useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
-import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Header, GlowOrb } from '../../../src/components/ui';
 import { useTheme } from '../../../src/contexts/ThemeContext';
 import { t } from '../../../src/i18n';
 import { useAppStore } from '../../../src/stores/useAppStore';
 import { TRAINING_TOPICS, getTopicsByCategory } from '../../../src/data/trainingTopics';
+import {
+  ProgressRing,
+  FeatureTopicCard,
+  CategorySection,
+} from '../../../src/components/training';
 import type { TrainingCategory, TrainingTopic } from '../../../src/types/training';
 
-type CategoryInfo = {
-  category: TrainingCategory;
-  icon: keyof typeof Ionicons.glyphMap;
-  colorKey: 'primary' | 'accent' | 'success';
-};
-
-const CATEGORIES: CategoryInfo[] = [
-  { category: 'research', icon: 'book-outline', colorKey: 'primary' },
-  { category: 'emotional', icon: 'heart-outline', colorKey: 'accent' },
-  { category: 'goal', icon: 'flag-outline', colorKey: 'success' },
-];
+const CATEGORIES: TrainingCategory[] = ['research', 'emotional', 'goal'];
 
 export default function TrainingScreen() {
   const router = useRouter();
@@ -41,9 +35,43 @@ export default function TrainingScreen() {
     };
   }, []);
 
-  const completedTopicCount = useMemo(() => {
-    return getCompletedTopicIds().length;
+  const completedTopicIds = useMemo(() => {
+    return getCompletedTopicIds();
   }, [trainingProgress, getCompletedTopicIds]);
+
+  const completedTopicCount = completedTopicIds.length;
+  const totalTopicCount = TRAINING_TOPICS.length;
+  const allCompleted = completedTopicCount === totalTopicCount;
+
+  // Find the recommended topic (highest progress among incomplete topics)
+  const recommendedTopic = useMemo((): TrainingTopic | null => {
+    if (allCompleted) return null;
+
+    let bestTopic: TrainingTopic | null = null;
+    let bestProgress = -1;
+
+    for (const topic of TRAINING_TOPICS) {
+      const progress = trainingProgress[topic.id];
+      const isCompleted = progress?.isCompleted ?? false;
+
+      if (!isCompleted) {
+        const completedContents = progress?.completedContents.length ?? 0;
+        const totalContents = topic.contents.length;
+        const progressRatio = totalContents > 0 ? completedContents / totalContents : 0;
+
+        // Prioritize topics that are in progress (started but not completed)
+        if (completedContents > 0 && progressRatio > bestProgress) {
+          bestProgress = progressRatio;
+          bestTopic = topic;
+        } else if (bestTopic === null) {
+          // If no in-progress topic found, use the first not-started topic
+          bestTopic = topic;
+        }
+      }
+    }
+
+    return bestTopic;
+  }, [trainingProgress, allCompleted]);
 
   const handleTopicPress = useCallback(
     (topicId: string) => {
@@ -52,161 +80,32 @@ export default function TrainingScreen() {
     [router]
   );
 
-  const getColorForCategory = (colorKey: 'primary' | 'accent' | 'success') => {
-    switch (colorKey) {
-      case 'primary':
-        return colors.primary;
-      case 'accent':
-        return colors.accent;
-      case 'success':
-        return colors.success;
-    }
-  };
-
-  const renderTopicCard = (topic: TrainingTopic, index: number, colorKey: 'primary' | 'accent' | 'success') => {
-    const color = getColorForCategory(colorKey);
-    const topicProgress = trainingProgress[topic.id];
-    const completedContents = topicProgress?.completedContents.length ?? 0;
-    const totalContents = topic.contents.length;
-    const progress = totalContents > 0 ? completedContents / totalContents : 0;
-    const isCompleted = topicProgress?.isCompleted ?? false;
-
-    return (
-      <Animated.View
-        key={topic.id}
-        entering={FadeInRight.duration(400).delay(200 + index * 80)}
-      >
-        <Pressable
-          onPress={() => handleTopicPress(topic.id)}
-          style={({ pressed }) => [
-            styles.topicCard,
-            {
-              backgroundColor: colors.backgroundCard,
-              borderRadius: borderRadius.lg,
-              opacity: pressed ? 0.8 : 1,
-            },
-          ]}
-        >
-          <View style={styles.topicContent}>
-            <View style={styles.topicHeader}>
-              <Text
-                style={[typography.h3, { color: colors.textPrimary, flex: 1, fontSize: 16 }]}
-                numberOfLines={1}
-              >
-                {t(topic.titleKey)}
-              </Text>
-              {isCompleted && (
-                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-              )}
-            </View>
-            <Text
-              style={[typography.bodySmall, { color: colors.textSecondary, marginTop: 2 }]}
-              numberOfLines={2}
-            >
-              {t(topic.descriptionKey)}
-            </Text>
-            <View style={[styles.topicMeta, { marginTop: spacing.sm }]}>
-              <View style={styles.metaItem}>
-                <Ionicons name="time-outline" size={14} color={colors.textMuted} />
-                <Text style={[typography.caption, { color: colors.textMuted, marginLeft: 4 }]}>
-                  {topic.estimatedMinutes}{t('training.minutes')}
-                </Text>
-              </View>
-              <View style={styles.metaItem}>
-                <Ionicons name="layers-outline" size={14} color={colors.textMuted} />
-                <Text style={[typography.caption, { color: colors.textMuted, marginLeft: 4 }]}>
-                  {completedContents}/{totalContents}
-                </Text>
-              </View>
-            </View>
-            {/* Progress bar */}
-            <View
-              style={[
-                styles.progressBar,
-                { backgroundColor: colors.border, marginTop: spacing.sm },
-              ]}
-            >
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    backgroundColor: color,
-                    width: `${progress * 100}%`,
-                  },
-                ]}
-              />
-            </View>
-          </View>
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={colors.textMuted}
-            style={styles.chevron}
-          />
-        </Pressable>
-      </Animated.View>
-    );
-  };
-
-  const renderCategory = (categoryInfo: CategoryInfo, categoryIndex: number) => {
-    const { category, icon, colorKey } = categoryInfo;
-    const topics = topicsByCategory[category];
-    const color = getColorForCategory(colorKey);
-
-    return (
-      <Animated.View
-        key={category}
-        entering={FadeInUp.duration(500).delay(categoryIndex * 150)}
-        style={[styles.categorySection, { marginBottom: spacing.xl }]}
-      >
-        {/* Category Header */}
-        <View style={styles.categoryHeader}>
-          <View
-            style={[
-              styles.categoryIcon,
-              { backgroundColor: color + '20' },
-            ]}
-          >
-            <Ionicons name={icon} size={20} color={color} />
-          </View>
-          <View style={styles.categoryTitleContainer}>
-            <Text style={[typography.h3, { color: colors.textPrimary }]}>
-              {t(`training.categories.${category}.title`)}
-            </Text>
-            <Text style={[typography.caption, { color: colors.textMuted }]}>
-              {topics.length} {t('training.topicCount')}
-            </Text>
-          </View>
-        </View>
-
-        {/* Topics List */}
-        <View style={[styles.topicsContainer, { marginTop: spacing.md }]}>
-          {topics.map((topic, index) => renderTopicCard(topic, index, colorKey))}
-        </View>
-      </Animated.View>
-    );
-  };
+  const recommendedTopicProgress = recommendedTopic
+    ? trainingProgress[recommendedTopic.id]
+    : null;
+  const recommendedCompletedContents =
+    recommendedTopicProgress?.completedContents.length ?? 0;
+  const recommendedIsCompleted = recommendedTopicProgress?.isCompleted ?? false;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <GlowOrb position="top-right" size="large" color="primary" intensity={0.08} />
 
-      <Header
-        title={t('training.screenTitle')}
-        showBack
-        variant="ghost"
-      />
+      <Header title={t('training.screenTitle')} showBack variant="ghost" />
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.gutter }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingHorizontal: spacing.gutter },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Stats Overview */}
+        {/* Progress Overview */}
         <Animated.View
           entering={FadeInUp.duration(500)}
           style={[
-            styles.statsCard,
+            styles.progressCard,
             {
               backgroundColor: colors.backgroundCard,
               borderRadius: borderRadius.xl,
@@ -215,34 +114,117 @@ export default function TrainingScreen() {
             },
           ]}
         >
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={[typography.h2, { color: colors.textPrimary }]}>{completedTopicCount}</Text>
-              <Text style={[typography.caption, { color: colors.textMuted }]}>
-                {t('training.stats.completed')}
-              </Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statItem}>
-              <Text style={[typography.h2, { color: colors.textPrimary }]}>
-                {TRAINING_TOPICS.length}
-              </Text>
-              <Text style={[typography.caption, { color: colors.textMuted }]}>
+          <View style={styles.progressRow}>
+            <ProgressRing
+              completed={completedTopicCount}
+              total={totalTopicCount}
+              size={100}
+              strokeWidth={8}
+            />
+            <View style={styles.progressInfo}>
+              <Text style={[typography.h3, { color: colors.textPrimary }]}>
                 {t('training.stats.total')}
               </Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statItem}>
-              <Text style={[typography.h2, { color: colors.textPrimary }]}>0</Text>
-              <Text style={[typography.caption, { color: colors.textMuted }]}>
-                {t('training.stats.streak')}
+              <Text
+                style={[
+                  typography.bodySmall,
+                  { color: colors.textSecondary, marginTop: 4 },
+                ]}
+              >
+                {completedTopicCount}/{totalTopicCount} {t('training.topicCount')}
+                {t('training.stats.completed')}
               </Text>
+              {allCompleted && (
+                <Text
+                  style={[
+                    typography.caption,
+                    { color: colors.success, marginTop: 8 },
+                  ]}
+                >
+                  {t('training.congratulations')}
+                </Text>
+              )}
             </View>
           </View>
         </Animated.View>
 
-        {/* Categories */}
-        {CATEGORIES.map((cat, index) => renderCategory(cat, index))}
+        {/* Recommended Topic */}
+        {recommendedTopic && !allCompleted && (
+          <Animated.View
+            entering={FadeInUp.duration(500).delay(100)}
+            style={{ marginBottom: spacing.xl }}
+          >
+            <Text
+              style={[
+                typography.label,
+                { color: colors.textMuted, marginBottom: spacing.sm },
+              ]}
+            >
+              {t('training.recommended')}
+            </Text>
+            <FeatureTopicCard
+              topic={recommendedTopic}
+              completedContents={recommendedCompletedContents}
+              isCompleted={recommendedIsCompleted}
+              onPress={() => handleTopicPress(recommendedTopic.id)}
+            />
+          </Animated.View>
+        )}
+
+        {/* All Completed Celebration */}
+        {allCompleted && (
+          <Animated.View
+            entering={FadeInUp.duration(500).delay(100)}
+            style={[
+              styles.celebrationCard,
+              {
+                backgroundColor: colors.success + '15',
+                borderColor: colors.success,
+                borderRadius: borderRadius.xl,
+                padding: spacing.lg,
+                marginBottom: spacing.xl,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                typography.h3,
+                { color: colors.success, textAlign: 'center' },
+              ]}
+            >
+              {t('training.congratulations')}
+            </Text>
+            <Text
+              style={[
+                typography.bodySmall,
+                { color: colors.textSecondary, textAlign: 'center', marginTop: 8 },
+              ]}
+            >
+              {t('training.allCompleteMessage')}
+            </Text>
+          </Animated.View>
+        )}
+
+        {/* Category Sections */}
+        <Text
+          style={[
+            typography.label,
+            { color: colors.textMuted, marginBottom: spacing.md },
+          ]}
+        >
+          {t('training.allTopics')}
+        </Text>
+
+        {CATEGORIES.map((category, index) => (
+          <CategorySection
+            key={category}
+            category={category}
+            topics={topicsByCategory[category]}
+            trainingProgress={trainingProgress}
+            onTopicPress={handleTopicPress}
+            index={index}
+          />
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -259,73 +241,18 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 40,
   },
-  statsCard: {
+  progressCard: {
     // inline styles
   },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-  },
-  categorySection: {
-    // inline styles
-  },
-  categoryHeader: {
+  progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  categoryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  categoryTitleContainer: {
+  progressInfo: {
     flex: 1,
+    marginLeft: 20,
   },
-  topicsContainer: {
-    gap: 12,
-  },
-  topicCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  topicContent: {
-    flex: 1,
-  },
-  topicHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  topicMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  progressBar: {
-    height: 4,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  chevron: {
-    marginLeft: 12,
+  celebrationCard: {
+    borderWidth: 1,
   },
 });
