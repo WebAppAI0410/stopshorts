@@ -892,6 +892,7 @@
     "habitScoreEncouragement": "大丈夫、ここから始めよう",
     "interventionSuccess": "介入成功率",
     "interventionSuccessDetail": "{{success}}回成功 / {{total}}回発動",
+    "tapForDetails": "タップして詳細",
     "details": {
       "title": "詳細統計",
       "habitScoreSection": "習慣スコア",

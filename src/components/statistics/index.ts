@@ -21,3 +21,6 @@ export type { CircularGaugeProps } from './CircularGauge';
 
 export { HabitScoreCard } from './HabitScoreCard';
 export type { HabitScoreCardProps } from './HabitScoreCard';
+
+export { InterventionSuccessCard } from './InterventionSuccessCard';
+export type { InterventionSuccessCardProps } from './InterventionSuccessCard';

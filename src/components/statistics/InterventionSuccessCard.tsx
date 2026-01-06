@@ -1,8 +1,8 @@
 /**
- * HabitScoreCard - Displays the habit score with a circular gauge
+ * InterventionSuccessCard - Displays intervention success rate
  *
- * A tappable card that shows the user's habit score (0-100)
- * and navigates to the details screen when pressed.
+ * Shows the overall success rate of interventions (dismissed / triggered)
+ * with success count and total triggered count.
  */
 
 import React from 'react';
@@ -15,9 +15,8 @@ import Animated, {
 import { t } from '../../i18n';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
-import { CircularGauge } from './CircularGauge';
 
-export interface HabitScoreCardProps {
+export interface InterventionSuccessCardProps {
   /** Callback when card is pressed */
   onPress?: () => void;
   /** Test ID for testing */
@@ -26,11 +25,18 @@ export interface HabitScoreCardProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export const HabitScoreCard: React.FC<HabitScoreCardProps> = ({ onPress, testID }) => {
-  const { colors, typography, borderRadius } = useTheme();
-  const getHabitScore = useStatisticsStore((state) => state.getHabitScore);
+export const InterventionSuccessCard: React.FC<InterventionSuccessCardProps> = ({
+  onPress,
+  testID,
+}) => {
+  const { colors, typography, spacing, borderRadius } = useTheme();
+  const getOverallInterventionSuccessRate = useStatisticsStore(
+    (state) => state.getOverallInterventionSuccessRate
+  );
 
-  const score = getHabitScore();
+  const stats = getOverallInterventionSuccessRate();
+  const successPercent = Math.round(stats.successRate * 100);
+
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -43,10 +49,6 @@ export const HabitScoreCard: React.FC<HabitScoreCardProps> = ({ onPress, testID 
 
   const handlePressOut = () => {
     scale.value = withTiming(1, { duration: 150 });
-  };
-
-  const handlePress = () => {
-    onPress?.();
   };
 
   return (
@@ -63,7 +65,7 @@ export const HabitScoreCard: React.FC<HabitScoreCardProps> = ({ onPress, testID 
       ]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      onPress={handlePress}
+      onPress={onPress}
     >
       <Text
         style={[
@@ -75,26 +77,48 @@ export const HabitScoreCard: React.FC<HabitScoreCardProps> = ({ onPress, testID 
           },
         ]}
       >
-        {t('statistics.habitScore')}
+        {t('statistics.interventionSuccess')}
       </Text>
 
-      <View style={styles.gaugeContainer}>
-        <CircularGauge value={score} size={100} strokeWidth={10} />
-      </View>
-
-      {score === 0 && (
+      <View style={styles.contentContainer}>
         <Text
           style={[
-            styles.encouragement,
+            styles.percentValue,
             {
-              color: colors.textMuted,
-              fontSize: typography.bodySmall.fontSize,
+              color: colors.accent,
+              fontWeight: 'bold',
             },
           ]}
         >
-          {t('statistics.habitScoreEncouragement')}
+          {successPercent}%
         </Text>
-      )}
+
+        <View style={[styles.detailRow, { marginTop: spacing.xs }]}>
+          <Text
+            style={[
+              typography.bodySmall,
+              { color: colors.textSecondary },
+            ]}
+          >
+            {t('statistics.interventionSuccessDetail', {
+              success: stats.dismissed,
+              total: stats.triggered,
+            })}
+          </Text>
+        </View>
+      </View>
+
+      <Text
+        style={[
+          styles.tapHint,
+          {
+            color: colors.textMuted,
+            fontSize: typography.caption.fontSize,
+          },
+        ]}
+      >
+        {t('statistics.tapForDetails')}
+      </Text>
     </AnimatedPressable>
   );
 };
@@ -112,13 +136,20 @@ const styles = StyleSheet.create({
   label: {
     textAlign: 'center',
   },
-  gaugeContainer: {
+  contentContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  encouragement: {
+  percentValue: {
+    fontSize: 36,
+    lineHeight: 42,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tapHint: {
     textAlign: 'center',
-    marginTop: 8,
   },
 });

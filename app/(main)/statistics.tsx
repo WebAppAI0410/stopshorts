@@ -1,15 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { StatCard } from '../../src/components/ui';
 import {
     TabSelector,
     ComparisonHero,
     DailyComparisonChart,
     WeeklyComparisonChart,
     TrendChart,
+    HabitScoreCard,
+    InterventionSuccessCard,
 } from '../../src/components/statistics';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
@@ -18,11 +20,11 @@ import { t } from '../../src/i18n';
 
 export default function StatisticsScreen() {
     const { colors, typography, spacing, borderRadius } = useTheme();
+    const router = useRouter();
     const [selectedTab, setSelectedTab] = useState<'day' | 'week'>('day');
 
     const {
         getWeeklyStats,
-        getStreak,
         lifetime,
         getEarnedBadges,
         getDailyComparison,
@@ -33,7 +35,6 @@ export default function StatisticsScreen() {
     const { isMockData } = useScreenTimeData();
 
     const weeklyStats = getWeeklyStats();
-    const currentStreak = getStreak();
     const earnedBadges = getEarnedBadges();
     const dailyComparison = getDailyComparison();
     const weeklyComparison = getWeeklyComparison();
@@ -77,9 +78,10 @@ export default function StatisticsScreen() {
         ];
     }, [weeklyComparison]);
 
-    const streakDays = currentStreak || (hasRealData ? currentStreak : 28);
-    const totalUrgeSurfing = lifetime.totalUrgeSurfingCompleted || 0;
-    const successRate = weeklyStats.successRate || 0;
+    // Handler for navigating to details screen
+    const handleDetailsPress = () => {
+        router.push('/(main)/statistics/details' as Href);
+    };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -199,30 +201,14 @@ export default function StatisticsScreen() {
                     </Animated.View>
                 )}
 
-                {/* Stats Cards */}
+                {/* Stats Cards - Habit Score & Intervention Success */}
                 <Animated.View
                     entering={FadeInDown.duration(600).delay(300)}
                     style={[styles.cardsRow, { marginTop: spacing.lg }]}
                 >
-                    <StatCard
-                        icon="flame-outline"
-                        iconColor={colors.streak}
-                        title={t('statistics.streak')}
-                        value={streakDays}
-                        unit={t('statistics.days')}
-                        subtitle={t('statistics.keepMomentum')}
-                        progressColor={colors.streak}
-                    />
+                    <HabitScoreCard onPress={handleDetailsPress} />
                     <View style={{ width: spacing.md }} />
-                    <StatCard
-                        icon="water-outline"
-                        iconColor={colors.primary}
-                        title={t('statistics.surfing')}
-                        value={totalUrgeSurfing}
-                        unit={t('statistics.times')}
-                        subtitle={t('statistics.successRate', { percent: Math.round(successRate * 100) })}
-                        progressColor={colors.primary}
-                    />
+                    <InterventionSuccessCard onPress={handleDetailsPress} />
                 </Animated.View>
 
                 {/* Badges Section */}
@@ -264,7 +250,7 @@ export default function StatisticsScreen() {
                 </Animated.View>
 
                 {/* Urge Surfing Stats */}
-                {totalUrgeSurfing > 0 && (
+                {lifetime.totalUrgeSurfingCompleted > 0 && (
                     <Animated.View
                         entering={FadeInDown.duration(600).delay(500)}
                         style={[
