@@ -41,6 +41,8 @@ export interface TrainingTopic {
   locked?: boolean;
   /** Topic IDs that must be completed before this one */
   prerequisites?: string[];
+  /** Related app features that users can try after learning */
+  relatedFeatures?: RelatedFeature[];
 }
 
 /**
@@ -133,6 +135,22 @@ export interface TrainingStats {
   longestStreak: number;
   /** ISO date string of last training session */
   lastSessionAt: string | null;
+}
+
+/**
+ * Related app feature that can be linked from a training topic
+ */
+export interface RelatedFeature {
+  /** Unique identifier for the feature */
+  id: string;
+  /** i18n key for the feature title */
+  titleKey: string;
+  /** i18n key for the feature description */
+  descriptionKey: string;
+  /** Route to navigate to */
+  route: string;
+  /** Icon name from Ionicons */
+  icon: string;
 }
 
 /**

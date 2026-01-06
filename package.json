@@ -23,6 +23,7 @@
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-community/netinfo": "^11.4.1",
     "@react-native-community/slider": "5.0.1",
+    "@ronradtke/react-native-markdown-display": "^8.1.0",
     "@stopshorts/screen-time-android": "file:./modules/screen-time-android",
     "babel-preset-expo": "^54.0.9",
     "expo": "~54.0.30",

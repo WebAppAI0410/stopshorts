@@ -10,6 +10,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Header, Button, GlowOrb } from '../../../src/components/ui';
+import { MarkdownContent, FeatureLinkSection } from '../../../src/components/training';
 import { useTheme } from '../../../src/contexts/ThemeContext';
 import { t } from '../../../src/i18n';
 import { useAppStore } from '../../../src/stores/useAppStore';
@@ -17,6 +18,7 @@ import { getTopicById } from '../../../src/data/trainingTopics';
 import type { TrainingContent } from '../../../src/types/training';
 
 type ContentPhase = 'list' | 'article' | 'quiz' | 'worksheet' | 'complete';
+type ContentState = 'completed' | 'active' | 'locked';
 
 export default function TopicDetailScreen() {
   const router = useRouter();
@@ -114,6 +116,130 @@ export default function TopicDetailScreen() {
     }
   }, [phase, router]);
 
+  // Helper function to determine content state for timeline
+  const getContentState = useCallback((contentId: string, index: number): ContentState => {
+    const completed = topicId ? isContentCompleted(topicId, contentId) : false;
+    if (completed) return 'completed';
+
+    const firstIncompleteIndex = topic?.contents.findIndex(
+      (c) => !isContentCompleted(topicId || '', c.id)
+    ) ?? 0;
+
+    if (index === (firstIncompleteIndex === -1 ? 0 : firstIncompleteIndex)) return 'active';
+    return 'locked';
+  }, [topicId, topic, isContentCompleted]);
+
+  // Render timeline left side (vertical line + node)
+  const renderTimelineLeft = useCallback((state: ContentState, index: number, isLast: boolean) => (
+    <View style={styles.timelineLeft}>
+      {/* Upper vertical line */}
+      {index > 0 && (
+        <View style={[
+          styles.timelineLine,
+          state === 'completed' && { backgroundColor: colors.success },
+        ]} />
+      )}
+      {/* Node */}
+      <View style={[
+        styles.timelineNode,
+        state === 'completed' && styles.timelineNodeCompleted,
+        state === 'active' && styles.timelineNodeActive,
+        state === 'locked' && styles.timelineNodeLocked,
+      ]}>
+        {state === 'completed' ? (
+          <Ionicons name="checkmark" size={14} color={colors.success} />
+        ) : state === 'locked' ? (
+          <Ionicons name="lock-closed" size={12} color={colors.textMuted} />
+        ) : (
+          <Text style={[styles.nodeNumber, { color: colors.primary }]}>{index + 1}</Text>
+        )}
+      </View>
+      {/* Lower vertical line */}
+      {!isLast && (
+        <View style={[
+          styles.timelineLine,
+          state === 'completed' && { backgroundColor: colors.success },
+        ]} />
+      )}
+    </View>
+  ), [colors]);
+
+  // Active Card for Focus Timeline UI
+  const renderActiveCard = (content: TrainingContent, onPress: () => void) => {
+    const iconName = content.type === 'article' ? 'book-outline' :
+                     content.type === 'quiz' ? 'flask-outline' : 'document-text-outline';
+
+    return (
+      <View style={[
+        styles.activeCard,
+        {
+          backgroundColor: colors.backgroundCard,
+          shadowColor: colors.primary,
+          borderColor: colors.primary + '40',
+        }
+      ]}>
+        {/* Header */}
+        <View style={styles.activeCardHeader}>
+          <Ionicons name={iconName} size={20} color={colors.primary} />
+          <Text style={[styles.activeCardType, { color: colors.primary }]}>
+            {t(`training.contentTypes.${content.type}`)}
+          </Text>
+        </View>
+
+        {/* Title */}
+        <Text style={[styles.activeCardTitle, { color: colors.textPrimary }]}>
+          {t(content.titleKey)}
+        </Text>
+
+        {/* Meta */}
+        <View style={styles.activeCardMeta}>
+          <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+          <Text style={[styles.activeCardTime, { color: colors.textSecondary }]}>
+            5{t('training.minutes')}
+          </Text>
+        </View>
+
+        {/* Start Button */}
+        <Button
+          title={t('training.startLearning')}
+          onPress={onPress}
+          size="md"
+        />
+      </View>
+    );
+  };
+
+  // Compact row for completed/locked items
+  const renderCompactRow = (
+    content: TrainingContent,
+    state: ContentState,
+    index: number,
+    onPress: () => void
+  ) => {
+    const isDisabled = state === 'locked';
+
+    return (
+      <Pressable
+        onPress={isDisabled ? undefined : onPress}
+        disabled={isDisabled}
+        style={({ pressed }) => [
+          styles.compactRow,
+          { opacity: pressed && !isDisabled ? 0.7 : 1 },
+        ]}
+      >
+        <Text
+          style={[
+            styles.compactTitle,
+            { color: state === 'completed' ? colors.textSecondary : colors.textMuted },
+          ]}
+          numberOfLines={1}
+        >
+          {index + 1}. {t(content.titleKey)}
+        </Text>
+      </Pressable>
+    );
+  };
+
   // Early return for error state - must be after all hooks
   if (!topic) {
     return (
@@ -130,7 +256,7 @@ export default function TopicDetailScreen() {
 
   const currentContent = topic.contents[currentContentIndex];
 
-  // Content List Phase
+  // Content List Phase - Focus Timeline UI
   const renderContentList = () => (
     <ScrollView
       style={styles.scrollView}
@@ -153,51 +279,27 @@ export default function TopicDetailScreen() {
         </View>
       </Animated.View>
 
-      {/* Content Items */}
-      <View style={[styles.contentsList, { marginTop: spacing.xl }]}>
+      {/* Focus Timeline Content List */}
+      <View style={{ marginTop: spacing.xl }}>
         {topic.contents.map((content, index) => {
-          const contentCompleted = topicId ? isContentCompleted(topicId, content.id) : false;
-          const iconName = content.type === 'article' ? 'document-text-outline' :
-                          content.type === 'quiz' ? 'help-circle-outline' : 'create-outline';
+          const state = getContentState(content.id, index);
+          const isLast = index === topic.contents.length - 1;
 
           return (
             <Animated.View
               key={content.id}
               entering={FadeInUp.duration(400).delay(200 + index * 100)}
+              style={styles.timelineItem}
             >
-              <Pressable
-                onPress={() => handleContentPress(content)}
-                style={({ pressed }) => [
-                  styles.contentCard,
-                  {
-                    backgroundColor: colors.backgroundCard,
-                    borderRadius: borderRadius.lg,
-                    opacity: pressed ? 0.8 : 1,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.contentIcon,
-                    { backgroundColor: contentCompleted ? colors.success + '20' : colors.primary + '20' },
-                  ]}
-                >
-                  <Ionicons
-                    name={contentCompleted ? 'checkmark-circle' : iconName}
-                    size={24}
-                    color={contentCompleted ? colors.success : colors.primary}
-                  />
-                </View>
-                <View style={styles.contentInfo}>
-                  <Text style={[typography.label, { color: colors.textMuted, textTransform: 'uppercase' }]}>
-                    {t(`training.contentTypes.${content.type}`)}
-                  </Text>
-                  <Text style={[typography.h3, { color: colors.textPrimary, marginTop: 2, fontSize: 16 }]}>
-                    {t(content.titleKey)}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-              </Pressable>
+              {/* Timeline Left (vertical line + node) */}
+              {renderTimelineLeft(state, index, isLast)}
+
+              {/* Timeline Content (right side) */}
+              {state === 'active' ? (
+                renderActiveCard(content, () => handleContentPress(content))
+              ) : (
+                renderCompactRow(content, state, index, () => handleContentPress(content))
+              )}
             </Animated.View>
           );
         })}
@@ -219,9 +321,13 @@ export default function TopicDetailScreen() {
           <Text style={[typography.h2, { color: colors.textPrimary, marginBottom: spacing.lg }]}>
             {t(currentContent.titleKey)}
           </Text>
-          <Text style={[typography.body, { color: colors.textSecondary, lineHeight: 26 }]}>
-            {t(currentContent.bodyKey)}
-          </Text>
+          {/* Markdown content with note.com-style typography */}
+          <MarkdownContent content={t(currentContent.bodyKey)} />
+
+          {/* Related app features section */}
+          {topic.relatedFeatures && topic.relatedFeatures.length > 0 && (
+            <FeatureLinkSection features={topic.relatedFeatures} />
+          )}
         </Animated.View>
 
         <View style={[styles.buttonContainer, { marginTop: spacing['2xl'] }]}>
@@ -494,24 +600,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  contentsList: {
-    gap: 12,
+  // Step-based content list styles
+  stepList: {
+    // Inline styles for borderRadius and backgroundColor
   },
-  contentCard: {
+  stepItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
-  contentIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  stepBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
-  contentInfo: {
+  stepNumber: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  stepContent: {
     flex: 1,
+    marginRight: 8,
+  },
+  stepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  stepType: {
+    fontSize: 12,
+    marginLeft: 6,
+  },
+  stepTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  stepStatus: {
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   questionCard: {
     // inline styles
