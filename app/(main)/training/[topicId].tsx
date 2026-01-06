@@ -130,6 +130,51 @@ export default function TopicDetailScreen() {
 
   const currentContent = topic.contents[currentContentIndex];
 
+  // Active Card for Focus Timeline UI
+  const renderActiveCard = (content: TrainingContent, onPress: () => void) => {
+    const iconName = content.type === 'article' ? 'book-outline' :
+                     content.type === 'quiz' ? 'flask-outline' : 'document-text-outline';
+
+    return (
+      <View style={[
+        styles.activeCard,
+        {
+          backgroundColor: colors.backgroundCard,
+          shadowColor: colors.primary,
+          borderColor: colors.primary + '40',
+        }
+      ]}>
+        {/* Header */}
+        <View style={styles.activeCardHeader}>
+          <Ionicons name={iconName} size={20} color={colors.primary} />
+          <Text style={[styles.activeCardType, { color: colors.primary }]}>
+            {t(`training.contentTypes.${content.type}`)}
+          </Text>
+        </View>
+
+        {/* Title */}
+        <Text style={[styles.activeCardTitle, { color: colors.textPrimary }]}>
+          {t(content.titleKey)}
+        </Text>
+
+        {/* Meta */}
+        <View style={styles.activeCardMeta}>
+          <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+          <Text style={[styles.activeCardTime, { color: colors.textSecondary }]}>
+            5{t('training.minutes')}
+          </Text>
+        </View>
+
+        {/* Start Button */}
+        <Button
+          title={t('training.startLearning')}
+          onPress={onPress}
+          size="md"
+        />
+      </View>
+    );
+  };
+
   // Content List Phase
   const renderContentList = () => (
     <ScrollView
@@ -553,5 +598,45 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Active Card styles for Focus Timeline UI
+  activeCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 20,
+    marginLeft: 12,
+    marginVertical: 8,
+    // Glow effect (iOS)
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    // Android
+    elevation: 8,
+    // Border
+    borderWidth: 1,
+  },
+  activeCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  activeCardType: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  activeCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  activeCardMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  activeCardTime: {
+    fontSize: 13,
+    marginLeft: 4,
   },
 });
