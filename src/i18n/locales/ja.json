@@ -986,6 +986,7 @@
       "tryIt": "試してみる",
       "locked": "ロック中",
       "otherOptions": "その他の介入",
+      "basedOnSuccess": "成功率{{rate}}%",
       "options": {
         "breathing": {
           "title": "呼吸ガイド",

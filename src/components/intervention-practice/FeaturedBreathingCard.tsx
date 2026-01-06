@@ -99,7 +99,7 @@ export const FeaturedBreathingCard = ({ onPress, testID }: FeaturedBreathingCard
 
 const styles = StyleSheet.create({
   container: {
-    height: 220,
+    height: 240,
     width: '100%',
     overflow: 'hidden',
     position: 'relative',
@@ -117,7 +117,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: 20,
+    paddingBottom: 16,
     justifyContent: 'space-between',
   },
   badge: {
@@ -163,7 +164,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 16,
+    marginTop: 12,
+    flexShrink: 0,
   },
   durationBadge: {
     flexDirection: 'row',
@@ -190,6 +192,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    maxWidth: '45%',
+    flexShrink: 0,
   },
   ctaText: {
     color: palette.emerald[600],

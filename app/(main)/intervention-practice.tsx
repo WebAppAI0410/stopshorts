@@ -1,22 +1,70 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Header } from '../../src/components/ui';
-import { FeaturedBreathingCard } from '../../src/components/intervention-practice/FeaturedBreathingCard';
-import { MiniInterventionCard } from '../../src/components/intervention-practice/MiniInterventionCard';
+import { FeaturedInterventionCard, MiniInterventionCard } from '../../src/components/intervention-practice';
+import type { InterventionType } from '../../src/components/intervention-practice';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAIStore } from '../../src/stores/useAIStore';
+import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
 import { t } from '../../src/i18n';
 import { palette } from '../../src/design/theme';
+
+// Get recommended intervention based on success rate
+const getRecommendedIntervention = (
+  stats: ReturnType<typeof useStatisticsStore.getState>['getInterventionStatsByType'],
+  isAIReady: boolean
+): { type: InterventionType; successRate: number } => {
+  const interventionStats = stats();
+
+  // Filter out AI if not ready, and only include types with at least 1 trigger
+  const validTypes: InterventionType[] = ['breathing', 'friction', 'mirror'];
+  if (isAIReady) validTypes.push('ai');
+
+  const sorted = validTypes
+    .map(type => ({
+      type,
+      ...interventionStats[type],
+    }))
+    .filter(item => item.triggered > 0)
+    .sort((a, b) => b.successRate - a.successRate);
+
+  // No data: default to breathing
+  if (sorted.length === 0) {
+    return { type: 'breathing', successRate: 0 };
+  }
+
+  // Find all tied for top rate
+  const topRate = sorted[0].successRate;
+  const topTied = sorted.filter(item => item.successRate === topRate);
+
+  // If tied, pick randomly
+  const selected = topTied[Math.floor(Math.random() * topTied.length)];
+  return { type: selected.type, successRate: selected.successRate };
+};
 
 export default function InterventionPracticeScreen() {
   const router = useRouter();
   const { colors, spacing, borderRadius } = useTheme();
   const modelStatus = useAIStore((state) => state.modelStatus);
   const isAIModelReady = modelStatus === 'ready';
+  const getInterventionStatsByType = useStatisticsStore((state) => state.getInterventionStatsByType);
+
+  // Memoize recommended intervention to prevent re-randomizing on every render
+  const { recommendedType, successRate } = useMemo(() => {
+    const result = getRecommendedIntervention(getInterventionStatsByType, isAIModelReady);
+    return { recommendedType: result.type, successRate: result.successRate };
+  }, [getInterventionStatsByType, isAIModelReady]);
+
+  const handlePracticePress = (type: InterventionType) => {
+    router.push({
+      pathname: '/(main)/urge-surfing',
+      params: { practiceType: type, source: 'training' },
+    });
+  };
 
   const handleBreathingPress = () => {
     router.push({
@@ -77,11 +125,13 @@ export default function InterventionPracticeScreen() {
             </Text>
           </View>
 
-          {/* Hero Card */}
+          {/* Hero Card - Personalized based on success rate */}
           <View style={{ marginBottom: spacing.xl }}>
-            <FeaturedBreathingCard
-              onPress={handleBreathingPress}
-              testID="featured-breathing-card"
+            <FeaturedInterventionCard
+              type={recommendedType}
+              onPress={() => handlePracticePress(recommendedType)}
+              testID="featured-intervention-card"
+              successRate={successRate}
             />
           </View>
 
