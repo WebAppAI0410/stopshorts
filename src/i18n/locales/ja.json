@@ -1519,6 +1519,178 @@
     "downloadRequired": "AIモデルのダウンロードが必要です",
     "downloadOnAICoach": "AIコーチでダウンロード",
     "downloadComplete": "AIモデルのダウンロードが完了しました",
-    "chatDisabled": "チャットはモデルダウンロード後に利用できます"
+    "chatDisabled": "チャットはモデルダウンロード後に利用できます",
+    "quickActions": {
+      "title": "クイックアクション",
+      "explore": "探る",
+      "plan": "計画",
+      "training": "学習",
+      "reflect": "振返",
+      "explorePrompt": "最近、ショート動画を見たくなるパターンについて相談したい",
+      "planPrompt": "具体的な対策計画を立てたい",
+      "trainingPrompt": "習慣や依存について学びたい",
+      "reflectPrompt": "今日の振り返りをしたい"
+    },
+    "suggestions": {
+      "title": "おすすめ",
+      "makePlan": {
+        "title": "計画を立てよう",
+        "description": "具体的な行動計画を一緒に作りませんか？"
+      },
+      "overUsage": {
+        "title": "今日は多めですね",
+        "description": "何があったか振り返ってみましょう"
+      },
+      "weeklyIncrease": {
+        "title": "最近増えていますね",
+        "description": "原因を一緒に探りましょう"
+      },
+      "toughDay": {
+        "title": "厳しい一日ですね",
+        "description": "気持ちを話してみませんか？"
+      },
+      "goodJob": {
+        "title": "よく頑張りました！",
+        "description": "何がうまくいったか振り返りましょう"
+      },
+      "greatStreak": {
+        "title": "素晴らしい継続！",
+        "description": "この調子を維持するコツを確認しましょう"
+      },
+      "keepItUp": {
+        "title": "いい調子です！",
+        "description": "成功パターンを言語化しませんか？"
+      },
+      "nightReflect": {
+        "title": "寝る前の時間です",
+        "description": "今日の振り返りをして休みましょう"
+      },
+      "continueTraining": {
+        "title": "続きを学ぼう",
+        "description": "「{{topic}}」の続きはいかがですか？"
+      },
+      "startTraining": {
+        "title": "学びを始めよう",
+        "description": "習慣の仕組みを学んでみませんか？"
+      },
+      "tryUrgeSurfing": {
+        "title": "実践してみよう",
+        "description": "衝動サーフィングを体験しませんか？"
+      },
+      "welcomeBack": {
+        "title": "お久しぶりです",
+        "description": "最近の調子はいかがですか？"
+      },
+      "morningReflect": {
+        "title": "おはようございます",
+        "description": "昨日の振り返りから始めましょう"
+      }
+    },
+    "starters": {
+      "title": "よくある悩み",
+      "opened": "つい開いちゃった...",
+      "urge_now": "今まさに見たい衝動がある",
+      "urge_strong": "衝動が抑えられない",
+      "wasted_time": "また時間を無駄にした",
+      "cant_stop": "一度開くと止められない",
+      "failed_goal": "今日の目標を達成できなかった",
+      "bored": "暇で何もやることがない",
+      "stressed": "ストレスが溜まっている",
+      "lonely": "寂しい気持ちになる",
+      "anxious": "不安な気持ちを紛らわしたい",
+      "tired": "疲れていて何も考えたくない",
+      "before_sleep": "寝る前についスマホを見てしまう",
+      "resisted": "今日は我慢できた！",
+      "streak": "連続で達成できている",
+      "feeling_good": "最近調子がいい",
+      "noticed_trigger": "自分のパターンに気づいた",
+      "alternative_worked": "代わりの行動がうまくいった",
+      "why_addictive": "なぜこんなにハマるの？",
+      "how_to_stop": "どうすれば見なくなれる？",
+      "what_to_do": "見たくなったら何をすればいい？",
+      "is_progress": "自分は進歩している？",
+      "learn_habit": "習慣の仕組みを知りたい",
+      "learn_urge": "衝動との付き合い方を学びたい",
+      "make_plan": "具体的な対策を立てたい"
+    },
+    "guided": {
+      "title": "ガイド付き会話",
+      "cancel": "キャンセル",
+      "back": "戻る",
+      "next": "次へ",
+      "complete": "完了",
+      "step": "ステップ {{current}}/{{total}}",
+      "freeInputHint": "または自由に入力...",
+      "confirmCancel": "会話を中断しますか？入力内容は保存されません。",
+      "confirmCancelYes": "中断する",
+      "confirmCancelNo": "続ける",
+      "ifThen": {
+        "title": "If-Then計画作成",
+        "description": "「もし〜したら、〜する」の行動計画を作成します",
+        "step1": "どんな時にショート動画を見たくなりますか？",
+        "step2": "その状況をもう少し具体的に教えてください。例えば、どこで？何をしている時？",
+        "step3": "その時に代わりにできそうな行動は何ですか？",
+        "step4": "では、プランを完成させましょう。「もし{{trigger}}になったら、{{action}}をする」でいいですか？",
+        "opt": {
+          "bored": "暇な時",
+          "stressed": "ストレスを感じた時",
+          "beforeSleep": "寝る前",
+          "commute": "電車の中",
+          "eating": "食事中"
+        },
+        "alt": {
+          "breathe": "深呼吸する",
+          "water": "水を飲む",
+          "walk": "散歩する",
+          "read": "本を読む",
+          "music": "音楽を聴く"
+        },
+        "confirm": {
+          "yes": "はい、これで完成",
+          "edit": "少し修正したい"
+        },
+        "saved": "If-Then計画を保存しました！"
+      },
+      "trigger": {
+        "title": "トリガー分析",
+        "description": "見たくなる原因・パターンを言語化して自己理解を深めます",
+        "step1": "最近、ショート動画を見たくなった時のことを思い出してください。何がきっかけでしたか？",
+        "step2": "その時、体や気持ちはどんな状態でしたか？",
+        "step3": "その前に何をしていましたか？",
+        "step4": "このパターンに気づいて、どう思いますか？",
+        "cue": {
+          "notification": "通知が来た",
+          "bored": "暇だった",
+          "stressed": "ストレスを感じた",
+          "habit": "習慣的に",
+          "social": "誰かが見ていた",
+          "random": "なんとなく"
+        },
+        "emo": {
+          "tired": "疲れていた",
+          "bored": "退屈だった",
+          "anxious": "不安だった",
+          "irritated": "イライラしていた",
+          "nothing": "特に何も感じなかった"
+        },
+        "ctx": {
+          "work": "仕事・勉強",
+          "meal": "食事",
+          "commute": "移動中",
+          "break": "休憩中",
+          "bedtime": "寝る準備",
+          "sns": "SNSを見ていた"
+        },
+        "saved": "トリガー分析を保存しました！"
+      }
+    },
+    "training": {
+      "recommendTitle": "関連トレーニング",
+      "recommendAction": "見てみる"
+    },
+    "emptyState": {
+      "title": "何を話しましょうか？",
+      "subtitle": "悩みや相談したいことを選んでください"
+    }
   }
 }

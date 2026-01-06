@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   type AIState,
   type AIActions,
+  type AIActionsExtended,
   type Message,
   type CurrentSession,
   type PersonaId,
@@ -11,13 +12,21 @@ import {
   type LongTermMemory,
   type SessionSummary,
   type ConversationModeId,
+  type GuidedConversationState,
   DEFAULT_LONG_TERM_MEMORY,
   LONG_TERM_LIMITS,
 } from '../types/ai';
+import {
+  getGuidedTemplate,
+  getCurrentStep,
+  isLastStep,
+  buildTriggerSummary,
+} from '../data/guidedConversations';
 import { handleCrisisIfDetected } from '../services/ai/mentalHealthHandler';
 import { buildTrainingContext, type TrainingContextInput } from '../services/ai/promptBuilder';
 import { extractInsights } from '../services/ai/insightExtractor';
 import { useAppStore } from './useAppStore';
+import type { IfThenPlan, IfThenAction } from '../types';
 import { secureStorage, migrateToSecureStorage } from '../utils/secureStorage';
 
 // Utility to generate unique IDs
@@ -31,8 +40,17 @@ function estimateTokens(text: string): number {
   return Math.ceil(text.length / 2.5);
 }
 
+// Extended state interface with guided conversation
+interface AIStateExtended extends AIState {
+  guidedConversation: GuidedConversationState | null;
+  recentRecommendations: Array<{
+    topicId: string;
+    recommendedAt: number;
+  }>;
+}
+
 // Initial state
-const initialState: AIState = {
+const initialState: AIStateExtended = {
   // Model status
   modelStatus: 'not_downloaded',
   downloadProgress: 0,
@@ -50,13 +68,19 @@ const initialState: AIState = {
 
   // UI state
   isGenerating: false,
+
+  // Guided conversation state
+  guidedConversation: null,
+
+  // Recent recommendations (to avoid repetition)
+  recentRecommendations: [],
 };
 
 // Storage key for AI memory (separate from main store for modularity)
 const AI_MEMORY_KEY = 'stopshorts-ai-memory';
 const AI_SESSIONS_KEY = 'stopshorts-ai-sessions';
 
-interface AIStore extends AIState, AIActions {}
+interface AIStore extends AIStateExtended, AIActions, AIActionsExtended {}
 
 export const useAIStore = create<AIStore>()(
   devtools(
@@ -406,6 +430,143 @@ export const useAIStore = create<AIStore>()(
           },
         });
       },
+
+      // ============================================
+      // Guided Conversation
+      // ============================================
+
+      startGuidedConversation: (templateId: string) => {
+        const template = getGuidedTemplate(templateId);
+        if (!template) {
+          if (__DEV__) {
+            console.warn('[AIStore] Unknown guided template:', templateId);
+          }
+          return;
+        }
+
+        const guidedState: GuidedConversationState = {
+          templateId,
+          currentStepIndex: 0,
+          responses: {},
+          isActive: true,
+          startedAt: Date.now(),
+        };
+
+        set({ guidedConversation: guidedState });
+      },
+
+      advanceGuidedStep: (response: string) => {
+        const { guidedConversation } = get();
+        if (!guidedConversation || !guidedConversation.isActive) return;
+
+        const currentStep = getCurrentStep(
+          guidedConversation.templateId,
+          guidedConversation.currentStepIndex
+        );
+
+        if (!currentStep) return;
+
+        // Save the response
+        const updatedResponses = {
+          ...guidedConversation.responses,
+          [currentStep.id]: response,
+        };
+
+        // Check if this is the last step
+        if (isLastStep(guidedConversation.templateId, guidedConversation.currentStepIndex)) {
+          // Mark as complete but keep responses
+          set({
+            guidedConversation: {
+              ...guidedConversation,
+              responses: updatedResponses,
+              isActive: false,
+            },
+          });
+        } else {
+          // Move to next step
+          set({
+            guidedConversation: {
+              ...guidedConversation,
+              currentStepIndex: guidedConversation.currentStepIndex + 1,
+              responses: updatedResponses,
+            },
+          });
+        }
+      },
+
+      completeGuidedConversation: async () => {
+        const { guidedConversation } = get();
+        if (!guidedConversation) return;
+
+        const { templateId, responses } = guidedConversation;
+
+        try {
+          // Handle different template completions
+          if (templateId === 'if-then') {
+            // Save If-Then plan to app store
+            const alternative = responses['alternative'] || '';
+            const ifThenPlan = mapAlternativeToIfThenPlan(alternative);
+            if (ifThenPlan) {
+              useAppStore.getState().setIfThenPlan(ifThenPlan);
+            }
+          } else if (templateId === 'trigger-analysis') {
+            // Save trigger analysis to long-term memory
+            const { longTermMemory } = get();
+            if (longTermMemory) {
+              const summary = buildTriggerSummary(responses);
+              const newTrigger = {
+                id: generateId(),
+                trigger: `${summary.situation} (${summary.emotion})`,
+                frequency: 1,
+                discoveredAt: new Date().toISOString(),
+              };
+
+              const updatedTriggers = [
+                ...longTermMemory.identifiedTriggers,
+                newTrigger,
+              ].slice(-LONG_TERM_LIMITS.maxTriggers);
+
+              set({
+                longTermMemory: {
+                  ...longTermMemory,
+                  identifiedTriggers: updatedTriggers,
+                },
+              });
+
+              await get().saveMemory();
+            }
+          }
+        } catch (error) {
+          if (__DEV__) {
+            console.error('[AIStore] Error completing guided conversation:', error);
+          }
+        }
+
+        // Clear guided conversation state
+        set({ guidedConversation: null });
+      },
+
+      cancelGuidedConversation: () => {
+        set({ guidedConversation: null });
+      },
+
+      addRecommendation: (topicId: string) => {
+        const { recentRecommendations } = get();
+
+        // Keep only recommendations from the last 24 hours
+        const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        const filtered = recentRecommendations.filter(
+          (r) => r.recommendedAt > dayAgo
+        );
+
+        // Add new recommendation
+        const updated = [
+          ...filtered,
+          { topicId, recommendedAt: Date.now() },
+        ];
+
+        set({ recentRecommendations: updated });
+      },
       }),
       {
         name: 'stopshorts-ai-store',
@@ -517,6 +678,35 @@ function getDefaultErrorResponse(): string {
   return responses[Math.floor(Math.random() * responses.length)];
 }
 
+/**
+ * Map alternative action text from guided conversation to IfThenPlan
+ */
+function mapAlternativeToIfThenPlan(alternative: string): IfThenPlan | null {
+  if (!alternative) return null;
+
+  // Map known alternatives to IfThenAction
+  const actionMapping: Record<string, IfThenAction> = {
+    '深呼吸する': 'breathe',
+    '水を飲む': 'water',
+    '散歩する': 'short_walk',
+    '本を読む': 'read_page',
+    'ストレッチする': 'stretch',
+    '外の景色を見る': 'look_outside',
+  };
+
+  const mappedAction = actionMapping[alternative];
+
+  if (mappedAction) {
+    return { action: mappedAction };
+  }
+
+  // Unknown alternative becomes custom action
+  return {
+    action: 'custom',
+    customAction: alternative,
+  };
+}
+
 // ============================================
 // Selectors
 // ============================================
@@ -535,3 +725,12 @@ export const selectModelReady = (state: AIState): boolean =>
 
 export const selectCanChat = (state: AIState): boolean =>
   state.modelStatus === 'ready' && !state.isGenerating;
+
+export const selectIsGuidedConversationActive = (state: AIStateExtended): boolean =>
+  state.guidedConversation?.isActive ?? false;
+
+export const selectGuidedConversation = (state: AIStateExtended): GuidedConversationState | null =>
+  state.guidedConversation;
+
+export const selectRecentRecommendations = (state: AIStateExtended): string[] =>
+  state.recentRecommendations.map((r) => r.topicId);
