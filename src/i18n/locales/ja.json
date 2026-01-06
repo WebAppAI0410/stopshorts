@@ -835,6 +835,8 @@
   },
   "statistics": {
     "title": "統計",
+    "day": "日",
+    "week": "週",
     "savedThisWeek": "今週の節約時間",
     "weeklyUsageTime": "今週の使用時間",
     "streak": "連続日数",
@@ -852,7 +854,18 @@
     "longestStreak": "最長連続",
     "mindfulPauses": "意識的な休憩を取りました。",
     "demoMode": "デモモード",
-    "demoModeDescription": "スクリーンタイム機能が有効になると、実際のデータが表示されます"
+    "demoModeDescription": "スクリーンタイム機能が有効になると、実際のデータが表示されます",
+    "comparison": {
+      "todayUsage": "今日の使用時間",
+      "thisWeekUsage": "今週の使用時間",
+      "vsYesterday": "昨日と比較",
+      "vsLastWeek": "先週と比較",
+      "yesterday": "昨日",
+      "lastWeek": "先週",
+      "decreased": "{{percent}}%減少",
+      "increased": "{{percent}}%増加",
+      "fromBaseline": "基準値から"
+    }
   },
   "profile": {
     "title": "プロフィール",
