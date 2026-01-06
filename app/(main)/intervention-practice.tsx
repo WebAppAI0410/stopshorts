@@ -19,7 +19,7 @@ import {
 } from '../../src/components/intervention-practice';
 
 export default function InterventionPracticeScreen() {
-  const { colors, typography, spacing, borderRadius } = useTheme();
+  const { colors, spacing, borderRadius } = useTheme();
   const router = useRouter();
   const modelStatus = useAIStore((state) => state.modelStatus);
 
@@ -69,12 +69,17 @@ export default function InterventionPracticeScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header with back button */}
       <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-        <Pressable onPress={handleBack} style={styles.backButton}>
+        <Pressable
+          onPress={handleBack}
+          style={[styles.backButton, { borderRadius: borderRadius.full }]}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+        >
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </Pressable>
       </Animated.View>
 
-      {/* Title Section - Left aligned */}
+      {/* Title Section - Left aligned as per mockup */}
       <Animated.View
         entering={FadeInDown.duration(500).delay(50)}
         style={[styles.titleSection, { paddingHorizontal: spacing.gutter }]}
@@ -92,7 +97,7 @@ export default function InterventionPracticeScreen() {
         <FeaturedBreathingCard onPress={handleBreathingPress} />
       </View>
 
-      {/* Mini Cards Grid */}
+      {/* Mini Cards Grid - 3 columns */}
       <View style={[styles.miniCardsSection, { paddingHorizontal: spacing.gutter }]}>
         <View style={styles.miniCardsGrid}>
           <MiniInterventionCard
@@ -117,7 +122,7 @@ export default function InterventionPracticeScreen() {
         </View>
       </View>
 
-      {/* Footer - Simple centered text */}
+      {/* Footer - Simple centered text as per mockup */}
       <Animated.View
         entering={FadeInUp.duration(400).delay(400)}
         style={styles.footer}
@@ -135,9 +140,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 16,
+    paddingBottom: 12,
   },
   backButton: {
     width: 40,
@@ -150,14 +155,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
     letterSpacing: -0.5,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 24,
   },
   featuredSection: {
     marginBottom: 20,
@@ -171,12 +176,12 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 'auto',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingBottom: 24,
     alignItems: 'center',
   },
   footerText: {
-    fontSize: 13,
+    fontSize: 14,
     textAlign: 'center',
   },
 });
