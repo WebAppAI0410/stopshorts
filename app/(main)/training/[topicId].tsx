@@ -18,6 +18,7 @@ import { getTopicById } from '../../../src/data/trainingTopics';
 import type { TrainingContent } from '../../../src/types/training';
 
 type ContentPhase = 'list' | 'article' | 'quiz' | 'worksheet' | 'complete';
+type ContentState = 'completed' | 'active' | 'locked';
 
 export default function TopicDetailScreen() {
   const router = useRouter();
@@ -130,6 +131,37 @@ export default function TopicDetailScreen() {
   }
 
   const currentContent = topic.contents[currentContentIndex];
+
+  // Compact row for completed/locked items (Task C - Focus Timeline)
+  const renderCompactRow = (
+    content: TrainingContent,
+    state: ContentState,
+    index: number,
+    onPress: () => void
+  ) => {
+    const isDisabled = state === 'locked';
+
+    return (
+      <Pressable
+        onPress={isDisabled ? undefined : onPress}
+        disabled={isDisabled}
+        style={({ pressed }) => [
+          styles.compactRow,
+          { opacity: pressed && !isDisabled ? 0.7 : 1 },
+        ]}
+      >
+        <Text
+          style={[
+            styles.compactTitle,
+            { color: state === 'completed' ? colors.textSecondary : colors.textMuted },
+          ]}
+          numberOfLines={1}
+        >
+          {index + 1}. {t(content.titleKey)}
+        </Text>
+      </Pressable>
+    );
+  };
 
   // Content List Phase
   const renderContentList = () => (
@@ -638,5 +670,14 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Compact row styles (Task C - Focus Timeline)
+  compactRow: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingLeft: 12,
+  },
+  compactTitle: {
+    fontSize: 14,
   },
 });
