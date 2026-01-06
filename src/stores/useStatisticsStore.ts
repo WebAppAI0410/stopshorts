@@ -15,8 +15,10 @@ import type {
   DayData,
   DailyComparisonResult,
   WeeklyComparisonResult,
+  InterventionSuccessRate,
+  InterventionTypeStats,
 } from '../types/statistics';
-import type { IntentionLog, IntentionId } from '../types';
+import type { IntentionLog, IntentionId, InterventionType } from '../types';
 import { getDateKey, getTimeOfDay } from '../types/statistics';
 import { useAppStore } from './useAppStore';
 import { BADGE_DEFINITIONS, checkBadges, calculateStreak } from '../services/badges';
@@ -34,6 +36,7 @@ interface InterventionInput {
   proceeded: boolean;
   appPackage?: string;  // Package name of the app that triggered intervention
   timestamp?: number;   // When the intervention occurred
+  interventionType?: InterventionType; // Type of intervention shown
 }
 
 // Individual intervention record for analytics
@@ -42,6 +45,7 @@ export interface InterventionRecord {
   appPackage: string;
   timestamp: number;
   timeOfDay: 'morning' | 'daytime' | 'evening' | 'night';
+  interventionType?: InterventionType; // Optional for backward compatibility
 }
 
 interface StatisticsState {
@@ -88,6 +92,10 @@ interface StatisticsState {
   getWeeklyComparison: () => WeeklyComparisonResult;
   getBaselineDailyMinutes: () => number | null;
   getPreviousWeekData: () => DayData[];
+
+  // Intervention success rate methods
+  getOverallInterventionSuccessRate: () => InterventionSuccessRate;
+  getInterventionStatsByType: () => InterventionTypeStats[];
 
   // Utilities
   resetDailyStats: () => void;
@@ -250,7 +258,7 @@ export const useStatisticsStore = create<StatisticsState>()(
       },
 
       recordIntervention: (input) => {
-        const { proceeded, appPackage = '', timestamp = Date.now() } = input;
+        const { proceeded, appPackage = '', timestamp = Date.now(), interventionType } = input;
         const dateKey = getDateKey();
         const state = get();
         const todayStats = state.dailyStats[dateKey] || createEmptyDailyStats(dateKey);
@@ -265,6 +273,7 @@ export const useStatisticsStore = create<StatisticsState>()(
           appPackage,
           timestamp,
           timeOfDay,
+          interventionType,
         };
 
         const newInterventions = { ...todayStats.interventions };
@@ -747,6 +756,64 @@ export const useStatisticsStore = create<StatisticsState>()(
         }
 
         return result;
+      },
+
+      getOverallInterventionSuccessRate: (): InterventionSuccessRate => {
+        const state = get();
+        let totalTriggered = 0;
+        let totalDismissed = 0;
+
+        // Sum up from all daily stats
+        for (const stats of Object.values(state.dailyStats)) {
+          totalTriggered += stats.interventions.triggered;
+          totalDismissed += stats.interventions.dismissed;
+        }
+
+        const successRate = totalTriggered > 0
+          ? Math.round((totalDismissed / totalTriggered) * 100)
+          : 0;
+
+        return {
+          successRate,
+          dismissed: totalDismissed,
+          triggered: totalTriggered,
+        };
+      },
+
+      getInterventionStatsByType: (): InterventionTypeStats[] => {
+        const state = get();
+        const types: Array<'breathing' | 'friction' | 'mirror' | 'ai'> = [
+          'breathing',
+          'friction',
+          'mirror',
+          'ai',
+        ];
+
+        // Aggregate from intervention history (which has type info)
+        const stats: Record<string, { triggered: number; dismissed: number }> = {
+          breathing: { triggered: 0, dismissed: 0 },
+          friction: { triggered: 0, dismissed: 0 },
+          mirror: { triggered: 0, dismissed: 0 },
+          ai: { triggered: 0, dismissed: 0 },
+        };
+
+        for (const record of state.interventionHistory) {
+          if (record.interventionType && stats[record.interventionType]) {
+            stats[record.interventionType].triggered += 1;
+            if (!record.proceeded) {
+              stats[record.interventionType].dismissed += 1;
+            }
+          }
+        }
+
+        return types.map((type) => ({
+          type,
+          triggered: stats[type].triggered,
+          dismissed: stats[type].dismissed,
+          successRate: stats[type].triggered > 0
+            ? Math.round((stats[type].dismissed / stats[type].triggered) * 100)
+            : 0,
+        }));
       },
 
       resetDailyStats: () => {

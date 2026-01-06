@@ -150,3 +150,18 @@ export interface WeeklyComparisonResult {
   };
   changePercent: number;
 }
+
+// Intervention success rate result
+export interface InterventionSuccessRate {
+  successRate: number; // 0-100 percentage
+  dismissed: number; // success count
+  triggered: number; // total count
+}
+
+// Intervention type stats
+export interface InterventionTypeStats {
+  type: 'breathing' | 'friction' | 'mirror' | 'ai';
+  triggered: number;
+  dismissed: number;
+  successRate: number; // 0-100 percentage
+}

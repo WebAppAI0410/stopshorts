@@ -885,6 +885,18 @@
       "fri": "金",
       "sat": "土",
       "sun": "日"
+    },
+    "interventionSuccess": "介入成功率",
+    "interventionSuccessDetail": "{{success}}回成功 / {{total}}回発動",
+    "tapForDetails": "タップで詳細",
+    "details": {
+      "byType": "タイプ別成功率",
+      "breathing": "呼吸法",
+      "friction": "フリクション",
+      "mirror": "ミラー",
+      "ai": "AIコーチ",
+      "typeStats": "{{dismissed}}回成功 / {{triggered}}回発動",
+      "notUsed": "未使用"
     }
   },
   "profile": {
