@@ -30,8 +30,28 @@ export {
   estimateTokens,
   wouldExceedContext,
   buildTrainingContext,
+  buildLearnedConceptsContext,
+  buildWorksheetContext,
+  buildIfThenPlanContext,
+  buildEnhancedTrainingContext,
   MODE_PROMPTS,
 } from './promptBuilder';
+
+// Suggestion Engine
+export {
+  getContextualSuggestions,
+  buildSuggestionContext,
+  getSuggestionActionHandler,
+  getNextRecommendedTopicId,
+} from './suggestionEngine';
+
+// Training Recommender
+export {
+  getTrainingRecommendations,
+  getInlineRecommendation,
+  messageHasTrainingKeywords,
+  getMatchingTopicIds,
+} from './trainingRecommender';
 
 // Mental Health Crisis Handler
 export {
@@ -48,6 +68,7 @@ export type {
   TrainingProgressContext,
   FullPromptResult,
   TrainingContextInput,
+  EnhancedContextInput,
 } from './promptBuilder';
 
 // Re-export LLM service type for consumers

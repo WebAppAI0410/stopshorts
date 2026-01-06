@@ -155,6 +155,58 @@ export interface TrainingContextInput {
 }
 
 /**
+ * Learned concepts that can be referenced in conversations
+ * Maps topic ID to key concepts the user has learned
+ */
+const TOPIC_CONCEPTS: Record<string, string[]> = {
+  'habit-loop': [
+    '習慣は「きっかけ→行動→報酬」の3ステップで形成される',
+    'きっかけを特定することで習慣を変えやすくなる',
+    '報酬を別の行動に置き換えることで習慣を書き換えられる',
+  ],
+  'if-then-plan': [
+    '「もし〜したら、〜する」の形式で具体的な計画を立てる',
+    '事前に決めておくことで、その場での意思決定を減らせる',
+    'If-Thenプランは習慣形成に効果的',
+  ],
+  'urge-surfing-science': [
+    '衝動は波のように上がって下がる（3-20分でピークを過ぎる）',
+    '衝動に逆らわず、観察することで乗り越えられる',
+    '衝動に気づいたら、呼吸に集中する',
+  ],
+  'brain-self-control': [
+    '前頭前野が自己制御を担当している',
+    '睡眠不足やストレスは自己制御力を低下させる',
+    'ドーパミンは「期待」で放出され、実際の満足感は少ない',
+  ],
+  'cognitive-reframing': [
+    '思考は事実ではなく解釈である',
+    '認知の歪みに気づくことで、考え方を変えられる',
+    '「〜すべき」「〜しなければ」は認知の歪みの兆候',
+  ],
+  'dealing-with-boredom': [
+    '退屈は不快な感情だが、創造性の源にもなる',
+    'スマホを見る代わりに、退屈を感じる練習をする',
+    '「何もしない時間」は脳のリフレッシュに必要',
+  ],
+  'loneliness-and-sns': [
+    'SNSの「つながり」は本当のつながりの代替にならない',
+    '孤独感はSNSを見ても解消されにくい',
+    '少人数との深い交流の方が満足度が高い',
+  ],
+  'screen-time-and-sleep': [
+    'ブルーライトはメラトニン分泌を抑制する',
+    '就寝1時間前はスマホを避けるのが理想',
+    '睡眠不足は翌日の自己制御力を低下させる',
+  ],
+  'reclaiming-focus': [
+    '集中力は有限のリソースで、回復が必要',
+    'マルチタスクは集中力を低下させる',
+    '通知をオフにするだけで集中力が向上する',
+  ],
+};
+
+/**
  * Build training context from user's progress
  * Returns formatted string with completed and not-started topics,
  * plus recent insights from past sessions for AI context
@@ -194,6 +246,131 @@ ${recentInsights.map((insight) => `- ${insight}`).join('\n')}
   }
 
   return context;
+}
+
+/**
+ * Build learned concepts context from completed training topics
+ * Returns formatted string with key concepts the user has learned
+ */
+export function buildLearnedConceptsContext(
+  completedTopicIds: string[]
+): string {
+  if (completedTopicIds.length === 0) {
+    return '';
+  }
+
+  const concepts: string[] = [];
+
+  for (const topicId of completedTopicIds) {
+    const topicConcepts = TOPIC_CONCEPTS[topicId];
+    if (topicConcepts) {
+      // Take first 2 concepts from each topic to keep context manageable
+      concepts.push(...topicConcepts.slice(0, 2));
+    }
+  }
+
+  if (concepts.length === 0) {
+    return '';
+  }
+
+  return `
+## ユーザーが学んだ概念
+${concepts.map((c) => `- ${c}`).join('\n')}
+
+これらの概念を会話で自然に参照してください。
+`;
+}
+
+/**
+ * Build worksheet answers context for AI reference
+ * Returns formatted string with user's self-reflection answers
+ */
+export function buildWorksheetContext(
+  trainingProgress: Record<string, TrainingProgress>
+): string {
+  const worksheetSummaries: string[] = [];
+
+  // Extract key worksheet answers from each topic
+  for (const [topicId, progress] of Object.entries(trainingProgress)) {
+    const answers = progress.worksheetAnswers;
+    if (!answers || Object.keys(answers).length === 0) continue;
+
+    const topicTitle = TOPIC_TITLES[topicId] || topicId;
+
+    // Get meaningful answers (non-empty)
+    const meaningfulAnswers = Object.entries(answers)
+      .filter(([, answer]) => answer && answer.length > 0)
+      .slice(0, 2); // Limit to 2 answers per topic
+
+    if (meaningfulAnswers.length > 0) {
+      const answerTexts = meaningfulAnswers
+        .map(([, answer]) => truncateText(answer, 100))
+        .join('、');
+      worksheetSummaries.push(`- ${topicTitle}: ${answerTexts}`);
+    }
+  }
+
+  if (worksheetSummaries.length === 0) {
+    return '';
+  }
+
+  return `
+## ユーザーの自己分析（ワークシート回答）
+${worksheetSummaries.join('\n')}
+`;
+}
+
+/**
+ * Truncate text to specified length with ellipsis
+ */
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 3) + '...';
+}
+
+/**
+ * Build If-Then plan context for AI reference
+ */
+export function buildIfThenPlanContext(ifThenPlan: string | null): string {
+  if (!ifThenPlan) {
+    return '';
+  }
+
+  return `
+## ユーザーのIf-Thenプラン
+${ifThenPlan}
+
+このプランを会話で参照し、実践を励ましてください。
+`;
+}
+
+/**
+ * Build enhanced user context with all learning data
+ * Combines training progress, learned concepts, worksheet answers, and If-Then plan
+ */
+export interface EnhancedContextInput {
+  trainingProgress: Record<string, TrainingProgress>;
+  completedTopicIds: string[];
+  sessionSummaries: SessionSummary[];
+  ifThenPlan: string | null;
+}
+
+export function buildEnhancedTrainingContext(
+  input: EnhancedContextInput
+): string {
+  const baseContext = buildTrainingContext({
+    trainingProgress: input.trainingProgress,
+    completedTopicIds: input.completedTopicIds,
+    sessionSummaries: input.sessionSummaries,
+  });
+
+  const learnedConcepts = buildLearnedConceptsContext(input.completedTopicIds);
+  const worksheetContext = buildWorksheetContext(input.trainingProgress);
+  const ifThenContext = buildIfThenPlanContext(input.ifThenPlan);
+
+  return [baseContext, learnedConcepts, worksheetContext, ifThenContext]
+    .filter((s) => s.length > 0)
+    .join('\n');
 }
 
 /**

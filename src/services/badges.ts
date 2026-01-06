@@ -5,6 +5,24 @@
 
 import type { Badge, BadgeCondition, LifetimeStatistics, DailyStatistics } from '../types/statistics';
 
+/**
+ * Badges that trigger confetti celebration when earned
+ */
+export const CONFETTI_BADGES: readonly string[] = [
+  'reduction_75',
+  'intervention_success_100',
+  'habit_score_90',
+  'streak_21', // 21-day streak is also a major achievement
+  'streak_66', // 66-day streak is legendary
+];
+
+/**
+ * Check if a badge should show confetti animation
+ */
+export function shouldShowConfetti(badgeId: string): boolean {
+  return CONFETTI_BADGES.includes(badgeId);
+}
+
 // Badge Definitions (without earnedAt)
 export const BADGE_DEFINITIONS: Omit<Badge, 'earnedAt'>[] = [
   {

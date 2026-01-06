@@ -303,3 +303,128 @@ export function isValidMessage(value: unknown): value is Message {
     typeof msg.tokenEstimate === 'number'
   );
 }
+
+// ============================================
+// Conversation Starter Types
+// ============================================
+
+export type ConversationStarterCategory =
+  | 'concern'
+  | 'emotional'
+  | 'positive'
+  | 'question'
+  | 'training';
+
+export interface ConversationStarter {
+  id: string;
+  textKey: string;
+  category: ConversationStarterCategory;
+  relatedTopic?: string;
+}
+
+// ============================================
+// Contextual Suggestion Types
+// ============================================
+
+export type SuggestionCategory = 'progress' | 'concern' | 'learning' | 'routine';
+
+export type SuggestionAction =
+  | { type: 'start_mode'; modeId: ConversationModeId }
+  | { type: 'start_guided'; templateId: string }
+  | { type: 'navigate'; route: string }
+  | { type: 'free_chat' };
+
+export interface ContextualSuggestion {
+  id: string;
+  titleKey: string;
+  descriptionKey: string;
+  action: SuggestionAction;
+  priority: number;
+  category: SuggestionCategory;
+}
+
+export interface SuggestionContext {
+  todayStats: {
+    interventionCount: number;
+    blockedCount: number;
+    totalMinutes: number;
+    goalMinutes: number;
+  };
+  weeklyStats: {
+    totalMinutes: number;
+    previousWeekMinutes: number;
+  };
+  trainingProgress: Record<string, { isCompleted: boolean; completedContents: string[] }>;
+  ifThenPlan: string | null;
+  lastSessionDate: string | null;
+  onboardingCompletedAt: string | null;
+  currentHour: number;
+  streakDays: number;
+}
+
+// ============================================
+// Guided Conversation Types
+// ============================================
+
+export interface GuidedOption {
+  textKey: string;
+  value: string;
+}
+
+export interface GuidedStep {
+  id: string;
+  promptKey: string;
+  options?: GuidedOption[];
+  allowFreeInput: boolean;
+  saveToStore?: {
+    store: 'appStore' | 'aiStore';
+    field: string;
+  };
+}
+
+export interface GuidedConversationTemplate {
+  id: string;
+  titleKey: string;
+  descriptionKey: string;
+  steps: GuidedStep[];
+}
+
+export interface GuidedConversationState {
+  templateId: string;
+  currentStepIndex: number;
+  responses: Record<string, string>;
+  isActive: boolean;
+  startedAt: number;
+}
+
+// ============================================
+// Training Recommendation Types
+// ============================================
+
+export interface TrainingRecommendation {
+  topicId: string;
+  topicTitle: string;
+  reason: string;
+  isCompleted: boolean;
+  route: string;
+}
+
+// ============================================
+// Extended AI State & Actions
+// ============================================
+
+export interface AIStateExtended extends AIState {
+  guidedConversation: GuidedConversationState | null;
+  recentRecommendations: Array<{
+    topicId: string;
+    recommendedAt: number;
+  }>;
+}
+
+export interface AIActionsExtended extends AIActions {
+  startGuidedConversation: (templateId: string) => void;
+  advanceGuidedStep: (response: string) => void;
+  completeGuidedConversation: () => Promise<void>;
+  cancelGuidedConversation: () => void;
+  addRecommendation: (topicId: string) => void;
+}
