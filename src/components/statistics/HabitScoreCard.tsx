@@ -12,7 +12,6 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
 import { t } from '../../i18n';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
@@ -27,7 +26,6 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export const HabitScoreCard: React.FC<HabitScoreCardProps> = ({ testID }) => {
   const { colors, typography, borderRadius } = useTheme();
-  const router = useRouter();
   const getHabitScore = useStatisticsStore((state) => state.getHabitScore);
 
   const score = getHabitScore();
@@ -46,7 +44,8 @@ export const HabitScoreCard: React.FC<HabitScoreCardProps> = ({ testID }) => {
   };
 
   const handlePress = () => {
-    router.push('/statistics/details');
+    // TODO: Navigate to statistics details screen when implemented
+    // router.push('/statistics/details');
   };
 
   return (
