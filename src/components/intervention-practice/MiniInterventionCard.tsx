@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { palette } from '../../design/theme';
+import { t } from '../../i18n';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
 type MiniInterventionCardProps = {
@@ -70,7 +71,7 @@ export const MiniInterventionCard = ({
           <View style={[styles.lockBadge, { backgroundColor: palette.dark[500] }]}>
             <Ionicons name="lock-closed" size={12} color={colors.textMuted} />
             <Text style={[styles.lockText, { color: colors.textMuted }]}>
-              Locked
+              {t('intervention.practice.locked')}
             </Text>
           </View>
         )}
