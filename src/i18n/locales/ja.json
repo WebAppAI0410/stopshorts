@@ -981,27 +981,31 @@
     },
     "practice": {
       "title": "介入を練習",
-      "subtitle": "どの介入タイプを体験しますか？",
+      "subtitle": "実際のアプリ検出時と同じ介入を\n練習モードで体験できます",
+      "recommended": "おすすめ",
+      "tryIt": "試してみる",
+      "locked": "ロック中",
       "options": {
         "breathing": {
           "title": "呼吸ガイド",
-          "description": "深呼吸で衝動を落ち着かせる練習をします"
+          "tagline": "最も効果的な基本テクニック",
+          "description": "4-7-8呼吸法を使って衝動の波を落ち着かせます。",
+          "duration": "30-90秒"
         },
         "friction": {
           "title": "フリクション",
-          "description": "待機時間と意図確認のフローを体験します"
+          "description": "待機と意図確認"
         },
         "mirror": {
           "title": "ミラー",
-          "description": "前面カメラで自分の顔を見ながら目標を再確認します"
+          "description": "自分を見つめる"
         },
         "ai": {
           "title": "AIコーチ",
-          "description": "AIとの対話で気持ちを整理し、衝動を落ち着かせます"
+          "description": "会話で分析"
         }
       },
-      "info": "練習モードでは実際のアプリ起動はブロックされません。各介入の流れを確認できます。",
-      "comingSoon": "準備中"
+      "info": "練習モードでの使用記録は統計に含まれません。\nいつでも自由に試すことができます。"
     },
     "mirror": {
       "title": "{{app}}を開く前に",

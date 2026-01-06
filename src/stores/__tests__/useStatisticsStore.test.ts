@@ -96,7 +96,7 @@ describe('useStatisticsStore', () => {
         proceeded: false,
         type: 'friction',
         appPackage: 'com.instagram.android',
-        intention: 'boredom',
+        intention: 'bored',
       });
 
       const state = useStatisticsStore.getState();
@@ -106,7 +106,7 @@ describe('useStatisticsStore', () => {
         proceeded: false,
         type: 'friction',
         appPackage: 'com.instagram.android',
-        intention: 'boredom',
+        intention: 'bored',
       });
       expect(record.timestamp).toBeDefined();
       expect(record.timeOfDay).toBeDefined();
@@ -204,16 +204,17 @@ describe('useStatisticsStore', () => {
         useStatisticsStore.getState();
 
       // recordIntention is called by FrictionIntervention component
-      recordIntention('boredom', false, undefined, 'com.tiktok.app');
-      recordIntention('boredom', true, undefined, 'com.tiktok.app');
-      recordIntention('notification', false, undefined, 'com.tiktok.app');
+      // Valid IntentionId values: 'dm', 'specific', 'bored', 'random', 'other'
+      recordIntention('bored', false, undefined, 'com.tiktok.app');
+      recordIntention('bored', true, undefined, 'com.tiktok.app');
+      recordIntention('dm', false, undefined, 'com.tiktok.app');
 
       const stats = getIntentionPatternStats();
 
-      expect(stats['boredom']).toBeDefined();
-      expect(stats['boredom'].count).toBe(2);
-      expect(stats['notification']).toBeDefined();
-      expect(stats['notification'].count).toBe(1);
+      expect(stats['bored']).toBeDefined();
+      expect(stats['bored'].count).toBe(2);
+      expect(stats['dm']).toBeDefined();
+      expect(stats['dm'].count).toBe(1);
     });
   });
 

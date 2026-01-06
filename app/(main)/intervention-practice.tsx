@@ -1,9 +1,10 @@
 /**
  * Intervention Practice Selection Page
  * Allows users to choose which intervention type to practice
+ * Features a hero card for breathing and mini cards for other interventions
  */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,69 +13,48 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAIStore } from '../../src/stores/useAIStore';
 import { t } from '../../src/i18n';
-
-interface PracticeOption {
-  id: 'breathing' | 'friction' | 'mirror' | 'ai';
-  icon: keyof typeof Ionicons.glyphMap;
-  titleKey: string;
-  descriptionKey: string;
-  available: boolean;
-}
-
-// Base practice options (AI availability is determined dynamically)
-const BASE_PRACTICE_OPTIONS: Omit<PracticeOption, 'available'>[] = [
-  {
-    id: 'breathing',
-    icon: 'leaf-outline',
-    titleKey: 'intervention.practice.options.breathing.title',
-    descriptionKey: 'intervention.practice.options.breathing.description',
-  },
-  {
-    id: 'friction',
-    icon: 'time-outline',
-    titleKey: 'intervention.practice.options.friction.title',
-    descriptionKey: 'intervention.practice.options.friction.description',
-  },
-  {
-    id: 'mirror',
-    icon: 'person-outline',
-    titleKey: 'intervention.practice.options.mirror.title',
-    descriptionKey: 'intervention.practice.options.mirror.description',
-  },
-  {
-    id: 'ai',
-    icon: 'chatbubble-outline',
-    titleKey: 'intervention.practice.options.ai.title',
-    descriptionKey: 'intervention.practice.options.ai.description',
-  },
-];
+import {
+  FeaturedBreathingCard,
+  MiniInterventionCard,
+} from '../../src/components/intervention-practice';
 
 export default function InterventionPracticeScreen() {
-  const { colors, typography, spacing, borderRadius } = useTheme();
+  const { colors, typography, spacing, borderRadius, isDark } = useTheme();
   const router = useRouter();
   const modelStatus = useAIStore((state) => state.modelStatus);
 
-  // AI is only available when model is ready
   const isAIModelReady = modelStatus === 'ready';
 
-  // Create practice options with dynamic AI availability
-  const practiceOptions: PracticeOption[] = useMemo(() => {
-    return BASE_PRACTICE_OPTIONS.map((option) => ({
-      ...option,
-      available: option.id === 'ai' ? isAIModelReady : true,
-    }));
-  }, [isAIModelReady]);
-
-  const handleSelectOption = (option: PracticeOption) => {
-    if (!option.available) return;
+  const handleBreathingPress = () => {
     router.push({
       pathname: '/(main)/urge-surfing',
-      params: { practiceType: option.id },
+      params: { practiceType: 'breathing' },
     });
   };
 
-  const handleGoToAICoach = () => {
-    router.push('/(main)/ai');
+  const handleFrictionPress = () => {
+    router.push({
+      pathname: '/(main)/urge-surfing',
+      params: { practiceType: 'friction' },
+    });
+  };
+
+  const handleMirrorPress = () => {
+    router.push({
+      pathname: '/(main)/urge-surfing',
+      params: { practiceType: 'mirror' },
+    });
+  };
+
+  const handleAIPress = () => {
+    if (isAIModelReady) {
+      router.push({
+        pathname: '/(main)/urge-surfing',
+        params: { practiceType: 'ai' },
+      });
+    } else {
+      router.push('/(main)/ai');
+    }
   };
 
   const handleBack = () => {
@@ -89,113 +69,86 @@ export default function InterventionPracticeScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
-        <View style={styles.headerRow}>
-          <Pressable onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </Pressable>
-          <Text style={[typography.h2, { color: colors.textPrimary }]}>
-            {t('intervention.practice.title')}
-          </Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <Pressable onPress={handleBack} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+        </Pressable>
       </Animated.View>
 
-      {/* Description */}
-      <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.descriptionContainer}>
-        <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}>
+      {/* Title Section */}
+      <Animated.View
+        entering={FadeInDown.duration(600)}
+        style={styles.titleSection}
+      >
+        <Text style={[typography.h2, { color: colors.textPrimary }]}>
+          {t('intervention.practice.title')}
+        </Text>
+        <Text
+          style={[
+            typography.body,
+            { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.sm },
+          ]}
+        >
           {t('intervention.practice.subtitle')}
         </Text>
       </Animated.View>
 
-      {/* Options */}
-      <View style={styles.optionsContainer}>
-        {practiceOptions.map((option, index) => (
-          <Animated.View
-            key={option.id}
-            entering={FadeInDown.duration(600).delay(200 + index * 100)}
-          >
-            <View style={{ opacity: option.available ? 1 : 0.5 }}>
-              <Pressable
-                onPress={() => handleSelectOption(option)}
-                disabled={!option.available}
-                style={({ pressed }) => [
-                  styles.optionCard,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    borderRadius: borderRadius.xl,
-                    opacity: pressed && option.available ? 0.8 : 1,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: colors.primary + '15' },
-                  ]}
-                >
-                  <Ionicons name={option.icon} size={32} color={colors.primary} />
-                </View>
-                <View style={styles.optionContent}>
-                  <Text style={[typography.h3, { color: colors.textPrimary }]}>
-                    {t(option.titleKey)}
-                  </Text>
-                  <Text
-                    style={[
-                      typography.bodySmall,
-                      { color: colors.textSecondary, marginTop: spacing.xs },
-                    ]}
-                  >
-                    {t(option.descriptionKey)}
-                  </Text>
-                </View>
-                {option.available ? (
-                  <Ionicons name="chevron-forward" size={24} color={colors.textMuted} />
-                ) : (
-                  <Ionicons name="lock-closed-outline" size={24} color={colors.textMuted} />
-                )}
-              </Pressable>
-            </View>
-            {/* Show download guidance for unavailable AI option */}
-            {!option.available && option.id === 'ai' && (
-              <Pressable
-                onPress={handleGoToAICoach}
-                style={({ pressed }) => [
-                  styles.downloadBadge,
-                  {
-                    backgroundColor: colors.primary,
-                    borderRadius: borderRadius.sm,
-                    opacity: pressed ? 0.8 : 1,
-                  },
-                ]}
-              >
-                <Ionicons name="download-outline" size={14} color="#FFFFFF" />
-                <Text style={[typography.caption, { color: '#FFFFFF', marginLeft: 4 }]}>
-                  {t('ai.downloadOnAICoach')}
-                </Text>
-              </Pressable>
-            )}
-          </Animated.View>
-        ))}
+      {/* Featured Breathing Card */}
+      <View style={[styles.featuredSection, { paddingHorizontal: spacing.gutter }]}>
+        <FeaturedBreathingCard onPress={handleBreathingPress} />
       </View>
 
-      {/* Info */}
+      {/* Mini Cards Grid */}
+      <View style={[styles.miniCardsSection, { paddingHorizontal: spacing.gutter }]}>
+        <View style={styles.miniCardsGrid}>
+          <MiniInterventionCard
+            type="friction"
+            title={t('intervention.practice.options.friction.title')}
+            subtitle={t('intervention.practice.options.friction.description')}
+            onPress={handleFrictionPress}
+            index={0}
+          />
+          <MiniInterventionCard
+            type="mirror"
+            title={t('intervention.practice.options.mirror.title')}
+            subtitle={t('intervention.practice.options.mirror.description')}
+            onPress={handleMirrorPress}
+            index={1}
+          />
+          <MiniInterventionCard
+            type="ai"
+            title={t('intervention.practice.options.ai.title')}
+            subtitle={t('intervention.practice.options.ai.description')}
+            locked={!isAIModelReady}
+            lockedLabel={t('intervention.practice.locked')}
+            onPress={handleAIPress}
+            index={2}
+          />
+        </View>
+      </View>
+
+      {/* Footer Info */}
       <Animated.View
-        entering={FadeInDown.duration(600).delay(400)}
+        entering={FadeInDown.duration(600).delay(300)}
         style={[
-          styles.infoCard,
+          styles.footer,
           {
-            backgroundColor: colors.primary + '10',
-            borderRadius: borderRadius.lg,
+            backgroundColor: isDark
+              ? 'rgba(255, 255, 255, 0.03)'
+              : 'rgba(0, 0, 0, 0.03)',
+            borderRadius: borderRadius.md,
             marginHorizontal: spacing.gutter,
           },
         ]}
       >
-        <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
+        <Ionicons
+          name="information-circle-outline"
+          size={16}
+          color={colors.textSecondary}
+        />
         <Text
           style={[
-            typography.caption,
-            { color: colors.textSecondary, marginLeft: spacing.sm, flex: 1 },
+            styles.footerText,
+            { color: colors.textSecondary, marginLeft: spacing.sm },
           ]}
         >
           {t('intervention.practice.info')}
@@ -212,63 +165,41 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 16,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingBottom: 8,
   },
   backButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginLeft: -8,
   },
-  descriptionContainer: {
+  titleSection: {
+    alignItems: 'center',
     paddingHorizontal: 24,
     marginBottom: 24,
   },
-  optionsContainer: {
-    paddingHorizontal: 16,
+  featuredSection: {
+    marginBottom: 24,
+  },
+  miniCardsSection: {
+    marginBottom: 24,
+  },
+  miniCardsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 12,
   },
-  optionCard: {
+  footer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderWidth: 1,
-  },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionContent: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: 12,
     marginTop: 'auto',
     marginBottom: 24,
   },
-  comingSoonBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  downloadBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+  footerText: {
+    flex: 1,
+    fontSize: 11,
+    lineHeight: 16,
   },
 });
