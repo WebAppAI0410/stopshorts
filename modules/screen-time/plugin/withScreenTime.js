@@ -71,8 +71,9 @@ function withScreenTime(config) {
     if (enableFamilyControls) {
         console.log('[withScreenTime] Family Controls entitlement ENABLED');
         config = withFamilyControls(config);
-        // Add extensions only when Family Controls is enabled
-        config = withScreenTimeExtensions(config);
+        // TODO: Fix extension build settings and re-enable
+        // Extension adding is temporarily disabled due to pbxproj generation issues
+        // config = withScreenTimeExtensions(config);
     } else {
         console.log(
             '[withScreenTime] Family Controls entitlement DISABLED (set ENABLE_FAMILY_CONTROLS=true to enable)'
