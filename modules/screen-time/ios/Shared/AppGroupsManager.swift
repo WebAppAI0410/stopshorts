@@ -203,6 +203,11 @@ public final class AppGroupsManager {
         set(todayString, forKey: Keys.lastResetDate)
     }
 
+    /// Public method for extensions to reset daily threshold count
+    public func resetDailyThresholdCountIfNeeded() {
+        resetIfNewDay()
+    }
+
     // MARK: - Shield Cooldown
 
     public var shieldCooldownUntil: Date? {
