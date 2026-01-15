@@ -6,6 +6,7 @@ import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 import { useMonitoringService } from '../src/hooks/useMonitoringService';
 import { useDailyUsageSync } from '../src/hooks/useDailyUsageSync';
 import { useNotifications } from '../src/hooks/useNotifications';
+import { useIOSIntervention } from '../src/hooks/useIOSIntervention';
 
 export default function RootLayout() {
   return (
@@ -23,6 +24,10 @@ function AppWithStatusBar() {
   // Initialize monitoring service (Android only)
   // This hook automatically starts/stops monitoring based on onboarding status
   useMonitoringService();
+
+  // Initialize iOS intervention detection (iOS only)
+  // Checks for urge surfing requests and polls intervention events
+  useIOSIntervention();
 
   // Sync daily usage data from native module to statistics store
   // This updates habit score and records usage history
