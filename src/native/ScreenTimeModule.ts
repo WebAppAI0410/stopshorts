@@ -823,16 +823,14 @@ class IOSScreenTimeService {
   // ============================================
 
   async startMonitoring(_packageNames: string[]): Promise<boolean> {
-    // iOS: Monitoring is handled by DeviceActivityMonitor extension
-    // This will be implemented in Phase 3
-    console.log('[ScreenTime] iOS monitoring uses DeviceActivityMonitor extension');
-    return false;
+    // iOS: Package names are ignored - uses FamilyActivitySelection from App Groups
+    const result = await IOSScreenTime.startMonitoring();
+    return result.success;
   }
 
   async stopMonitoring(): Promise<boolean> {
-    // iOS: Stop DeviceActivityMonitor
-    console.log('[ScreenTime] iOS stop monitoring - not yet implemented');
-    return false;
+    const result = await IOSScreenTime.stopMonitoring();
+    return result.success;
   }
 
   async updateTargetApps(_packageNames: string[]): Promise<boolean> {

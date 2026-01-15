@@ -94,7 +94,9 @@ export interface ScreenTimeModuleType {
     // Intervention Events
     pollInterventionEvents(): InterventionEvent[];
 
-    // Monitoring State
+    // Monitoring Control
+    startMonitoring(): Promise<ShieldResult>;
+    stopMonitoring(): Promise<ShieldResult>;
     isMonitoringActive(): boolean;
 
     // Shield Cooldown
@@ -315,7 +317,34 @@ export function pollInterventionEvents(): InterventionEvent[] {
     return ScreenTimeModule.pollInterventionEvents();
 }
 
-// MARK: - Monitoring State
+// MARK: - Monitoring Control
+
+/**
+ * Start monitoring target apps with threshold events
+ * Sets up DeviceActivityCenter to track usage in 5-minute intervals
+ */
+export async function startMonitoring(): Promise<ShieldResult> {
+    if (!ScreenTimeModule) {
+        return {
+            success: false,
+            error: 'Screen Time API is only available on iOS 15+',
+        };
+    }
+    return ScreenTimeModule.startMonitoring();
+}
+
+/**
+ * Stop monitoring target apps
+ */
+export async function stopMonitoring(): Promise<ShieldResult> {
+    if (!ScreenTimeModule) {
+        return {
+            success: false,
+            error: 'Screen Time API is only available on iOS 15+',
+        };
+    }
+    return ScreenTimeModule.stopMonitoring();
+}
 
 /**
  * Check if monitoring is currently active
@@ -375,6 +404,8 @@ export default {
     consumeUrgeSurfingRequest,
     hasUrgeSurfingRequest,
     pollInterventionEvents,
+    startMonitoring,
+    stopMonitoring,
     isMonitoringActive,
     isInShieldCooldown,
     setShieldCooldown,

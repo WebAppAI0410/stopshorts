@@ -7,6 +7,13 @@ public class ScreenTimeModule: Module {
     // Store for managing app shields/blocks
     private let managedSettingsStore = ManagedSettingsStore()
 
+    // DeviceActivityCenter singleton for monitoring
+    @available(iOS 15.0, *)
+    private lazy var deviceActivityCenter = DeviceActivityCenter()
+
+    // Activity name constant
+    private let monitoringActivityName = "stopshorts_monitoring"
+
     public func definition() -> ModuleDefinition {
         Name("ScreenTime")
 
@@ -271,11 +278,88 @@ public class ScreenTimeModule: Module {
             return AppGroupsManager.shared.consumeInterventionEvents()
         }
 
-        // MARK: - Monitoring State
+        // MARK: - Monitoring Control
+
+        /// Start monitoring target apps with threshold events
+        AsyncFunction("startMonitoring") { (promise: Promise) in
+            if #available(iOS 15.0, *) {
+                do {
+                    // Load saved selection
+                    guard let selection = try SelectionSerializer.loadFromAppGroups(),
+                          !selection.applicationTokens.isEmpty else {
+                        promise.resolve(["success": false, "error": "No apps selected. Use FamilyActivityPicker first."])
+                        return
+                    }
+
+                    let activityName = DeviceActivityName(self.monitoringActivityName)
+
+                    // Create schedule for all-day monitoring
+                    let schedule = DeviceActivitySchedule(
+                        intervalStart: DateComponents(hour: 0, minute: 0),
+                        intervalEnd: DateComponents(hour: 23, minute: 59),
+                        repeats: true
+                    )
+
+                    // Create threshold events (5-minute intervals for up to 60 minutes)
+                    var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
+                    for minutes in stride(from: 5, through: 60, by: 5) {
+                        let eventName = DeviceActivityEvent.Name("threshold_\(minutes)min")
+                        events[eventName] = DeviceActivityEvent(
+                            applications: selection.applicationTokens,
+                            threshold: DateComponents(minute: minutes)
+                        )
+                    }
+
+                    // Stop any existing monitoring first
+                    self.deviceActivityCenter.stopMonitoring([activityName])
+
+                    // Start monitoring with schedule and events
+                    try self.deviceActivityCenter.startMonitoring(
+                        activityName,
+                        during: schedule,
+                        events: events
+                    )
+
+                    AppGroupsManager.shared.isMonitoringActive = true
+                    promise.resolve(["success": true])
+                } catch {
+                    promise.resolve(["success": false, "error": error.localizedDescription])
+                }
+            } else {
+                promise.resolve(["success": false, "error": "iOS 15+ required"])
+            }
+        }
+
+        /// Stop monitoring target apps
+        AsyncFunction("stopMonitoring") { (promise: Promise) in
+            if #available(iOS 15.0, *) {
+                let activityName = DeviceActivityName(self.monitoringActivityName)
+
+                self.deviceActivityCenter.stopMonitoring([activityName])
+                AppGroupsManager.shared.isMonitoringActive = false
+
+                promise.resolve(["success": true])
+            } else {
+                promise.resolve(["success": false, "error": "iOS 15+ required"])
+            }
+        }
 
         /// Check if monitoring is active
+        /// Syncs UserDefaults state with actual DeviceActivityCenter state on first call
         Function("isMonitoringActive") { () -> Bool in
-            return AppGroupsManager.shared.isMonitoringActive
+            if #available(iOS 15.0, *) {
+                // Check actual DeviceActivityCenter activities for accurate state
+                let activityName = DeviceActivityName(self.monitoringActivityName)
+                let isActuallyActive = self.deviceActivityCenter.activities.contains(activityName)
+
+                // Sync UserDefaults if out of sync (e.g., after app crash)
+                if isActuallyActive != AppGroupsManager.shared.isMonitoringActive {
+                    AppGroupsManager.shared.isMonitoringActive = isActuallyActive
+                }
+
+                return isActuallyActive
+            }
+            return false
         }
 
         // MARK: - Shield Cooldown
