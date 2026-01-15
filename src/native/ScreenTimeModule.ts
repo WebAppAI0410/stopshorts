@@ -939,6 +939,15 @@ class IOSScreenTimeService {
   }
 
   /**
+   * Present FamilyActivityPicker to select apps
+   */
+  async presentFamilyActivityPicker(
+    options?: IOSScreenTime.FamilyActivityPickerOptions
+  ): Promise<IOSScreenTime.FamilyActivityPickerResult> {
+    return IOSScreenTime.presentFamilyActivityPicker(options);
+  }
+
+  /**
    * Check if shield is in cooldown
    */
   isInShieldCooldown(): boolean {
@@ -1406,6 +1415,21 @@ class ScreenTimeService {
       webDomainCount: 0,
       isEmpty: true,
       totalCount: 0,
+    };
+  }
+
+  /**
+   * Present FamilyActivityPicker to select apps (iOS only)
+   */
+  async presentFamilyActivityPicker(
+    options?: IOSScreenTime.FamilyActivityPickerOptions
+  ): Promise<IOSScreenTime.FamilyActivityPickerResult> {
+    if (this.iosService) {
+      return this.iosService.presentFamilyActivityPicker(options);
+    }
+    return {
+      success: false,
+      error: 'FamilyActivityPicker is only available on iOS',
     };
   }
 

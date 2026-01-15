@@ -8,7 +8,10 @@
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "env": {
+          "ENABLE_FAMILY_CONTROLS": "true"
+        }
       },
       "android": {
         "buildType": "apk",
@@ -47,6 +50,11 @@
     },
     "production": {
       "autoIncrement": true,
+      "ios": {
+        "env": {
+          "ENABLE_FAMILY_CONTROLS": "true"
+        }
+      },
       "android": {
         "buildType": "app-bundle"
       }

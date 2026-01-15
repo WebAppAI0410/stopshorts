@@ -2,6 +2,6 @@
   "platforms": ["ios"],
   "ios": {
     "modules": ["ScreenTimeModule"],
-    "sourceDirs": ["src", "ios/Shared"]
+    "sourceDirs": ["src", "ios/Shared", "ios/FamilyActivityPicker"]
   }
 }

@@ -47,6 +47,20 @@ export interface ShieldResult {
     error?: string;
 }
 
+export interface FamilyActivityPickerOptions {
+    headerText?: string;
+    footerText?: string;
+}
+
+export interface FamilyActivityPickerResult {
+    success: boolean;
+    applicationCount?: number;
+    categoryCount?: number;
+    webDomainCount?: number;
+    isEmpty?: boolean;
+    error?: string;
+}
+
 export interface ScreenTimeModuleType {
     // Availability
     isAvailable(): boolean;
@@ -60,6 +74,7 @@ export interface ScreenTimeModuleType {
     hasSelectedApps(): boolean;
     getSelectionSummary(): SelectionSummary;
     clearSelection(): Promise<boolean>;
+    presentFamilyActivityPicker(options?: FamilyActivityPickerOptions): Promise<FamilyActivityPickerResult>;
 
     // Shield Management
     clearAllShields(): Promise<boolean>;
@@ -184,6 +199,22 @@ export function getSelectionSummary(): SelectionSummary {
 export async function clearSelection(): Promise<boolean> {
     if (!ScreenTimeModule) return false;
     return ScreenTimeModule.clearSelection();
+}
+
+/**
+ * Present the FamilyActivityPicker to select apps to monitor
+ * Selection is automatically saved to App Groups for use by extensions
+ */
+export async function presentFamilyActivityPicker(
+    options?: FamilyActivityPickerOptions
+): Promise<FamilyActivityPickerResult> {
+    if (!ScreenTimeModule) {
+        return {
+            success: false,
+            error: 'Screen Time API is only available on iOS 15+',
+        };
+    }
+    return ScreenTimeModule.presentFamilyActivityPicker(options);
 }
 
 // MARK: - Shield Management
@@ -335,6 +366,7 @@ export default {
     hasSelectedApps,
     getSelectionSummary,
     clearSelection,
+    presentFamilyActivityPicker,
     clearAllShields,
     applyShields,
     setInterventionSettings,

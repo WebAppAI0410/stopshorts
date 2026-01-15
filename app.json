@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.stopshorts.app",
+      "bundleIdentifier": "com.nverse.stopshorts",
       "infoPlist": {
         "NSUserTrackingUsageDescription": "アプリの使用状況を分析し、より良い体験を提供するために使用します。",
         "NSCameraUsageDescription": "自分の顔を見て目標を思い出すために、カメラへのアクセスが必要です。",
@@ -28,7 +28,11 @@
       },
       "package": "com.stopshorts.app",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -55,9 +59,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "0c46ad4b-81b5-4c52-a35e-aca3b18fca50"
+        "projectId": "a2814f46-d5c1-41c1-af25-0290f401c4bb"
       }
     },
-    "owner": "webappai"
+    "owner": "n-verse-llc"
   }
 }

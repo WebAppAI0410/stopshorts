@@ -136,6 +136,45 @@ public class ScreenTimeModule: Module {
             }
         }
 
+        /// Present the FamilyActivityPicker to select apps to monitor
+        /// Selection is automatically saved to App Groups
+        AsyncFunction("presentFamilyActivityPicker") { (options: [String: Any]?, promise: Promise) in
+            if #available(iOS 15.0, *) {
+                let headerText = options?["headerText"] as? String ?? ""
+                let footerText = options?["footerText"] as? String ?? ""
+
+                FamilyActivityPickerManager.shared.present(
+                    headerText: headerText,
+                    footerText: footerText,
+                    completion: { selection in
+                        // Save selection to App Groups
+                        do {
+                            try SelectionSerializer.saveToAppGroups(selection)
+                            let summary = SelectionSerializer.getSummary(selection)
+                            promise.resolve([
+                                "success": true,
+                                "applicationCount": summary.applicationCount,
+                                "categoryCount": summary.categoryCount,
+                                "webDomainCount": summary.webDomainCount,
+                                "isEmpty": summary.isEmpty
+                            ])
+                        } catch {
+                            promise.resolve([
+                                "success": false,
+                                "error": error.localizedDescription
+                            ])
+                        }
+                    },
+                    onDismiss: nil
+                )
+            } else {
+                promise.resolve([
+                    "success": false,
+                    "error": "iOS 15+ required"
+                ])
+            }
+        }
+
         // MARK: - Shield Management
 
         /// Clear all shields/blocks
