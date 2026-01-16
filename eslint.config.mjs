@@ -38,10 +38,7 @@ export default tseslint.config(
   },
   {
     files: [
-      '.detoxrc.js',
-      'e2e/**/*.js',
       'modules/screen-time/plugin/withScreenTime.js',
-      'modules/detox/plugin/withDetox.js',
       'jest.setup.js',
       'jest.expo-winter-mock.js',
     ],

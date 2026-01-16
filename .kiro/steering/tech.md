@@ -21,7 +21,7 @@
 - **Animation**: react-native-reanimated
 - **Gestures**: react-native-gesture-handler
 - **Testing**: Jest + React Native Testing Library
-- **E2E**: Detox
+- **E2E**: Maestro
 - **UI Review**: Storybook (dev only)
 
 ## 開発標準
@@ -35,7 +35,7 @@
 
 ### テスト
 - Jestでロジック/コンポーネント
-- DetoxでE2E（CI/EASに依存）
+- MaestroでE2E（CI/EASに依存）
 
 ## 開発環境
 

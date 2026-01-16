@@ -34,20 +34,6 @@
         "buildType": "apk"
       }
     },
-    "detox-android": {
-      "distribution": "internal",
-      "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleDebug"
-      }
-    },
-    "detox-ios": {
-      "distribution": "internal",
-      "ios": {
-        "simulator": true,
-        "buildConfiguration": "Debug"
-      }
-    },
     "production": {
       "autoIncrement": true,
       "ios": {

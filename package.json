@@ -11,11 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "storybook:generate": "node scripts/storybook-generate.js",
-    "e2e:build:android": "detox build -c android.emu.debug",
-    "e2e:build:ios": "detox build -c ios.sim.debug",
-    "e2e:test:android": "detox test -c android.emu.debug",
-    "e2e:test:ios": "detox test -c ios.sim.debug"
+    "storybook:generate": "node scripts/storybook-generate.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -68,7 +64,6 @@
     "@types/react": "~19.1.0",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.50.0",
-    "detox": "^20.46.0",
     "eslint": "^9.39.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
