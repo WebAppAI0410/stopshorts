@@ -63,7 +63,11 @@ const SHARED_SOURCE_FILES = [
 ];
 
 function withScreenTime(config) {
-    const enableFamilyControls = process.env.ENABLE_FAMILY_CONTROLS === 'true';
+    // Debug: log the raw env value
+    const rawEnvValue = process.env.ENABLE_FAMILY_CONTROLS;
+    console.log(`[withScreenTime] ENABLE_FAMILY_CONTROLS raw value: "${rawEnvValue}" (type: ${typeof rawEnvValue})`);
+
+    const enableFamilyControls = rawEnvValue === 'true';
 
     // Always add App Groups (needed for extension communication)
     config = withAppGroups(config);
