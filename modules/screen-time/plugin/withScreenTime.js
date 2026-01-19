@@ -476,6 +476,7 @@ function addExtensionTarget(project, ext, mainBundleId, extensionsDir, platformP
         CLANG_CXX_LANGUAGE_STANDARD: '"gnu++20"',
         CLANG_ENABLE_MODULES: 'YES',
         CLANG_ENABLE_OBJC_WEAK: 'YES',
+        CODE_SIGN_ENTITLEMENTS: `ScreenTimeExtensions/${ext.sourceDir}/${ext.name}.entitlements`,
         CODE_SIGN_STYLE: 'Automatic',
         CURRENT_PROJECT_VERSION: '1',
         DEVELOPMENT_TEAM: developmentTeam,
