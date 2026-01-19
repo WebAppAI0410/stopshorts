@@ -50,6 +50,7 @@
         }
       ],
       "./modules/screen-time/plugin/withScreenTime",
+      "./modules/screen-time/plugin/withPodfileResourceBundleFix",
       "expo-secure-store"
     ],
     "experiments": {
