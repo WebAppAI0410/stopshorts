@@ -7,11 +7,12 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "ENABLE_FAMILY_CONTROLS": "true"
+      },
       "ios": {
         "simulator": false,
-        "env": {
-          "ENABLE_FAMILY_CONTROLS": "true"
-        }
+        "image": "latest"
       },
       "android": {
         "buildType": "apk",
@@ -36,10 +37,11 @@
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "ENABLE_FAMILY_CONTROLS": "true"
+      },
       "ios": {
-        "env": {
-          "ENABLE_FAMILY_CONTROLS": "true"
-        }
+        "image": "latest"
       },
       "android": {
         "buildType": "app-bundle"
