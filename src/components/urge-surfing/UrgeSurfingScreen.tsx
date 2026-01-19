@@ -21,7 +21,8 @@ import { IntensitySlider } from './IntensitySlider';
 import { BreathingGuide } from './BreathingGuide';
 import { WaveAnimation } from './WaveAnimation';
 import { useSharedValue, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
-// TODO: Use t() for i18n when translations are ready
+// Note: Hardcoded Japanese strings - i18n keys exist in ja.json (urgeSurfing section)
+// but are not yet integrated. Low priority as app is currently Japanese-only.
 
 type SurfingPhase = 'initial' | 'surfing' | 'complete';
 

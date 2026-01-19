@@ -217,10 +217,10 @@ class AndroidScreenTimeService {
         ? getSelectedPackages(selectedApps)
         : getTargetPackages(); // Fallback to all if none selected
       const packages = [...selectedPackages, ...customPackages];
-      console.log('[ScreenTime] getTodayUsage - target packages:', packages);
+      if (__DEV__) console.log('[ScreenTime] getTodayUsage - target packages:', packages);
 
       const stats = await native.getTodayUsage(packages);
-      console.log('[ScreenTime] getTodayUsage - raw stats from native:', JSON.stringify(stats));
+      if (__DEV__) console.log('[ScreenTime] getTodayUsage - raw stats from native:', JSON.stringify(stats));
 
       // Return actual data even if empty - no mock fallback
       const apps: AppUsage[] = (stats || []).map((stat: UsageStat) => ({
@@ -230,10 +230,10 @@ class AndroidScreenTimeService {
         openCount: 0, // UsageStats doesn't provide this
       }));
 
-      console.log('[ScreenTime] getTodayUsage - mapped apps:', JSON.stringify(apps));
+      if (__DEV__) console.log('[ScreenTime] getTodayUsage - mapped apps:', JSON.stringify(apps));
 
       const totalMinutes = apps.reduce((sum, app) => sum + app.minutes, 0);
-      console.log('[ScreenTime] getTodayUsage - totalMinutes:', totalMinutes);
+      if (__DEV__) console.log('[ScreenTime] getTodayUsage - totalMinutes:', totalMinutes);
 
       return {
         totalMinutes,
@@ -459,7 +459,7 @@ class AndroidScreenTimeService {
         ? getSelectedPackages(selectedApps)
         : getTargetPackages();
       const packages = [...new Set([...selectedPackages, ...customPackages])];
-      console.log('[ScreenTime] getUsageStatsForRange - target packages:', packages);
+      if (__DEV__) console.log('[ScreenTime] getUsageStatsForRange - target packages:', packages);
 
       const stats = await native.getUsageStats(
         startDate.getTime(),
@@ -467,7 +467,7 @@ class AndroidScreenTimeService {
         packages
       );
 
-      console.log('[ScreenTime] getUsageStatsForRange - raw stats:', JSON.stringify(stats));
+      if (__DEV__) console.log('[ScreenTime] getUsageStatsForRange - raw stats:', JSON.stringify(stats));
 
       return (stats || []).map((stat: UsageStat) => ({
         packageName: stat.packageName,
@@ -506,7 +506,7 @@ class AndroidScreenTimeService {
         ? getSelectedPackages(selectedApps)
         : getTargetPackages(); // Fallback to all if none selected
       const packages = [...selectedPackages, ...customPackages];
-      console.log('[ScreenTime] getWeeklyUsage - target packages:', packages);
+      if (__DEV__) console.log('[ScreenTime] getWeeklyUsage - target packages:', packages);
       const dailyBreakdown: { date: string; minutes: number }[] = [];
       let weeklyTotal = 0;
 
@@ -528,13 +528,13 @@ class AndroidScreenTimeService {
             packages
           );
 
-          console.log(`[ScreenTime] getWeeklyUsage - ${dateStr} raw stats:`, JSON.stringify(stats));
+          if (__DEV__) console.log(`[ScreenTime] getWeeklyUsage - ${dateStr} raw stats:`, JSON.stringify(stats));
 
           const dayMinutes = (stats || []).reduce((sum: number, stat: UsageStat) => {
             return sum + Math.round(stat.totalTimeMs / 60000);
           }, 0);
 
-          console.log(`[ScreenTime] getWeeklyUsage - ${dateStr} minutes:`, dayMinutes);
+          if (__DEV__) console.log(`[ScreenTime] getWeeklyUsage - ${dateStr} minutes:`, dayMinutes);
 
           weeklyTotal += dayMinutes;
           dailyBreakdown.push({ date: dateStr, minutes: dayMinutes });
@@ -544,7 +544,7 @@ class AndroidScreenTimeService {
         }
       }
 
-      console.log('[ScreenTime] getWeeklyUsage - weeklyTotal:', weeklyTotal, 'dailyBreakdown:', dailyBreakdown);
+      if (__DEV__) console.log('[ScreenTime] getWeeklyUsage - weeklyTotal:', weeklyTotal, 'dailyBreakdown:', dailyBreakdown);
 
       return {
         weeklyTotal,
@@ -587,7 +587,7 @@ class AndroidScreenTimeService {
         ? getSelectedPackages(selectedApps)
         : getTargetPackages(); // Fallback to all if none selected
       const packages = [...selectedPackages, ...customPackages];
-      console.log('[ScreenTime] getMonthlyUsage - target packages:', packages);
+      if (__DEV__) console.log('[ScreenTime] getMonthlyUsage - target packages:', packages);
       let monthlyTotal = 0;
 
       // Get usage for each day of the past 30 days
@@ -617,7 +617,7 @@ class AndroidScreenTimeService {
         }
       }
 
-      console.log('[ScreenTime] getMonthlyUsage - monthlyTotal:', monthlyTotal);
+      if (__DEV__) console.log('[ScreenTime] getMonthlyUsage - monthlyTotal:', monthlyTotal);
 
       return {
         monthlyTotal,
@@ -662,7 +662,7 @@ class AndroidScreenTimeService {
         ? getSelectedPackages(selectedApps)
         : getTargetPackages(); // Fallback to all if none selected
       const packages = [...selectedPackages, ...customPackages];
-      console.log('[ScreenTime] getMonthlyUsageWithApps - target packages:', packages);
+      if (__DEV__) console.log('[ScreenTime] getMonthlyUsageWithApps - target packages:', packages);
 
       // Accumulate per-app usage over 30 days
       const appUsageMap: Record<string, { appName: string; totalMs: number }> = {};
@@ -714,7 +714,7 @@ class AndroidScreenTimeService {
         }))
         .sort((a, b) => b.minutes - a.minutes); // Sort by usage descending
 
-      console.log('[ScreenTime] getMonthlyUsageWithApps - monthlyTotal:', monthlyTotal, 'apps:', apps.length);
+      if (__DEV__) console.log('[ScreenTime] getMonthlyUsageWithApps - monthlyTotal:', monthlyTotal, 'apps:', apps.length);
 
       return {
         monthlyTotal,
@@ -1160,7 +1160,7 @@ class ScreenTimeService {
    * Set shielded apps (iOS only, mock)
    */
   async setShieldedApps(bundleIds: string[]): Promise<boolean> {
-    console.log('[ScreenTime] Setting shielded apps:', bundleIds);
+    if (__DEV__) console.log('[ScreenTime] Setting shielded apps:', bundleIds);
     await new Promise((resolve) => setTimeout(resolve, 200));
     return true;
   }
@@ -1169,7 +1169,7 @@ class ScreenTimeService {
    * Remove shields from all apps (iOS only, mock)
    */
   async unshieldApps(): Promise<boolean> {
-    console.log('[ScreenTime] Removing shields from all apps');
+    if (__DEV__) console.log('[ScreenTime] Removing shields from all apps');
     await new Promise((resolve) => setTimeout(resolve, 200));
     return true;
   }

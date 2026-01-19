@@ -5,35 +5,11 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../../../src/contexts/ThemeContext';
 import { useStatisticsStore } from '../../../src/stores/useStatisticsStore';
 import {
+  CircularGauge,
   IntentionPatternChart,
   TimeOfDayBreakdown,
 } from '../../../src/components/statistics';
 import { t } from '../../../src/i18n';
-
-// Placeholder for CircularGauge (Task 2) - replace with actual import when available
-// import { CircularGauge } from '../../../src/components/statistics';
-function CircularGaugePlaceholder({ score, size }: { score: number; size: number }) {
-  const { colors, typography } = useTheme();
-  return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        backgroundColor: colors.accentMuted,
-        borderWidth: 8,
-        borderColor: colors.accent,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <Text style={[typography.hero, { color: colors.accent }]}>{score}</Text>
-      <Text style={[typography.caption, { color: colors.textSecondary }]}>
-        Habit Score
-      </Text>
-    </View>
-  );
-}
 
 // Placeholder for InterventionBreakdown (Task 3) - replace with actual import when available
 // import { InterventionBreakdown } from '../../../src/components/statistics';
@@ -127,8 +103,7 @@ export default function StatisticsDetailsScreen() {
           entering={FadeInDown.duration(600).delay(100)}
           style={[styles.gaugeContainer, { marginBottom: spacing.xl }]}
         >
-          {/* TODO: Replace with CircularGauge from Task 2 */}
-          <CircularGaugePlaceholder score={habitScore} size={200} />
+          <CircularGauge value={habitScore} size={200} strokeWidth={16} />
         </Animated.View>
 
         {/* Week Change */}
