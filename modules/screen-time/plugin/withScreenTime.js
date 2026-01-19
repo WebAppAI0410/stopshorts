@@ -460,6 +460,10 @@ function addExtensionTarget(project, ext, mainBundleId, extensionsDir, platformP
         project.hash.project.objects.PBXGroup[mainGroupUuid].children.push(extGroupUuid);
     }
 
+    // Get development team from config or use default for N-VERSE LLC
+    // This is needed for EAS Build which uses automatic signing
+    const developmentTeam = process.env.EAS_BUILD_APPLE_TEAM_ID || 'D4T6WZ4Z54';
+
     // Create build configurations using direct hash manipulation
     // NOTE: Values with spaces, commas, or special characters need quotes
     const commonBuildSettings = {
@@ -470,6 +474,7 @@ function addExtensionTarget(project, ext, mainBundleId, extensionsDir, platformP
         CLANG_ENABLE_OBJC_WEAK: 'YES',
         CODE_SIGN_STYLE: 'Automatic',
         CURRENT_PROJECT_VERSION: '1',
+        DEVELOPMENT_TEAM: developmentTeam,
         GENERATE_INFOPLIST_FILE: 'YES',
         INFOPLIST_FILE: `ScreenTimeExtensions/${ext.sourceDir}/Info.plist`,
         INFOPLIST_KEY_CFBundleDisplayName: `"${ext.displayName}"`,
