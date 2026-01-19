@@ -355,11 +355,12 @@ function addExtensionTarget(project, ext, mainBundleId, extensionsDir, platformP
     }
 
     // Add the extension group
+    // NOTE: path must include ScreenTimeExtensions/ prefix since files are copied there
     project.hash.project.objects.PBXGroup[extGroupUuid] = {
         isa: 'PBXGroup',
         children: [],
         name: ext.name,
-        path: ext.name,
+        path: `ScreenTimeExtensions/${ext.sourceDir}`,
         sourceTree: '"<group>"',
     };
 
