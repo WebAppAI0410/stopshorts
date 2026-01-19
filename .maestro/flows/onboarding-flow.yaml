@@ -4,11 +4,52 @@
 # This flow uses demo mode skip for subsequent screens after user-setup
 # because Android permissions require manual interaction with system settings.
 
+appId: com.nverse.stopshorts
+env:
+  TEST_USER_NAME: "TestUser"
+---
 - launchApp:
     clearState: true
 
-# Wait for app to fully load
+# Wait for Expo Dev Client to load
 - waitForAnimationToEnd
+
+# Handle iOS notification permission dialog
+- runFlow:
+    when:
+      visible: "許可"
+    commands:
+      - tapOn: "許可"
+      - waitForAnimationToEnd
+
+# Connect to Metro bundler (Expo Dev Client)
+- runFlow:
+    when:
+      visible: "http://localhost:8081"
+    commands:
+      - tapOn: "http://localhost:8081"
+      - waitForAnimationToEnd:
+          timeout: 10000
+
+# Handle Expo Dev Menu Continue button
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+      - waitForAnimationToEnd
+
+# Handle Expo Dev Menu Close button
+- runFlow:
+    when:
+      visible: "Close"
+    commands:
+      - tapOn: "Close"
+      - waitForAnimationToEnd
+
+# Wait for app to fully load after connecting to Metro
+- waitForAnimationToEnd:
+    timeout: 5000
 
 # ============================================
 # Screen 1: Welcome Screen

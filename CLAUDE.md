@@ -22,11 +22,41 @@
 | 2026-01-06 | ボトムナビが存在しないと誤答 | `app/(main)/_layout.tsx`を確認すれば6タブ構成が分かった |
 | 2026-01-06 | NativeWind使用と誤記（実際は未使用） | `className`のgrepで0件なら使用していない |
 | 2026-01-06 | トライアル期間を1日と誤記（実際は3日） | `ja.json`や`types/index.ts`で`trial_3day`を確認すれば分かった |
+| 2026-01-19 | Ghosttyの`working-directory`オプションを推測で試行錯誤 | context7 MCPで公式ドキュメントを確認すれば一発で解決できた |
 
 ### AIへの注意
 - **エアプ禁止**: 既存実装を確認せずに推測で回答しない
 - **存在確認**: ファイル・機能の有無は必ずコードベースで確認
 - **CLAUDE.md優先**: CLAUDE.mdに書かれた内容が古い可能性を常に疑う
+- **context7 MCP活用**: 外部ライブラリ・ツールの使い方は推測せず、context7 MCPで公式ドキュメントを確認してから回答する
+
+### Context7 MCP使用ルール（強制）
+
+**以下の場合は必ずContext7 MCPを使用すること：**
+
+1. **パッケージのインストール方法を調べる時**
+   - `npm install`, `pod install`, `brew install` 等
+   - 例: CocoaPods, Maestro, EAS CLI
+
+2. **ライブラリのAPI使用方法を調べる時**
+   - 関数の引数、オプション、戻り値
+   - 例: Expo Router, Zustand, Reanimated
+
+3. **設定ファイルの書き方を調べる時**
+   - `eas.json`, `app.json`, `Podfile` 等
+   - 例: EAS Build profiles, Expo config plugins
+
+4. **エラーのトラブルシューティング**
+   - 外部ツール起因のエラー解決時
+
+**使用手順:**
+```
+1. mcp__context7__resolve-library-id でライブラリIDを取得
+2. mcp__context7__query-docs で具体的な使い方を検索
+3. 公式ドキュメントに基づいて回答
+```
+
+**専用エージェント**: 複雑な調査が必要な場合は `docs-lookup` サブエージェントを使用
 
 ---
 
