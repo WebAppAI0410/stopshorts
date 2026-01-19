@@ -28,7 +28,7 @@ const fs = require('fs');
 // App Group identifier for sharing data between main app and extensions
 const APP_GROUP_IDENTIFIER = 'group.com.nverse.stopshorts.screentime';
 
-// Extension configurations
+// Extension configurations with required frameworks
 const EXTENSIONS = [
     {
         name: 'ScreenTimeMonitor',
@@ -37,6 +37,7 @@ const EXTENSIONS = [
         principalClass: '$(PRODUCT_MODULE_NAME).StopShortsMonitorExtension',
         sourceDir: 'ScreenTimeMonitor',
         sourceFiles: ['StopShortsMonitorExtension.swift'],
+        frameworks: ['DeviceActivity', 'ManagedSettings', 'FamilyControls'],
     },
     {
         name: 'ScreenTimeShieldConfig',
@@ -45,6 +46,7 @@ const EXTENSIONS = [
         principalClass: '$(PRODUCT_MODULE_NAME).StopShortsShieldConfiguration',
         sourceDir: 'ScreenTimeShieldConfig',
         sourceFiles: ['StopShortsShieldConfiguration.swift'],
+        frameworks: ['ManagedSettings', 'ManagedSettingsUI'],
     },
     {
         name: 'ScreenTimeShieldAction',
@@ -53,6 +55,7 @@ const EXTENSIONS = [
         principalClass: '$(PRODUCT_MODULE_NAME).StopShortsShieldAction',
         sourceDir: 'ScreenTimeShieldAction',
         sourceFiles: ['StopShortsShieldAction.swift'],
+        frameworks: ['ManagedSettings', 'ManagedSettingsUI'],
     },
 ];
 
@@ -552,11 +555,37 @@ function addExtensionTarget(project, ext, mainBundleId, extensionsDir, platformP
         project.hash.project.objects.PBXFrameworksBuildPhase = {};
     }
 
-    // Add frameworks build phase
+    // Add framework references and build files for this extension
+    const frameworkBuildFileUuids = [];
+    for (const frameworkName of ext.frameworks || []) {
+        const frameworkFileName = `${frameworkName}.framework`;
+
+        // Create file reference for the framework
+        const frameworkFileRefUuid = project.generateUuid();
+        project.hash.project.objects.PBXFileReference[frameworkFileRefUuid] = {
+            isa: 'PBXFileReference',
+            lastKnownFileType: 'wrapper.framework',
+            name: frameworkFileName,
+            path: `System/Library/Frameworks/${frameworkFileName}`,
+            sourceTree: 'SDKROOT',
+        };
+
+        // Create build file for the framework
+        const frameworkBuildFileUuid = project.generateUuid();
+        project.hash.project.objects.PBXBuildFile[frameworkBuildFileUuid] = {
+            isa: 'PBXBuildFile',
+            fileRef: frameworkFileRefUuid,
+            fileRef_comment: frameworkFileName,
+        };
+
+        frameworkBuildFileUuids.push(frameworkBuildFileUuid);
+    }
+
+    // Add frameworks build phase with the framework build files
     project.hash.project.objects.PBXFrameworksBuildPhase[frameworksBuildPhaseUuid] = {
         isa: 'PBXFrameworksBuildPhase',
         buildActionMask: 2147483647,
-        files: [],
+        files: frameworkBuildFileUuids,
         runOnlyForDeploymentPostprocessing: 0,
     };
 
