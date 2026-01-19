@@ -59,7 +59,39 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "a2814f46-d5c1-41c1-af25-0290f401c4bb"
+        "projectId": "a2814f46-d5c1-41c1-af25-0290f401c4bb",
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "ScreenTimeMonitor",
+                  "bundleIdentifier": "com.nverse.stopshorts.ScreenTimeMonitor",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": ["group.com.nverse.stopshorts.screentime"]
+                  }
+                },
+                {
+                  "targetName": "ScreenTimeShieldConfig",
+                  "bundleIdentifier": "com.nverse.stopshorts.ScreenTimeShieldConfig",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": ["group.com.nverse.stopshorts.screentime"]
+                  }
+                },
+                {
+                  "targetName": "ScreenTimeShieldAction",
+                  "bundleIdentifier": "com.nverse.stopshorts.ScreenTimeShieldAction",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": ["group.com.nverse.stopshorts.screentime"]
+                  }
+                }
+              ]
+            }
+          }
+        }
       }
     },
     "owner": "n-verse-llc"
