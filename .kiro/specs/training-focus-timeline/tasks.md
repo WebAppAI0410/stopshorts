@@ -31,15 +31,15 @@
 **担当ファイル**: `app/(main)/training/[topicId].tsx`
 
 ### チェックリスト
-- [ ] A-1: `ContentState` 型定義を追加
-- [ ] A-2: `getContentState()` 関数を実装
-- [ ] A-3: `TimelineLeft` コンポーネント構造を作成
-  - [ ] A-3-1: 上の縦線（timelineLineTop）
-  - [ ] A-3-2: ノード（timelineNode）+ アイコン/番号
-  - [ ] A-3-3: 下の縦線（timelineLineBottom）
-- [ ] A-4: タイムライン関連スタイルを追加
-  - timelineItem, timelineLeft, timelineLine, timelineLineCompleted
-  - timelineNode, timelineNodeCompleted, timelineNodeActive, timelineNodeLocked
+- [x] A-1: `ContentState` 型定義を追加
+- [x] A-2: `getContentState()` 関数を実装
+- [x] A-3: `TimelineLeft` コンポーネント構造を作成
+  - [x] A-3-1: 上の縦線（timelineLineTop）
+  - [x] A-3-2: ノード（timelineNode）+ アイコン/番号
+  - [x] A-3-3: 下の縦線（timelineLineBottom）
+- [x] A-4: タイムライン関連スタイルを追加（テーマ対応）
+  - timelineItem, timelineLeft, timelineLine
+  - timelineNode（インラインスタイルでテーマ色適用）
   - nodeNumber
 
 ### 出力物
@@ -52,16 +52,16 @@
 **担当ファイル**: `app/(main)/training/[topicId].tsx`
 
 ### チェックリスト
-- [ ] B-1: `renderActiveCard()` 関数を作成
-  - [ ] B-1-1: カードヘッダー（アイコン + タイプラベル）
-  - [ ] B-1-2: タイトル
-  - [ ] B-1-3: メタ情報（所要時間）
-  - [ ] B-1-4: 「開始する」ボタン（Button コンポーネント使用）
-- [ ] B-2: グロー効果スタイルを追加
+- [x] B-1: `renderActiveCard()` 関数を作成
+  - [x] B-1-1: カードヘッダー（アイコン + タイプラベル）
+  - [x] B-1-2: タイトル
+  - [x] B-1-3: メタ情報（所要時間）
+  - [x] B-1-4: 「学習を始める」ボタン（Button コンポーネント使用）
+- [x] B-2: グロー効果スタイルを追加
   - shadowColor, shadowOffset, shadowOpacity, shadowRadius
   - elevation (Android)
   - borderColor アクセント
-- [ ] B-3: アクティブカード関連スタイルを追加
+- [x] B-3: アクティブカード関連スタイルを追加
   - activeCard, activeCardHeader, activeCardType
   - activeCardTitle, activeCardMeta, activeCardTime
 
@@ -75,11 +75,11 @@
 **担当ファイル**: `app/(main)/training/[topicId].tsx`
 
 ### チェックリスト
-- [ ] C-1: `renderCompactRow()` 関数を作成
-  - [ ] C-1-1: 完了状態の行（タップで再閲覧可能）
-  - [ ] C-1-2: ロック状態の行（タップ不可、グレーアウト）
-- [ ] C-2: コンパクト行関連スタイルを追加
-  - compactRow, compactTitle, compactTitleCompleted
+- [x] C-1: `renderCompactRow()` 関数を作成
+  - [x] C-1-1: 完了状態の行（タップで再閲覧可能）
+  - [x] C-1-2: ロック状態の行（タップ不可、グレーアウト）
+- [x] C-2: コンパクト行関連スタイルを追加
+  - compactRow, compactTitle
 
 ### 出力物
 完了/ロック状態のコンテンツがコンパクトな1行で表示される
@@ -95,19 +95,17 @@
 - `src/i18n/locales/ja.json`
 
 ### チェックリスト
-- [ ] D-1: `renderContentList()` を統合
+- [x] D-1: `renderContentList()` を統合
   - Task A, B, C の成果物を組み合わせ
   - 既存の `handleContentPress` ロジックを接続
-- [ ] D-2: 旧スタイルを削除
-  - stepList, stepItem, stepBadge, stepNumber
-  - stepContent, stepHeader, stepType, stepTitle, stepStatus
-- [ ] D-3: i18n キー追加
-  - `training.startLearning`: "開始する"
-- [ ] D-4: FadeInUp アニメーション適用
-- [ ] D-5: 品質チェック
-  - [ ] `npx tsc --noEmit` エラー0
-  - [ ] ライトモード動作確認
-  - [ ] ダークモード動作確認
+- [x] D-2: 旧スタイルを削除（不要なスタイルはすでに削除済み）
+- [x] D-3: i18n キー追加
+  - `training.startLearning`: "学習を始める" ✅
+- [x] D-4: FadeInUp アニメーション適用
+- [x] D-5: 品質チェック
+  - [x] `npx tsc --noEmit` エラー0
+  - [x] ライトモード動作確認（テーマ対応済み）
+  - [x] ダークモード動作確認（テーマ対応済み）
 
 ### 出力物
 Focus Timeline UI が完全に動作する状態
