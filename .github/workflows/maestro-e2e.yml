@@ -149,6 +149,9 @@ jobs:
       - name: Install pods
         run: cd ios && pod install
 
+      - name: List available simulators
+        run: xcrun simctl list devices available
+
       - name: Build iOS Simulator app
         run: |
           cd ios
@@ -160,7 +163,7 @@ jobs:
             -scheme "$SCHEME" \
             -sdk iphonesimulator \
             -configuration Debug \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.1' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
             -derivedDataPath build \
             build
 
@@ -173,13 +176,16 @@ jobs:
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
-      - name: Boot iOS Simulator
+      - name: Create and boot iOS Simulator
         run: |
-          xcrun simctl boot "iPhone 16" || true
-          xcrun simctl bootstatus "iPhone 16" -b
+          # Create a new simulator with specific name to avoid conflicts
+          DEVICE_ID=$(xcrun simctl create "TestDevice" "iPhone 16" "iOS18.5" 2>/dev/null || xcrun simctl list devices | grep "iPhone 16" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+          echo "SIMULATOR_UDID=$DEVICE_ID" >> $GITHUB_ENV
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
 
       - name: Install app on simulator
-        run: xcrun simctl install booted app.app
+        run: xcrun simctl install "$SIMULATOR_UDID" app.app
 
       - name: Run Maestro E2E tests
         run: |
