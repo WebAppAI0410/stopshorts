@@ -398,6 +398,42 @@ export interface GuidedConversationState {
 }
 
 // ============================================
+// Urge & Success Record Types (iOS value enhancement)
+// ============================================
+
+/**
+ * Record of an urge moment (self-reported)
+ * Used to build patterns when iOS usage stats are unavailable
+ */
+export interface UrgeRecord {
+  id: string;
+  /** Intensity of urge (1-10 scale) */
+  intensity: number;
+  /** What triggered the urge */
+  trigger: string;
+  /** How the user was feeling */
+  feeling: string;
+  /** When this record was created */
+  timestamp: number;
+}
+
+/**
+ * Record of successfully resisting an urge
+ * Used to identify effective strategies
+ */
+export interface SuccessRecord {
+  id: string;
+  /** Method used to overcome the urge */
+  method: string;
+  /** How the user felt after succeeding */
+  feeling: string;
+  /** Any tips or insights from this success */
+  tip: string;
+  /** When this record was created */
+  timestamp: number;
+}
+
+// ============================================
 // Training Recommendation Types
 // ============================================
 
@@ -427,4 +463,7 @@ export interface AIActionsExtended extends AIActions {
   completeGuidedConversation: () => Promise<void>;
   cancelGuidedConversation: () => void;
   addRecommendation: (topicId: string) => void;
+  // Urge and success record management (iOS value enhancement)
+  addUrgeRecord: (record: Omit<UrgeRecord, 'id' | 'timestamp'>) => void;
+  addSuccessRecord: (record: Omit<SuccessRecord, 'id' | 'timestamp'>) => void;
 }
