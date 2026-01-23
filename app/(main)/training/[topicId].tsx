@@ -130,39 +130,64 @@ export default function TopicDetailScreen() {
   }, [topicId, topic, isContentCompleted]);
 
   // Render timeline left side (vertical line + node)
-  const renderTimelineLeft = useCallback((state: ContentState, index: number, isLast: boolean) => (
-    <View style={styles.timelineLeft}>
-      {/* Upper vertical line */}
-      {index > 0 && (
-        <View style={[
-          styles.timelineLine,
-          state === 'completed' && { backgroundColor: colors.success },
-        ]} />
-      )}
-      {/* Node */}
-      <View style={[
-        styles.timelineNode,
-        state === 'completed' && styles.timelineNodeCompleted,
-        state === 'active' && styles.timelineNodeActive,
-        state === 'locked' && styles.timelineNodeLocked,
-      ]}>
-        {state === 'completed' ? (
-          <Ionicons name="checkmark" size={14} color={colors.success} />
-        ) : state === 'locked' ? (
-          <Ionicons name="lock-closed" size={12} color={colors.textMuted} />
-        ) : (
-          <Text style={[styles.nodeNumber, { color: colors.primary }]}>{index + 1}</Text>
+  const renderTimelineLeft = useCallback((state: ContentState, index: number, isLast: boolean) => {
+    // Theme-aware styles for timeline elements
+    const getLineStyle = (isCompleted: boolean) => ({
+      backgroundColor: isCompleted ? colors.success : colors.border,
+    });
+
+    const getNodeStyle = () => {
+      const baseStyle = {
+        backgroundColor: colors.backgroundCard,
+        borderColor: colors.border,
+        borderWidth: 2,
+      };
+
+      if (state === 'completed') {
+        return {
+          ...baseStyle,
+          backgroundColor: colors.success + '33', // 20% opacity
+          borderColor: colors.success,
+        };
+      }
+      if (state === 'active') {
+        return {
+          ...baseStyle,
+          backgroundColor: colors.primary + '26', // 15% opacity
+          borderColor: colors.primary,
+          borderWidth: 3,
+        };
+      }
+      // locked
+      return {
+        ...baseStyle,
+        backgroundColor: colors.surface,
+      };
+    };
+
+    return (
+      <View style={styles.timelineLeft}>
+        {/* Upper vertical line */}
+        {index > 0 && (
+          <View style={[styles.timelineLine, getLineStyle(state === 'completed')]} />
+        )}
+        {/* Node */}
+        <View style={[styles.timelineNode, getNodeStyle()]}>
+          {state === 'completed' ? (
+            <Ionicons name="checkmark" size={14} color={colors.success} />
+          ) : state === 'locked' ? (
+            <Ionicons name="lock-closed" size={12} color={colors.textMuted} />
+          ) : (
+            <Text style={[styles.nodeNumber, { color: colors.primary }]}>{index + 1}</Text>
+          )}
+        </View>
+        {/* Lower vertical line */}
+        {!isLast && (
+          <View style={[styles.timelineLine, getLineStyle(state === 'completed')]} />
         )}
       </View>
-      {/* Lower vertical line */}
-      {!isLast && (
-        <View style={[
-          styles.timelineLine,
-          state === 'completed' && { backgroundColor: colors.success },
-        ]} />
-      )}
-    </View>
-  ), [colors]);
+    );
+  }, [colors]);
 
   // Active Card for Focus Timeline UI
   const renderActiveCard = (content: TrainingContent, onPress: () => void) => {
@@ -612,30 +637,15 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: '#E5E7EB',
+    // backgroundColor set dynamically via inline style
   },
   timelineNode: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  timelineNodeCompleted: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    borderColor: '#10B981',
-  },
-  timelineNodeActive: {
-    backgroundColor: 'rgba(198, 93, 59, 0.15)',
-    borderColor: '#C65D3B',
-    borderWidth: 3,
-  },
-  timelineNodeLocked: {
-    backgroundColor: '#F9FAFB',
-    borderColor: '#E5E7EB',
+    // backgroundColor, borderColor, borderWidth set dynamically via inline style
   },
   nodeNumber: {
     fontSize: 14,
