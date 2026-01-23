@@ -3,11 +3,44 @@
 #
 # Prerequisites: None - uses demo mode skip if onboarding is shown
 
+appId: com.nverse.stopshorts
+---
 - launchApp:
     clearState: true
 
 # Wait for app to fully load
 - waitForAnimationToEnd
+
+# Handle iOS notification permission dialog
+- runFlow:
+    when:
+      visible: "許可"
+    commands:
+      - tapOn: "許可"
+      - waitForAnimationToEnd
+
+# Handle Expo Dev Client dialogs
+- runFlow:
+    when:
+      visible: "http://localhost:8081"
+    commands:
+      - tapOn: "http://localhost:8081"
+      - waitForAnimationToEnd:
+          timeout: 10000
+
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: "Close"
+    commands:
+      - tapOn: "Close"
+      - waitForAnimationToEnd
 
 # ============================================
 # Skip onboarding using demo mode

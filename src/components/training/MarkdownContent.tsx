@@ -6,6 +6,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import Markdown from '@ronradtke/react-native-markdown-display';
+import MarkdownIt from 'markdown-it';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface MarkdownContentProps {
@@ -13,8 +14,34 @@ interface MarkdownContentProps {
   content: string;
 }
 
+/**
+ * Pre-process markdown to fix CJK emphasis issue.
+ * CommonMark has a limitation where ** adjacent to CJK characters
+ * is not recognized as emphasis. This inserts zero-width spaces (U+200B)
+ * inside the ** delimiters to help the parser recognize them.
+ *
+ * Pattern: **text** → **\u200Btext\u200B**
+ */
+function preprocessMarkdown(text: string): string {
+  const ZWSP = '\u200B'; // Zero-width space
+
+  // Insert ZWSP after opening ** and before closing **
+  // This helps markdown-it recognize the delimiters with CJK characters
+  const result = text.replace(/\*\*([^*]+)\*\*/g, `**${ZWSP}$1${ZWSP}**`);
+
+  return result;
+}
+
+// Create markdown-it instance
+const markdownItInstance = new MarkdownIt({
+  typographer: true,
+});
+
 export function MarkdownContent({ content }: MarkdownContentProps) {
   const { colors } = useTheme();
+
+  // Pre-process content to handle CJK emphasis
+  const processedContent = useMemo(() => preprocessMarkdown(content), [content]);
 
   // note.com-style: emphasis on whitespace and typography
   const markdownStyles = useMemo(
@@ -119,5 +146,9 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
     [colors]
   );
 
-  return <Markdown style={markdownStyles}>{content}</Markdown>;
+  return (
+    <Markdown style={markdownStyles} markdownit={markdownItInstance}>
+      {processedContent}
+    </Markdown>
+  );
 }

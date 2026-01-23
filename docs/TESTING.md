@@ -3,7 +3,7 @@
 ## テスト構成
 
 - **Unit / Service tests**: Jest + jest-expo
-- **E2E tests**: Detox (Android emulator / iOS simulator)
+- **E2E tests**: Maestro (Android / iOS)
 - **CI**: GitHub Actions で lint/typecheck + E2E
 
 ## Unit / Service Tests (Jest)
@@ -59,30 +59,29 @@ EXPO_PUBLIC_STORYBOOK_ENABLED=true npx expo start
 - `/storybook` ルートで Storybook を開く
 - 新しい `*.stories.tsx` を追加したら `storybook:generate` を再実行
 
-## E2E Tests (Detox)
+## E2E Tests (Maestro)
 
 ### 対象
-- `e2e/firstTest.e2e.js`（起動・基本フロー）
-- Detox config: `.detoxrc.js` / `e2e/jest.config.js`
+- `.maestro/flows/` 内のYAMLフローファイル
+- Maestro Cloud でCI実行
 
 ### 実行コマンド
 ```bash
-npm run e2e:build:android
-npm run e2e:test:android
+# ローカルで実行
+maestro test .maestro/flows/
 
-npm run e2e:build:ios
-npm run e2e:test:ios
+# Maestro Cloud経由（CI）
+# .github/workflows/maestro-cloud.yml を参照
 ```
 
 ### 注意点
-- Android は emulator、iOS は simulator が必要
-- CI では EAS Build を使ってアーティファクトを取得
+- Android / iOS の実機またはシミュレータが必要
+- CI では Maestro Cloud を使用してテスト実行
 
 ## CI (GitHub Actions)
 
 - `lint-typecheck`: ESLint + TypeScript
-- `e2e-android`: EAS build → APK取得 → emulatorでDetox
-- `e2e-ios`: EAS build → .app取得 → simulatorでDetox
+- `maestro-cloud.yml`: EAS build → Maestro Cloud でE2E実行
 
 ファイル: `.github/workflows/ci.yml`
 

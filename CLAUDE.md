@@ -22,11 +22,57 @@
 | 2026-01-06 | ボトムナビが存在しないと誤答 | `app/(main)/_layout.tsx`を確認すれば6タブ構成が分かった |
 | 2026-01-06 | NativeWind使用と誤記（実際は未使用） | `className`のgrepで0件なら使用していない |
 | 2026-01-06 | トライアル期間を1日と誤記（実際は3日） | `ja.json`や`types/index.ts`で`trial_3day`を確認すれば分かった |
+| 2026-01-19 | Ghosttyの`working-directory`オプションを推測で試行錯誤 | context7 MCPで公式ドキュメントを確認すれば一発で解決できた |
+| 2026-01-24 | `/verify`をスキップしてコミット・PR作成（Lintエラー30件見逃し） | **コミット前に必ず`/verify`を実行**。部分的な検証（tsc, test）だけで満足しない |
 
 ### AIへの注意
 - **エアプ禁止**: 既存実装を確認せずに推測で回答しない
 - **存在確認**: ファイル・機能の有無は必ずコードベースで確認
 - **CLAUDE.md優先**: CLAUDE.mdに書かれた内容が古い可能性を常に疑う
+- **context7 MCP活用**: 外部ライブラリ・ツールの使い方は推測せず、context7 MCPで公式ドキュメントを確認してから回答する
+
+### ⛔ 絶対にスキップしてはいけないステップ
+
+**コミット・PR作成前に以下を必ず実行すること：**
+
+```bash
+/verify   # 全検証チェック（tsc, lint, test, build）
+```
+
+**禁止事項:**
+- 「tscとtestが通ったから大丈夫」と判断してlint/buildをスキップ
+- 「時間がないから」と検証を省略
+- 部分的な手動チェックで `/verify` の代用とすること
+
+**理由:** 2026-01-24にこのルールを破り、Lintエラー30件を見逃したままPRを作成してしまった
+
+### Context7 MCP使用ルール（強制）
+
+**以下の場合は必ずContext7 MCPを使用すること：**
+
+1. **パッケージのインストール方法を調べる時**
+   - `npm install`, `pod install`, `brew install` 等
+   - 例: CocoaPods, Maestro, EAS CLI
+
+2. **ライブラリのAPI使用方法を調べる時**
+   - 関数の引数、オプション、戻り値
+   - 例: Expo Router, Zustand, Reanimated
+
+3. **設定ファイルの書き方を調べる時**
+   - `eas.json`, `app.json`, `Podfile` 等
+   - 例: EAS Build profiles, Expo config plugins
+
+4. **エラーのトラブルシューティング**
+   - 外部ツール起因のエラー解決時
+
+**使用手順:**
+```
+1. mcp__context7__resolve-library-id でライブラリIDを取得
+2. mcp__context7__query-docs で具体的な使い方を検索
+3. 公式ドキュメントに基づいて回答
+```
+
+**専用エージェント**: 複雑な調査が必要な場合は `docs-lookup` サブエージェントを使用
 
 ---
 
@@ -146,6 +192,124 @@ Requirements → Design → Tasks → Implementation
 
 ### 延期項目
 - `.kiro/specs/intervention-system/FUTURE_IMPROVEMENTS.md`
+
+---
+
+## 開発ワークフロー（Boris Cherny流）
+
+> "give Claude a way to verify its work. If Claude has that feedback loop, it will 2-3x the quality of the final result." - Boris Cherny
+
+### シンプルな場合（バグ修正、単純な変更）
+
+```
+実装 → /verify → (/simplify) → /commit-push-pr
+```
+
+### 複雑な場合（新機能、アーキテクチャ変更）
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  1. Plan Mode (Shift+Tab × 2)                              │
+│     └─ 計画を反復・ブラッシュアップ                         │
+│                                                            │
+│  2. 仕様駆動開発 (SDD)                                      │
+│     /kiro:spec-init → requirements → design → tasks        │
+│                                                            │
+│  3. 実装ループ                                              │
+│     /impl-loop <feature> [tasks]                           │
+│     ├─ TDD実装 (RED → GREEN → REFACTOR)                    │
+│     ├─ 品質チェック (tsc, test)                             │
+│     ├─ レビュー (code-reviewer)                            │
+│     └─ 検証 (/kiro:validate-impl)                          │
+│                                                            │
+│  4. 検証・簡潔化                                            │
+│     /verify → /simplify                                    │
+│                                                            │
+│  5. コミット・PR                                            │
+│     /commit-push-pr                                        │
+└────────────────────────────────────────────────────────────┘
+```
+
+### コマンド一覧
+
+| コマンド | 用途 |
+|---------|------|
+| `/impl-loop` | TDD + レビューループ（仕様に基づく実装） |
+| `/verify` | 全検証チェック（tsc, lint, test, build） |
+| `/simplify` | 最近変更したコードを簡潔化 |
+| `/commit-push-pr` | コミット → プッシュ → PR作成 |
+| `/kiro:spec-init` | 仕様書初期化 |
+| `/kiro:spec-requirements` | 要件定義 |
+| `/kiro:spec-design` | 技術設計 |
+| `/kiro:spec-tasks` | タスク分解 |
+| `/kiro:validate-impl` | 仕様適合性検証 |
+
+---
+
+## Codex CLI レビューワークフロー
+
+OpenAI Codex CLIを使用した自動レビュー機能です。SDDワークフローと並列実行が可能です。
+
+### 基本コマンド
+
+```bash
+# 未コミット変更をレビュー
+codex review --uncommitted
+
+# mainブランチとの差分をレビュー
+codex review --base main
+
+# 特定コミットをレビュー
+codex review --commit <SHA>
+
+# 非インタラクティブ実行（CI/CD向け）
+codex exec "Review src/components/ for React best practices"
+```
+
+### 並列レビューエージェント（AGENTS.md定義済み）
+
+| エージェント | 対象 |
+|-------------|------|
+| Code Review Agent | 型エラー、未使用コード、Hooks違反、i18n |
+| UI Consistency Agent | デザインシステム準拠 |
+| Architecture Review Agent | ファイル構造、状態管理、循環参照 |
+| Security Review Agent | シークレット漏洩、脆弱性 |
+| Test Coverage Agent | テストカバレッジ |
+
+### SDD統合ワークフロー
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  /impl-loop <feature> [tasks]                               │
+│  ├─ TDD実装 (rn-expert)                                     │
+│  ├─ 品質チェック (tsc, test)                                │
+│  ├─ Claude レビュー (code-reviewer, ui-reviewer)            │
+│  │                                                          │
+│  │  【並列実行】Codex レビュー                               │
+│  │  ├─ codex exec "Code Review: type errors, any usage..."  │
+│  │  ├─ codex exec "UI Consistency: theme compliance..."     │
+│  │  └─ codex exec "Security: console.log guards..."         │
+│  │                                                          │
+│  └─ /kiro:validate-impl                                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Pre-PRレビュー（推奨）
+
+PR作成前に以下を並列実行:
+
+```bash
+# Terminal 1: Code Review
+codex exec "Code Review: 1) Run 'npx tsc --noEmit' 2) Find any type usages 3) Check React Hooks violations"
+
+# Terminal 2: UI Consistency
+codex exec "UI Consistency: Check components against src/design/theme.ts"
+
+# Terminal 3: Security
+codex exec "Security Review: Check console.log guards and exposed secrets"
+```
+
+---
 
 ## 品質基準
 

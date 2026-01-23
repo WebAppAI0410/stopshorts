@@ -84,26 +84,26 @@ describe('badges', () => {
     expect(firstBadge?.earnedAt).toBe(new Date().toISOString());
   });
 
-  it('calculates badge progress for streak conditions', () => {
+  it('calculates badge progress for total_surfs conditions', () => {
     const badge = {
-      ...BADGE_DEFINITIONS.find((item) => item.id === 'streak_7')!,
+      ...BADGE_DEFINITIONS.find((item) => item.id === 'surfs_100')!,
       earnedAt: null,
     };
 
     const lifetime: LifetimeStatistics = {
       startDate: '2025-01-01',
       totalSavedHours: 0,
-      totalUrgeSurfingCompleted: 0,
+      totalUrgeSurfingCompleted: 43,
       totalInterventions: 0,
-      currentStreak: 3,
-      longestStreak: 3,
+      currentStreak: 0,
+      longestStreak: 0,
       badges: [badge],
     };
 
     const progress = getBadgeProgress(badge, lifetime);
 
-    expect(progress.current).toBe(3);
-    expect(progress.target).toBe(7);
+    expect(progress.current).toBe(43);
+    expect(progress.target).toBe(100);
     expect(progress.percentage).toBe(43);
   });
 

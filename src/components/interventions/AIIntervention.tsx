@@ -309,14 +309,14 @@ export function AIIntervention({
 
   // Handle proceed action
   const handleProceed = useCallback(() => {
-    recordIntervention({ proceeded: true });
+    recordIntervention({ proceeded: true, type: 'ai' });
     endSession('user_explicit');
     onProceed();
   }, [recordIntervention, endSession, onProceed]);
 
   // Handle dismiss action
   const handleDismiss = useCallback(() => {
-    recordIntervention({ proceeded: false });
+    recordIntervention({ proceeded: false, type: 'ai' });
     endSession('user_explicit');
     onDismiss();
   }, [recordIntervention, endSession, onDismiss]);

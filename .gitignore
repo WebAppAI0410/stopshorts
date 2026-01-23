@@ -49,3 +49,4 @@ File*.jpg
 # Claude Code local settings (personal preferences, not shared)
 .claude/settings.local.json
 CLAUDE.local.md
+secrets/

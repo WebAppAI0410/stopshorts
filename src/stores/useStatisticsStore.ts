@@ -15,6 +15,7 @@ import type {
   DayData,
   DailyComparisonResult,
   WeeklyComparisonResult,
+  InterventionType,
 } from '../types/statistics';
 import type { IntentionLog, IntentionId } from '../types';
 import { getDateKey, getTimeOfDay } from '../types/statistics';
@@ -32,16 +33,28 @@ interface UrgeSurfingRecordInput {
 // Input for recording an intervention event
 interface InterventionInput {
   proceeded: boolean;
+  type: InterventionType;  // Type of intervention (breathing, friction, mirror, ai)
   appPackage?: string;  // Package name of the app that triggered intervention
   timestamp?: number;   // When the intervention occurred
+  // For breathing interventions
+  intensityBefore?: number;
+  intensityAfter?: number;
+  // For friction interventions
+  intention?: IntentionId;
 }
 
 // Individual intervention record for analytics
 export interface InterventionRecord {
   proceeded: boolean;
+  type: InterventionType;
   appPackage: string;
   timestamp: number;
   timeOfDay: 'morning' | 'daytime' | 'evening' | 'night';
+  // For breathing interventions
+  intensityBefore?: number;
+  intensityAfter?: number;
+  // For friction interventions
+  intention?: IntentionId;
 }
 
 interface StatisticsState {
@@ -54,6 +67,7 @@ interface StatisticsState {
   // Habit Score (replacement for streak - gradual increase/decrease)
   habitScore: number; // 0-100
   habitScoreLastUpdatedDate: string | null; // YYYY-MM-DD (prevents duplicate daily evaluation)
+  habitScoreHistory: Array<{ date: string; score: number }>; // Daily score history for weekly change calculation
 
   // Actions
   recordUrgeSurfing: (record: UrgeSurfingRecordInput) => void;
@@ -88,6 +102,27 @@ interface StatisticsState {
   getWeeklyComparison: () => WeeklyComparisonResult;
   getBaselineDailyMinutes: () => number | null;
   getPreviousWeekData: () => DayData[];
+
+  // Statistics v2 methods
+  getHabitScoreHistory: () => Array<{ date: string; score: number }>;
+  getHabitScoreWeeklyChange: () => number;
+  getOverallInterventionSuccessRate: () => {
+    triggered: number;
+    dismissed: number;
+    proceeded: number;
+    successRate: number;
+  };
+  getInterventionStatsByType: () => {
+    breathing: { triggered: number; dismissed: number; successRate: number };
+    friction: { triggered: number; dismissed: number; successRate: number };
+    mirror: { triggered: number; dismissed: number; successRate: number };
+    ai: { triggered: number; dismissed: number; successRate: number };
+  };
+  getIntentionPatternStats: () => Record<string, { count: number; percentage: number }>;
+  getTimeOfDayPatterns: () => {
+    intervention: TimeOfDayBreakdown;
+    usage: TimeOfDayBreakdown;
+  };
 
   // Utilities
   resetDailyStats: () => void;
@@ -193,6 +228,7 @@ export const useStatisticsStore = create<StatisticsState>()(
       intentionHistory: [],
       habitScore: 50, // Start at 50 (middle)
       habitScoreLastUpdatedDate: null,
+      habitScoreHistory: [],
 
       recordUrgeSurfing: (record) => {
         const dateKey = getDateKey();
@@ -250,7 +286,15 @@ export const useStatisticsStore = create<StatisticsState>()(
       },
 
       recordIntervention: (input) => {
-        const { proceeded, appPackage = '', timestamp = Date.now() } = input;
+        const {
+          proceeded,
+          type,
+          appPackage = '',
+          timestamp = Date.now(),
+          intensityBefore,
+          intensityAfter,
+          intention,
+        } = input;
         const dateKey = getDateKey();
         const state = get();
         const todayStats = state.dailyStats[dateKey] || createEmptyDailyStats(dateKey);
@@ -262,9 +306,13 @@ export const useStatisticsStore = create<StatisticsState>()(
         // Create intervention record for history
         const interventionRecord: InterventionRecord = {
           proceeded,
+          type,
           appPackage,
           timestamp,
           timeOfDay,
+          ...(intensityBefore !== undefined && { intensityBefore }),
+          ...(intensityAfter !== undefined && { intensityAfter }),
+          ...(intention !== undefined && { intention }),
         };
 
         const newInterventions = { ...todayStats.interventions };
@@ -276,8 +324,8 @@ export const useStatisticsStore = create<StatisticsState>()(
           newInterventions.dismissed += 1;
         }
 
-        // Keep last 100 intervention records to limit storage
-        const newHistory = [...state.interventionHistory, interventionRecord].slice(-100);
+        // Keep last 200 intervention records to limit storage (increased for v2 analytics)
+        const newHistory = [...state.interventionHistory, interventionRecord].slice(-200);
 
         set({
           dailyStats: {
@@ -443,9 +491,16 @@ export const useStatisticsStore = create<StatisticsState>()(
           newScore = Math.max(0, newScore - 3);
         }
 
+        // Record score in history (keep last 30 days)
+        const newHistory = [
+          ...state.habitScoreHistory,
+          { date: today, score: newScore },
+        ].slice(-30);
+
         set({
           habitScore: newScore,
           habitScoreLastUpdatedDate: today,
+          habitScoreHistory: newHistory,
         });
       },
 
@@ -749,6 +804,148 @@ export const useStatisticsStore = create<StatisticsState>()(
         return result;
       },
 
+      // Statistics v2 getters
+      getHabitScoreHistory: () => {
+        return get().habitScoreHistory;
+      },
+
+      getHabitScoreWeeklyChange: () => {
+        const state = get();
+        const history = state.habitScoreHistory;
+
+        if (history.length < 2) {
+          return 0;
+        }
+
+        // Get score from 7 days ago (or oldest available)
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const weekAgoKey = getDateKey(weekAgo);
+
+        // Find score closest to a week ago
+        const weekAgoEntry = history.find((h) => h.date <= weekAgoKey);
+        const latestEntry = history[history.length - 1];
+
+        if (!weekAgoEntry) {
+          // Use oldest entry if no week-old data
+          const oldestEntry = history[0];
+          return latestEntry.score - oldestEntry.score;
+        }
+
+        return latestEntry.score - weekAgoEntry.score;
+      },
+
+      getOverallInterventionSuccessRate: () => {
+        const state = get();
+        const history = state.interventionHistory;
+
+        const triggered = history.length;
+        const proceeded = history.filter((r) => r.proceeded).length;
+        const dismissed = history.filter((r) => !r.proceeded).length;
+
+        return {
+          triggered,
+          dismissed,
+          proceeded,
+          successRate: triggered > 0 ? dismissed / triggered : 0,
+        };
+      },
+
+      getInterventionStatsByType: () => {
+        const state = get();
+        const history = state.interventionHistory;
+
+        const types: InterventionType[] = ['breathing', 'friction', 'mirror', 'ai'];
+        const result: Record<InterventionType, { triggered: number; dismissed: number; successRate: number }> = {
+          breathing: { triggered: 0, dismissed: 0, successRate: 0 },
+          friction: { triggered: 0, dismissed: 0, successRate: 0 },
+          mirror: { triggered: 0, dismissed: 0, successRate: 0 },
+          ai: { triggered: 0, dismissed: 0, successRate: 0 },
+        };
+
+        for (const record of history) {
+          if (record.type && types.includes(record.type)) {
+            result[record.type].triggered += 1;
+            if (!record.proceeded) {
+              result[record.type].dismissed += 1;
+            }
+          }
+        }
+
+        // Calculate success rates
+        for (const type of types) {
+          if (result[type].triggered > 0) {
+            result[type].successRate = result[type].dismissed / result[type].triggered;
+          }
+        }
+
+        return result;
+      },
+
+      getIntentionPatternStats: () => {
+        const state = get();
+        const history = state.intentionHistory;
+        const total = history.length;
+
+        if (total === 0) {
+          return {};
+        }
+
+        // Count by intention ID
+        const counts: Record<string, number> = {};
+        for (const log of history) {
+          const id = log.intentionId;
+          counts[id] = (counts[id] || 0) + 1;
+        }
+
+        // Convert to percentage
+        const result: Record<string, { count: number; percentage: number }> = {};
+        for (const [id, count] of Object.entries(counts)) {
+          result[id] = {
+            count,
+            percentage: Math.round((count / total) * 1000) / 10, // Round to 1 decimal
+          };
+        }
+
+        return result;
+      },
+
+      getTimeOfDayPatterns: () => {
+        const state = get();
+
+        // Intervention time of day
+        const interventionBreakdown: TimeOfDayBreakdown = {
+          morning: 0,
+          daytime: 0,
+          evening: 0,
+          night: 0,
+        };
+
+        for (const record of state.interventionHistory) {
+          interventionBreakdown[record.timeOfDay] += 1;
+        }
+
+        // Usage time of day (aggregate from daily stats)
+        const usageBreakdown: TimeOfDayBreakdown = {
+          morning: 0,
+          daytime: 0,
+          evening: 0,
+          night: 0,
+        };
+
+        for (const stats of Object.values(state.dailyStats)) {
+          usageBreakdown.morning += stats.timeOfDayBreakdown.morning;
+          usageBreakdown.daytime += stats.timeOfDayBreakdown.daytime;
+          usageBreakdown.evening += stats.timeOfDayBreakdown.evening;
+          usageBreakdown.night += stats.timeOfDayBreakdown.night;
+        }
+
+        return {
+          intervention: interventionBreakdown,
+          usage: usageBreakdown,
+        };
+      },
+
       resetDailyStats: () => {
         set({ dailyStats: {} });
       },
@@ -759,6 +956,7 @@ export const useStatisticsStore = create<StatisticsState>()(
           lifetime: createEmptyLifetime(),
           habitScore: 50,
           habitScoreLastUpdatedDate: null,
+          habitScoreHistory: [],
           interventionHistory: [],
           intentionHistory: [],
         });

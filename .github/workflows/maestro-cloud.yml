@@ -72,14 +72,14 @@ jobs:
 
       - name: Build Android APK with EAS
         run: |
-          # Build APK using EAS (detox-android profile produces APK)
-          eas build --platform android --profile detox-android --non-interactive --wait
+          # Build APK using EAS (preview profile produces APK)
+          eas build --platform android --profile preview --non-interactive --wait
 
       - name: Download Android build
         run: |
           mkdir -p artifacts
           # Get fingerprint for download
-          eas fingerprint:generate --json --non-interactive --platform android --build-profile detox-android > /tmp/fingerprint.json
+          eas fingerprint:generate --json --non-interactive --platform android --build-profile preview > /tmp/fingerprint.json
           FINGERPRINT=$(node -e "
             const fs = require('fs');
             const raw = fs.readFileSync('/tmp/fingerprint.json', 'utf8');
@@ -138,13 +138,13 @@ jobs:
       - name: Build iOS simulator app with EAS
         run: |
           # Build iOS simulator app
-          eas build --platform ios --profile detox-ios --non-interactive --wait
+          eas build --platform ios --profile development-simulator --non-interactive --wait
 
       - name: Download iOS build
         run: |
           mkdir -p artifacts
           # Get fingerprint for download
-          eas fingerprint:generate --json --non-interactive --platform ios --build-profile detox-ios > /tmp/fingerprint.json
+          eas fingerprint:generate --json --non-interactive --platform ios --build-profile development-simulator > /tmp/fingerprint.json
           FINGERPRINT=$(node -e "
             const fs = require('fs');
             const raw = fs.readFileSync('/tmp/fingerprint.json', 'utf8');

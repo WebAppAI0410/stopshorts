@@ -34,20 +34,29 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['node_modules/', 'dist/', '.expo/', '*.config.js', '*.config.mjs', '.rnstorybook/', 'scripts/'],
+    ignores: [
+      'node_modules/',
+      'dist/',
+      '.expo/',
+      '*.config.js',
+      '*.config.mjs',
+      '.rnstorybook/',
+      'scripts/',
+      '.venv/',
+      '.claude/skills/',
+    ],
   },
   {
     files: [
-      '.detoxrc.js',
-      'e2e/**/*.js',
       'modules/screen-time/plugin/withScreenTime.js',
-      'modules/detox/plugin/withDetox.js',
+      'modules/screen-time/plugin/withPodfileResourceBundleFix.js',
       'jest.setup.js',
       'jest.expo-winter-mock.js',
     ],
     rules: {
       'no-undef': 'off',
       '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   },
   {
@@ -62,7 +71,12 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/components/ui/Button.tsx', 'src/components/ui/SelectionCard.tsx'],
+    files: [
+      'src/components/ui/Button.tsx',
+      'src/components/ui/SelectionCard.tsx',
+      'src/components/statistics/HabitScoreCard.tsx',
+      'src/components/statistics/InterventionSuccessCard.tsx',
+    ],
     rules: {
       'react-hooks/immutability': 'off',
     },

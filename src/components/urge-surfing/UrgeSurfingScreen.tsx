@@ -21,7 +21,8 @@ import { IntensitySlider } from './IntensitySlider';
 import { BreathingGuide } from './BreathingGuide';
 import { WaveAnimation } from './WaveAnimation';
 import { useSharedValue, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
-// TODO: Use t() for i18n when translations are ready
+// Note: Hardcoded Japanese strings - i18n keys exist in ja.json (urgeSurfing section)
+// but are not yet integrated. Low priority as app is currently Japanese-only.
 
 type SurfingPhase = 'initial' | 'surfing' | 'complete';
 
@@ -99,7 +100,12 @@ export function UrgeSurfingScreen({
       durationSeconds: cycleCount * 10,
       completed: true,
     });
-    recordIntervention({ proceeded: false }); // Dismissed = didn't proceed to app
+    recordIntervention({
+      proceeded: false,
+      type: 'breathing',
+      intensityBefore,
+      intensityAfter,
+    }); // Dismissed = didn't proceed to app
     onDismiss();
   }, [intensityBefore, intensityAfter, recordUrgeSurfing, recordIntervention, onDismiss, cycleCount]);
 
@@ -111,15 +117,25 @@ export function UrgeSurfingScreen({
       durationSeconds: 0,
       completed: false,
     });
-    recordIntervention({ proceeded: true }); // Proceeded to app
+    recordIntervention({
+      proceeded: true,
+      type: 'breathing',
+      intensityBefore,
+      intensityAfter: intensityBefore,
+    }); // Proceeded to app
     onProceed();
   }, [intensityBefore, recordUrgeSurfing, recordIntervention, onProceed]);
 
   const handleProceedAfterComplete = useCallback(() => {
     // User completed surfing but still wants to open app
-    recordIntervention({ proceeded: true });
+    recordIntervention({
+      proceeded: true,
+      type: 'breathing',
+      intensityBefore,
+      intensityAfter,
+    });
     onProceed();
-  }, [recordIntervention, onProceed]);
+  }, [recordIntervention, onProceed, intensityBefore, intensityAfter]);
 
   // Calculate intensity reduction
   const intensityReduction = intensityBefore - intensityAfter;

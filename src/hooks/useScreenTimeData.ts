@@ -71,9 +71,9 @@ export function useScreenTimeData(): UseScreenTimeDataReturn {
     }
 
     try {
-      console.log('[useScreenTimeData] Fetching today usage - selectedApps:', memoizedSelectedApps, 'customPackages:', customPackages);
+      if (__DEV__) console.log('[useScreenTimeData] Fetching today usage - selectedApps:', memoizedSelectedApps, 'customPackages:', customPackages);
       const data = await screenTimeService.getTodayUsage(memoizedSelectedApps, customPackages);
-      console.log('[useScreenTimeData] Today data:', JSON.stringify(data));
+      if (__DEV__) console.log('[useScreenTimeData] Today data:', JSON.stringify(data));
 
       setState((prev) => ({
         ...prev,

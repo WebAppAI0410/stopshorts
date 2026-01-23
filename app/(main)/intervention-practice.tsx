@@ -1,206 +1,217 @@
-/**
- * Intervention Practice Selection Page
- * Allows users to choose which intervention type to practice
- */
-
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { Header } from '../../src/components/ui';
+import { FeaturedInterventionCard, MiniInterventionCard } from '../../src/components/intervention-practice';
+import type { InterventionType } from '../../src/components/intervention-practice';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAIStore } from '../../src/stores/useAIStore';
+import { useStatisticsStore } from '../../src/stores/useStatisticsStore';
 import { t } from '../../src/i18n';
+import { palette } from '../../src/design/theme';
 
-interface PracticeOption {
-  id: 'breathing' | 'friction' | 'mirror' | 'ai';
-  icon: keyof typeof Ionicons.glyphMap;
+// Mini card configuration for each intervention type
+type MiniCardConfig = {
+  type: InterventionType;
   titleKey: string;
-  descriptionKey: string;
-  available: boolean;
-}
+  subtitleKey: string;
+  iconName: ComponentProps<typeof Ionicons>['name'];
+  iconColor: string;
+  iconBgColor: string;
+  testID: string;
+};
 
-// Base practice options (AI availability is determined dynamically)
-const BASE_PRACTICE_OPTIONS: Omit<PracticeOption, 'available'>[] = [
-  {
-    id: 'breathing',
-    icon: 'leaf-outline',
+const MINI_CARD_CONFIGS: Record<InterventionType, MiniCardConfig> = {
+  breathing: {
+    type: 'breathing',
     titleKey: 'intervention.practice.options.breathing.title',
-    descriptionKey: 'intervention.practice.options.breathing.description',
+    subtitleKey: 'intervention.practice.options.breathing.tagline',
+    iconName: 'leaf',
+    iconColor: palette.emerald[500],
+    iconBgColor: palette.emerald[500] + '20',
+    testID: 'mini-card-breathing',
   },
-  {
-    id: 'friction',
-    icon: 'time-outline',
+  friction: {
+    type: 'friction',
     titleKey: 'intervention.practice.options.friction.title',
-    descriptionKey: 'intervention.practice.options.friction.description',
+    subtitleKey: 'intervention.practice.options.friction.description',
+    iconName: 'hourglass-outline',
+    iconColor: palette.orange[500],
+    iconBgColor: palette.orange[500] + '20',
+    testID: 'mini-card-friction',
   },
-  {
-    id: 'mirror',
-    icon: 'person-outline',
+  mirror: {
+    type: 'mirror',
     titleKey: 'intervention.practice.options.mirror.title',
-    descriptionKey: 'intervention.practice.options.mirror.description',
+    subtitleKey: 'intervention.practice.options.mirror.description',
+    iconName: 'person-outline',
+    iconColor: palette.purple[500],
+    iconBgColor: palette.purple[500] + '20',
+    testID: 'mini-card-mirror',
   },
-  {
-    id: 'ai',
-    icon: 'chatbubble-outline',
+  ai: {
+    type: 'ai',
     titleKey: 'intervention.practice.options.ai.title',
-    descriptionKey: 'intervention.practice.options.ai.description',
+    subtitleKey: 'intervention.practice.options.ai.description',
+    iconName: 'logo-android',
+    iconColor: palette.emerald[500],
+    iconBgColor: palette.emerald[500] + '10',
+    testID: 'mini-card-ai',
   },
-];
+};
+
+// Get recommended intervention based on success rate
+const getRecommendedIntervention = (
+  stats: ReturnType<typeof useStatisticsStore.getState>['getInterventionStatsByType'],
+  isAIReady: boolean
+): { type: InterventionType; successRate: number } => {
+  const interventionStats = stats();
+
+  // Filter out AI if not ready, and only include types with at least 1 trigger
+  const validTypes: InterventionType[] = ['breathing', 'friction', 'mirror'];
+  if (isAIReady) validTypes.push('ai');
+
+  const sorted = validTypes
+    .map(type => ({
+      type,
+      ...interventionStats[type],
+    }))
+    .filter(item => item.triggered > 0)
+    .sort((a, b) => b.successRate - a.successRate);
+
+  // No data: default to breathing
+  if (sorted.length === 0) {
+    return { type: 'breathing', successRate: 0 };
+  }
+
+  // Find all tied for top rate
+  const topRate = sorted[0].successRate;
+  const topTied = sorted.filter(item => item.successRate === topRate);
+
+  // If tied, pick randomly
+  const selected = topTied[Math.floor(Math.random() * topTied.length)];
+  return { type: selected.type, successRate: selected.successRate };
+};
 
 export default function InterventionPracticeScreen() {
-  const { colors, typography, spacing, borderRadius } = useTheme();
   const router = useRouter();
+  const { colors, spacing, borderRadius } = useTheme();
   const modelStatus = useAIStore((state) => state.modelStatus);
-
-  // AI is only available when model is ready
   const isAIModelReady = modelStatus === 'ready';
+  const getInterventionStatsByType = useStatisticsStore((state) => state.getInterventionStatsByType);
 
-  // Create practice options with dynamic AI availability
-  const practiceOptions: PracticeOption[] = useMemo(() => {
-    return BASE_PRACTICE_OPTIONS.map((option) => ({
-      ...option,
-      available: option.id === 'ai' ? isAIModelReady : true,
-    }));
-  }, [isAIModelReady]);
+  // Memoize recommended intervention to prevent re-randomizing on every render
+  const { recommendedType, successRate } = useMemo(() => {
+    const result = getRecommendedIntervention(getInterventionStatsByType, isAIModelReady);
+    return { recommendedType: result.type, successRate: result.successRate };
+  }, [getInterventionStatsByType, isAIModelReady]);
 
-  const handleSelectOption = (option: PracticeOption) => {
-    if (!option.available) return;
+  const handlePracticePress = (type: InterventionType) => {
     router.push({
       pathname: '/(main)/urge-surfing',
-      params: { practiceType: option.id },
+      params: { practiceType: type, source: 'training' },
     });
   };
 
-  const handleGoToAICoach = () => {
-    router.push('/(main)/ai');
-  };
+  // Get mini cards to display (excluding the recommended type)
+  const otherInterventions = useMemo(() => {
+    const allTypes: InterventionType[] = ['breathing', 'friction', 'mirror', 'ai'];
+    return allTypes.filter(type => type !== recommendedType);
+  }, [recommendedType]);
 
-  const handleBack = () => {
-    if (router.canGoBack()) {
-      router.back();
+  const handleMiniCardPress = (type: InterventionType) => {
+    if (type === 'ai' && !isAIModelReady) {
+      // Navigate to AI setup page
+      router.push('/(main)/ai');
     } else {
-      router.replace('/(main)');
+      router.push({
+        pathname: '/(main)/urge-surfing',
+        params: { practiceType: type, source: 'training' },
+      });
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.dark[900] }]}>
+
       {/* Header */}
-      <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
-        <View style={styles.headerRow}>
-          <Pressable onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </Pressable>
-          <Text style={[typography.h2, { color: colors.textPrimary }]}>
-            {t('intervention.practice.title')}
-          </Text>
-          <View style={{ width: 40 }} />
-        </View>
-      </Animated.View>
+      <Header
+        title=""
+        showBack
+        variant="ghost"
+        onBack={() => router.back()}
+      />
 
-      {/* Description */}
-      <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.descriptionContainer}>
-        <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}>
-          {t('intervention.practice.subtitle')}
-        </Text>
-      </Animated.View>
-
-      {/* Options */}
-      <View style={styles.optionsContainer}>
-        {practiceOptions.map((option, index) => (
-          <Animated.View
-            key={option.id}
-            entering={FadeInDown.duration(600).delay(200 + index * 100)}
-          >
-            <View style={{ opacity: option.available ? 1 : 0.5 }}>
-              <Pressable
-                onPress={() => handleSelectOption(option)}
-                disabled={!option.available}
-                style={({ pressed }) => [
-                  styles.optionCard,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    borderRadius: borderRadius.xl,
-                    opacity: pressed && option.available ? 0.8 : 1,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: colors.primary + '15' },
-                  ]}
-                >
-                  <Ionicons name={option.icon} size={32} color={colors.primary} />
-                </View>
-                <View style={styles.optionContent}>
-                  <Text style={[typography.h3, { color: colors.textPrimary }]}>
-                    {t(option.titleKey)}
-                  </Text>
-                  <Text
-                    style={[
-                      typography.bodySmall,
-                      { color: colors.textSecondary, marginTop: spacing.xs },
-                    ]}
-                  >
-                    {t(option.descriptionKey)}
-                  </Text>
-                </View>
-                {option.available ? (
-                  <Ionicons name="chevron-forward" size={24} color={colors.textMuted} />
-                ) : (
-                  <Ionicons name="lock-closed-outline" size={24} color={colors.textMuted} />
-                )}
-              </Pressable>
-            </View>
-            {/* Show download guidance for unavailable AI option */}
-            {!option.available && option.id === 'ai' && (
-              <Pressable
-                onPress={handleGoToAICoach}
-                style={({ pressed }) => [
-                  styles.downloadBadge,
-                  {
-                    backgroundColor: colors.primary,
-                    borderRadius: borderRadius.sm,
-                    opacity: pressed ? 0.8 : 1,
-                  },
-                ]}
-              >
-                <Ionicons name="download-outline" size={14} color="#FFFFFF" />
-                <Text style={[typography.caption, { color: '#FFFFFF', marginLeft: 4 }]}>
-                  {t('ai.downloadOnAICoach')}
-                </Text>
-              </Pressable>
-            )}
-          </Animated.View>
-        ))}
-      </View>
-
-      {/* Info */}
-      <Animated.View
-        entering={FadeInDown.duration(600).delay(400)}
-        style={[
-          styles.infoCard,
-          {
-            backgroundColor: colors.primary + '10',
-            borderRadius: borderRadius.lg,
-            marginHorizontal: spacing.gutter,
-          },
-        ]}
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.gutter }]}
+        showsVerticalScrollIndicator={false}
       >
-        <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-        <Text
-          style={[
-            typography.caption,
-            { color: colors.textSecondary, marginLeft: spacing.sm, flex: 1 },
-          ]}
-        >
-          {t('intervention.practice.info')}
-        </Text>
-      </Animated.View>
+        <Animated.View entering={FadeIn.duration(500)}>
+          {/* Title Section */}
+          <View style={[styles.titleSection, { marginBottom: spacing.xl }]}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              {t('intervention.practice.title')}
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              {t('intervention.practice.subtitle')}
+            </Text>
+          </View>
+
+          {/* Hero Card - Personalized based on success rate */}
+          <View style={{ marginBottom: spacing.xl }}>
+            <FeaturedInterventionCard
+              type={recommendedType}
+              onPress={() => handlePracticePress(recommendedType)}
+              testID="featured-intervention-card"
+              successRate={successRate}
+            />
+          </View>
+
+          {/* Mini Cards Grid */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              {t('intervention.practice.otherOptions')}
+            </Text>
+          </View>
+
+          <View style={[styles.grid, { gap: spacing.md }]}>
+            {otherInterventions.map((type, index) => {
+              const config = MINI_CARD_CONFIGS[type];
+              const isAI = type === 'ai';
+              const isLocked = isAI && !isAIModelReady;
+
+              return (
+                <MiniInterventionCard
+                  key={type}
+                  title={t(config.titleKey)}
+                  subtitle={isLocked ? t('intervention.practice.locked') : t(config.subtitleKey)}
+                  iconName={config.iconName}
+                  iconColor={config.iconColor}
+                  iconBgColor={config.iconBgColor}
+                  index={index}
+                  isLocked={isLocked}
+                  onPress={() => handleMiniCardPress(type)}
+                  testID={config.testID}
+                />
+              );
+            })}
+          </View>
+
+          {/* Footer Info */}
+          <View style={[styles.footer, { marginTop: spacing['2xl'] }]}>
+            <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+            <Text style={[styles.footerText, { color: colors.textMuted }]}>
+              {t('intervention.practice.infoSimple')}
+            </Text>
+          </View>
+
+        </Animated.View>
+      </ScrollView>
+
     </SafeAreaView>
   );
 }
@@ -209,66 +220,45 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 16,
+  scrollContent: {
+    paddingBottom: 40,
   },
-  headerRow: {
+  titleSection: {
+    marginTop: 8,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  sectionHeader: {
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  grid: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
   },
-  backButton: {
-    padding: 8,
-    marginLeft: -8,
-  },
-  descriptionContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 24,
-  },
-  optionsContainer: {
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  optionCard: {
+  footer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderWidth: 1,
-  },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  optionContent: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     padding: 12,
-    marginTop: 'auto',
-    marginBottom: 24,
+    borderRadius: 12,
   },
-  comingSoonBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  downloadBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
+  footerText: {
+    fontSize: 12,
+  }
 });

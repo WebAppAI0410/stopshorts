@@ -209,6 +209,13 @@ export default function MainLayout() {
                         href: null,
                     }}
                 />
+                {/* Hide statistics nested routes from tab bar */}
+                <Tabs.Screen
+                    name="statistics/details"
+                    options={{
+                        href: null,
+                    }}
+                />
             </Tabs>
 
             <SubscriptionModal

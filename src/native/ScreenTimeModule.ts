@@ -1,11 +1,12 @@
 /**
  * Screen Time Module
  * Cross-platform interface for screen time tracking
- * - iOS: Uses mock data (TODO: integrate with Screen Time API)
+ * - iOS: Uses Family Controls API via native module
  * - Android: Uses UsageStatsManager via native module
  */
 
 import { Platform } from 'react-native';
+import * as IOSScreenTime from '../../modules/screen-time';
 import type { TargetAppId } from '../types';
 
 // Types
@@ -114,98 +115,38 @@ export function getSelectedPackages(selectedApps: TargetAppId[]): string[] {
   return packages;
 }
 
-/**
- * Generate realistic mock usage data
- */
-function generateMockUsageData(): UsageData {
-  const now = new Date();
-  const hour = now.getHours();
-
-  // More usage during evening hours
-  const timeMultiplier = hour >= 17 && hour <= 23 ? 1.5 : hour >= 6 && hour <= 9 ? 1.2 : 1;
-  const randomFactor = 0.7 + Math.random() * 0.6;
-
-  const tiktokMinutes = Math.round(25 * timeMultiplier * randomFactor);
-  const youtubeMinutes = Math.round(18 * timeMultiplier * randomFactor);
-  const instagramMinutes = Math.round(12 * timeMultiplier * randomFactor);
-
-  const bundleIds = Platform.OS === 'android' ? TARGET_APPS.android : TARGET_APPS.ios;
-
-  return {
-    totalMinutes: tiktokMinutes + youtubeMinutes + instagramMinutes,
-    apps: [
-      {
-        bundleId: bundleIds.tiktok[0],
-        appName: 'TikTok',
-        minutes: tiktokMinutes,
-        openCount: Math.round(tiktokMinutes / 3),
-      },
-      {
-        bundleId: bundleIds.youtube[0],
-        appName: 'YouTube',
-        minutes: youtubeMinutes,
-        openCount: Math.round(youtubeMinutes / 4),
-      },
-      {
-        bundleId: bundleIds.instagram[0],
-        appName: 'Instagram',
-        minutes: instagramMinutes,
-        openCount: Math.round(instagramMinutes / 5),
-      },
-    ],
-    peakHours: ['21:00', '22:00', '23:00'],
-    lastUpdated: now.toISOString(),
-  };
-}
-
-/**
- * Generate weekly mock usage data
- */
-function generateWeeklyMockData(): {
-  weeklyTotal: number;
-  dailyAverage: number;
-  dailyBreakdown: { date: string; minutes: number }[];
-} {
-  const dailyBreakdown: { date: string; minutes: number }[] = [];
-  let weeklyTotal = 0;
-
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-
-    const dayOfWeek = date.getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const baseMinutes = isWeekend ? 90 : 60;
-    const variation = Math.random() * 40 - 20;
-    const minutes = Math.round(Math.max(20, baseMinutes + variation));
-
-    weeklyTotal += minutes;
-    dailyBreakdown.push({
-      date: date.toISOString().split('T')[0],
-      minutes,
-    });
-  }
-
-  return {
-    weeklyTotal,
-    dailyAverage: Math.round(weeklyTotal / 7),
-    dailyBreakdown,
-  };
+// Android native module type (dynamically imported)
+interface AndroidScreenTimeNativeModule {
+  getPermissionStatus(): Promise<{ usageStats: boolean; overlay: boolean; notifications: boolean }>;
+  openUsageStatsSettings(): Promise<void>;
+  openOverlaySettings(): Promise<void>;
+  getTodayUsage(packages: string[]): Promise<UsageStat[]>;
+  getUsageStats(startTime: number, endTime: number, packages: string[]): Promise<UsageStat[]>;
+  getInstalledApps(): Promise<InstalledApp[]>;
+  getAppIcon(packageName: string): Promise<string | null>;
+  getAppName(packageName: string): Promise<string>;
+  isAppInstalled(packageName: string): Promise<boolean>;
+  startMonitoring(packageNames: string[]): Promise<boolean>;
+  stopMonitoring(): Promise<boolean>;
+  updateTargetApps(packageNames: string[]): Promise<boolean>;
+  isMonitoringActive(): Promise<boolean>;
+  setInterventionSettings(timing: string, delayMinutes: number): Promise<boolean>;
+  getInterventionSettings(): Promise<{ timing: string; delayMinutes: number }>;
 }
 
 /**
  * Android-specific implementation using native module
  */
 class AndroidScreenTimeService {
-  private nativeModule: any = null;
+  private nativeModule: AndroidScreenTimeNativeModule | null = null;
 
-  private async getNativeModule() {
+  private async getNativeModule(): Promise<AndroidScreenTimeNativeModule | null> {
     if (this.nativeModule) return this.nativeModule;
 
     try {
       // Dynamic import to avoid errors on iOS
       const module = await import('@stopshorts/screen-time-android');
-      this.nativeModule = module.default;
+      this.nativeModule = module.default as AndroidScreenTimeNativeModule;
       return this.nativeModule;
     } catch (error) {
       console.warn('[ScreenTime] Failed to load Android native module:', error);
@@ -276,23 +217,23 @@ class AndroidScreenTimeService {
         ? getSelectedPackages(selectedApps)
         : getTargetPackages(); // Fallback to all if none selected
       const packages = [...selectedPackages, ...customPackages];
-      console.log('[ScreenTime] getTodayUsage - target packages:', packages);
+      if (__DEV__) console.log('[ScreenTime] getTodayUsage - target packages:', packages);
 
       const stats = await native.getTodayUsage(packages);
-      console.log('[ScreenTime] getTodayUsage - raw stats from native:', JSON.stringify(stats));
+      if (__DEV__) console.log('[ScreenTime] getTodayUsage - raw stats from native:', JSON.stringify(stats));
 
       // Return actual data even if empty - no mock fallback
-      const apps: AppUsage[] = (stats || []).map((stat: any) => ({
+      const apps: AppUsage[] = (stats || []).map((stat: UsageStat) => ({
         bundleId: stat.packageName,
-        appName: stat.appName,
+        appName: stat.appName || stat.packageName,
         minutes: Math.round(stat.totalTimeMs / 60000),
         openCount: 0, // UsageStats doesn't provide this
       }));
 
-      console.log('[ScreenTime] getTodayUsage - mapped apps:', JSON.stringify(apps));
+      if (__DEV__) console.log('[ScreenTime] getTodayUsage - mapped apps:', JSON.stringify(apps));
 
       const totalMinutes = apps.reduce((sum, app) => sum + app.minutes, 0);
-      console.log('[ScreenTime] getTodayUsage - totalMinutes:', totalMinutes);
+      if (__DEV__) console.log('[ScreenTime] getTodayUsage - totalMinutes:', totalMinutes);
 
       return {
         totalMinutes,
@@ -518,7 +459,7 @@ class AndroidScreenTimeService {
         ? getSelectedPackages(selectedApps)
         : getTargetPackages();
       const packages = [...new Set([...selectedPackages, ...customPackages])];
-      console.log('[ScreenTime] getUsageStatsForRange - target packages:', packages);
+      if (__DEV__) console.log('[ScreenTime] getUsageStatsForRange - target packages:', packages);
 
       const stats = await native.getUsageStats(
         startDate.getTime(),
@@ -526,9 +467,9 @@ class AndroidScreenTimeService {
         packages
       );
 
-      console.log('[ScreenTime] getUsageStatsForRange - raw stats:', JSON.stringify(stats));
+      if (__DEV__) console.log('[ScreenTime] getUsageStatsForRange - raw stats:', JSON.stringify(stats));
 
-      return (stats || []).map((stat: any) => ({
+      return (stats || []).map((stat: UsageStat) => ({
         packageName: stat.packageName,
         appName: stat.appName || stat.packageName,
         totalTimeMs: stat.totalTimeMs || 0,
@@ -565,7 +506,7 @@ class AndroidScreenTimeService {
         ? getSelectedPackages(selectedApps)
         : getTargetPackages(); // Fallback to all if none selected
       const packages = [...selectedPackages, ...customPackages];
-      console.log('[ScreenTime] getWeeklyUsage - target packages:', packages);
+      if (__DEV__) console.log('[ScreenTime] getWeeklyUsage - target packages:', packages);
       const dailyBreakdown: { date: string; minutes: number }[] = [];
       let weeklyTotal = 0;
 
@@ -587,13 +528,13 @@ class AndroidScreenTimeService {
             packages
           );
 
-          console.log(`[ScreenTime] getWeeklyUsage - ${dateStr} raw stats:`, JSON.stringify(stats));
+          if (__DEV__) console.log(`[ScreenTime] getWeeklyUsage - ${dateStr} raw stats:`, JSON.stringify(stats));
 
-          const dayMinutes = (stats || []).reduce((sum: number, stat: any) => {
+          const dayMinutes = (stats || []).reduce((sum: number, stat: UsageStat) => {
             return sum + Math.round(stat.totalTimeMs / 60000);
           }, 0);
 
-          console.log(`[ScreenTime] getWeeklyUsage - ${dateStr} minutes:`, dayMinutes);
+          if (__DEV__) console.log(`[ScreenTime] getWeeklyUsage - ${dateStr} minutes:`, dayMinutes);
 
           weeklyTotal += dayMinutes;
           dailyBreakdown.push({ date: dateStr, minutes: dayMinutes });
@@ -603,7 +544,7 @@ class AndroidScreenTimeService {
         }
       }
 
-      console.log('[ScreenTime] getWeeklyUsage - weeklyTotal:', weeklyTotal, 'dailyBreakdown:', dailyBreakdown);
+      if (__DEV__) console.log('[ScreenTime] getWeeklyUsage - weeklyTotal:', weeklyTotal, 'dailyBreakdown:', dailyBreakdown);
 
       return {
         weeklyTotal,
@@ -646,7 +587,7 @@ class AndroidScreenTimeService {
         ? getSelectedPackages(selectedApps)
         : getTargetPackages(); // Fallback to all if none selected
       const packages = [...selectedPackages, ...customPackages];
-      console.log('[ScreenTime] getMonthlyUsage - target packages:', packages);
+      if (__DEV__) console.log('[ScreenTime] getMonthlyUsage - target packages:', packages);
       let monthlyTotal = 0;
 
       // Get usage for each day of the past 30 days
@@ -666,7 +607,7 @@ class AndroidScreenTimeService {
             packages
           );
 
-          const dayMinutes = (stats || []).reduce((sum: number, stat: any) => {
+          const dayMinutes = (stats || []).reduce((sum: number, stat: UsageStat) => {
             return sum + Math.round(stat.totalTimeMs / 60000);
           }, 0);
 
@@ -676,7 +617,7 @@ class AndroidScreenTimeService {
         }
       }
 
-      console.log('[ScreenTime] getMonthlyUsage - monthlyTotal:', monthlyTotal);
+      if (__DEV__) console.log('[ScreenTime] getMonthlyUsage - monthlyTotal:', monthlyTotal);
 
       return {
         monthlyTotal,
@@ -721,7 +662,7 @@ class AndroidScreenTimeService {
         ? getSelectedPackages(selectedApps)
         : getTargetPackages(); // Fallback to all if none selected
       const packages = [...selectedPackages, ...customPackages];
-      console.log('[ScreenTime] getMonthlyUsageWithApps - target packages:', packages);
+      if (__DEV__) console.log('[ScreenTime] getMonthlyUsageWithApps - target packages:', packages);
 
       // Accumulate per-app usage over 30 days
       const appUsageMap: Record<string, { appName: string; totalMs: number }> = {};
@@ -773,7 +714,7 @@ class AndroidScreenTimeService {
         }))
         .sort((a, b) => b.minutes - a.minutes); // Sort by usage descending
 
-      console.log('[ScreenTime] getMonthlyUsageWithApps - monthlyTotal:', monthlyTotal, 'apps:', apps.length);
+      if (__DEV__) console.log('[ScreenTime] getMonthlyUsageWithApps - monthlyTotal:', monthlyTotal, 'apps:', apps.length);
 
       return {
         monthlyTotal,
@@ -795,122 +736,227 @@ class AndroidScreenTimeService {
 }
 
 /**
- * Mock implementation for iOS and development
+ * iOS implementation using Family Controls API
+ * Uses real native module - no mock data
  */
-class MockScreenTimeService {
-  private mockAuthStatus: AuthorizationStatus = 'notDetermined';
-
+class IOSScreenTimeService {
+  /**
+   * Get permission status for iOS
+   */
   async getPermissionStatus(): Promise<PermissionStatus> {
+    const status = IOSScreenTime.getAuthorizationStatus();
+    const isApproved = status === 'approved';
+
     return {
-      usageStats: this.mockAuthStatus === 'approved',
-      overlay: false,
-      familyControls: this.mockAuthStatus === 'approved',
-      notifications: true,
+      usageStats: isApproved,
+      overlay: false, // iOS doesn't have overlay concept
+      familyControls: isApproved,
+      notifications: true, // Handled separately on iOS
     };
   }
 
+  /**
+   * Request Family Controls authorization
+   */
   async requestAuthorization(): Promise<boolean> {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    this.mockAuthStatus = 'approved';
-    return true;
+    const result = await IOSScreenTime.requestAuthorization();
+    return result.success;
   }
 
+  /**
+   * Not applicable on iOS
+   */
   async openUsageStatsSettings(): Promise<void> {
     console.log('[ScreenTime] openUsageStatsSettings is Android-only');
   }
 
+  /**
+   * Not applicable on iOS
+   */
   async openOverlaySettings(): Promise<void> {
     console.log('[ScreenTime] openOverlaySettings is Android-only');
   }
 
+  /**
+   * Get today's usage based on threshold counting
+   * Note: iOS cannot directly query usage stats like Android
+   */
   async getTodayUsage(): Promise<UsageData> {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    return generateMockUsageData();
+    const estimated = IOSScreenTime.getEstimatedUsage();
+
+    return {
+      totalMinutes: estimated.estimatedMinutes,
+      apps: [], // iOS doesn't provide per-app breakdown
+      peakHours: [],
+      lastUpdated: new Date().toISOString(),
+    };
   }
 
   // ============================================
-  // Installed Apps Functions (Stubs for iOS)
-  // Note: iOS implementation pending - requires Family Controls Entitlement
+  // Installed Apps Functions
+  // iOS uses FamilyActivityPicker for app selection
   // ============================================
 
   async getInstalledApps(): Promise<InstalledApp[]> {
-    // iOS: Will be implemented when Family Controls Entitlement is approved
-    console.log('[ScreenTime] getInstalledApps requires Family Controls Entitlement on iOS');
+    // iOS: Use FamilyActivityPicker instead
+    console.log('[ScreenTime] iOS uses FamilyActivityPicker for app selection');
     return [];
   }
 
   async getAppIcon(_packageName: string): Promise<string | null> {
-    console.log('[ScreenTime] getAppIcon is Android-only');
+    // iOS: App icons not accessible via Family Controls
     return null;
   }
 
-  async getAppName(packageName: string): Promise<string> {
-    console.log('[ScreenTime] getAppName is Android-only');
-    return packageName;
+  async getAppName(_packageName: string): Promise<string> {
+    // iOS: App names not directly accessible
+    return _packageName;
   }
 
   async isAppInstalled(_packageName: string): Promise<boolean> {
-    console.log('[ScreenTime] isAppInstalled is Android-only');
+    // iOS: Cannot check directly, use FamilyActivityPicker
     return false;
   }
 
   // ============================================
-  // Monitoring Service Control Functions (Stubs for iOS)
+  // Monitoring Service Control Functions
   // ============================================
 
   async startMonitoring(_packageNames: string[]): Promise<boolean> {
-    console.log('[ScreenTime] startMonitoring is Android-only');
-    return false;
+    // iOS: Package names are ignored - uses FamilyActivitySelection from App Groups
+    const result = await IOSScreenTime.startMonitoring();
+    return result.success;
   }
 
   async stopMonitoring(): Promise<boolean> {
-    console.log('[ScreenTime] stopMonitoring is Android-only');
-    return false;
+    const result = await IOSScreenTime.stopMonitoring();
+    return result.success;
   }
 
   async updateTargetApps(_packageNames: string[]): Promise<boolean> {
-    console.log('[ScreenTime] updateTargetApps is Android-only');
+    // iOS: Update is done via FamilyActivityPicker and saved to App Groups
+    console.log('[ScreenTime] iOS uses FamilyActivityPicker for target app updates');
     return false;
   }
 
   async isMonitoringActive(): Promise<boolean> {
-    console.log('[ScreenTime] isMonitoringActive is Android-only');
-    return false;
+    return IOSScreenTime.isMonitoringActive();
   }
 
-  async setInterventionSettings(_timing: string, _delayMinutes: number): Promise<boolean> {
-    console.log('[ScreenTime] setInterventionSettings is Android-only');
-    return false;
+  async setInterventionSettings(timing: string, delayMinutes: number): Promise<boolean> {
+    return IOSScreenTime.setInterventionSettings(
+      timing as 'immediate' | 'delayed',
+      delayMinutes
+    );
   }
 
   async getInterventionSettings(): Promise<{ timing: string; delayMinutes: number } | null> {
-    console.log('[ScreenTime] getInterventionSettings is Android-only');
-    return null;
+    return IOSScreenTime.getInterventionSettings();
   }
 
+  /**
+   * Get monthly usage based on threshold counting
+   * Note: iOS can only track current day usage via threshold counting
+   */
   async getMonthlyUsageWithApps(): Promise<{
     monthlyTotal: number;
     dailyAverage: number;
     weeklyAverage: number;
     apps: AppUsage[];
   }> {
-    // iOS: Use mock data (pending Family Controls)
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const mockData = generateMockUsageData();
-    const monthlyMultiplier = 30;
+    // iOS limitation: Cannot get historical usage data
+    // Return today's estimated usage as the only data point
+    const estimated = IOSScreenTime.getEstimatedUsage();
+
     return {
-      monthlyTotal: mockData.totalMinutes * monthlyMultiplier,
-      dailyAverage: mockData.totalMinutes,
-      weeklyAverage: mockData.totalMinutes * 7,
-      apps: mockData.apps.map(app => ({
-        ...app,
-        minutes: app.minutes * monthlyMultiplier,
-      })),
+      monthlyTotal: estimated.estimatedMinutes, // Today only
+      dailyAverage: estimated.estimatedMinutes,
+      weeklyAverage: estimated.estimatedMinutes * 7,
+      apps: [], // iOS doesn't provide per-app breakdown
     };
   }
 
   async getUsageStatsForRange(): Promise<Array<{ packageName: string; appName: string; totalTimeMs: number }>> {
+    // iOS limitation: Cannot get historical per-app data
     return [];
+  }
+
+  async getWeeklyUsage(): Promise<{
+    weeklyTotal: number;
+    dailyAverage: number;
+    dailyBreakdown: { date: string; minutes: number }[];
+  }> {
+    // iOS limitation: Only today's data is available via threshold counting
+    const estimated = IOSScreenTime.getEstimatedUsage();
+    const today = new Date().toISOString().split('T')[0];
+
+    return {
+      weeklyTotal: estimated.estimatedMinutes,
+      dailyAverage: estimated.estimatedMinutes,
+      dailyBreakdown: [{ date: today, minutes: estimated.estimatedMinutes }],
+    };
+  }
+
+  async getMonthlyUsage(): Promise<{
+    monthlyTotal: number;
+    dailyAverage: number;
+    weeklyAverage: number;
+  }> {
+    const estimated = IOSScreenTime.getEstimatedUsage();
+
+    return {
+      monthlyTotal: estimated.estimatedMinutes,
+      dailyAverage: estimated.estimatedMinutes,
+      weeklyAverage: estimated.estimatedMinutes * 7,
+    };
+  }
+
+  // ============================================
+  // iOS-specific methods
+  // ============================================
+
+  /**
+   * Check if urge surfing was requested from Shield
+   */
+  consumeUrgeSurfingRequest(): boolean {
+    return IOSScreenTime.consumeUrgeSurfingRequest();
+  }
+
+  /**
+   * Poll for intervention events from Shield
+   */
+  pollInterventionEvents(): IOSScreenTime.InterventionEvent[] {
+    return IOSScreenTime.pollInterventionEvents();
+  }
+
+  /**
+   * Get selection summary
+   */
+  getSelectionSummary(): IOSScreenTime.SelectionSummary {
+    return IOSScreenTime.getSelectionSummary();
+  }
+
+  /**
+   * Present FamilyActivityPicker to select apps
+   */
+  async presentFamilyActivityPicker(
+    options?: IOSScreenTime.FamilyActivityPickerOptions
+  ): Promise<IOSScreenTime.FamilyActivityPickerResult> {
+    return IOSScreenTime.presentFamilyActivityPicker(options);
+  }
+
+  /**
+   * Check if shield is in cooldown
+   */
+  isInShieldCooldown(): boolean {
+    return IOSScreenTime.isInShieldCooldown();
+  }
+
+  /**
+   * Set shield cooldown
+   */
+  setShieldCooldown(seconds: number): void {
+    IOSScreenTime.setShieldCooldown(seconds);
   }
 }
 
@@ -919,11 +965,13 @@ class MockScreenTimeService {
  */
 class ScreenTimeService {
   private androidService: AndroidScreenTimeService | null = null;
-  private mockService: MockScreenTimeService = new MockScreenTimeService();
+  private iosService: IOSScreenTimeService | null = null;
 
   constructor() {
     if (Platform.OS === 'android') {
       this.androidService = new AndroidScreenTimeService();
+    } else if (Platform.OS === 'ios') {
+      this.iosService = new IOSScreenTimeService();
     }
   }
 
@@ -931,7 +979,7 @@ class ScreenTimeService {
    * Check if using real native implementation
    */
   isNativeAvailable(): boolean {
-    return Platform.OS === 'android';
+    return Platform.OS === 'android' || Platform.OS === 'ios';
   }
 
   /**
@@ -941,7 +989,15 @@ class ScreenTimeService {
     if (this.androidService) {
       return this.androidService.getPermissionStatus();
     }
-    return this.mockService.getPermissionStatus();
+    if (this.iosService) {
+      return this.iosService.getPermissionStatus();
+    }
+    return {
+      usageStats: false,
+      overlay: false,
+      familyControls: false,
+      notifications: false,
+    };
   }
 
   /**
@@ -950,8 +1006,8 @@ class ScreenTimeService {
   async openUsageStatsSettings(): Promise<void> {
     if (this.androidService) {
       await this.androidService.openUsageStatsSettings();
-    } else {
-      await this.mockService.openUsageStatsSettings();
+    } else if (this.iosService) {
+      await this.iosService.openUsageStatsSettings();
     }
   }
 
@@ -961,8 +1017,8 @@ class ScreenTimeService {
   async openOverlaySettings(): Promise<void> {
     if (this.androidService) {
       await this.androidService.openOverlaySettings();
-    } else {
-      await this.mockService.openOverlaySettings();
+    } else if (this.iosService) {
+      await this.iosService.openOverlaySettings();
     }
   }
 
@@ -974,7 +1030,10 @@ class ScreenTimeService {
       const status = await this.androidService.getPermissionStatus();
       return status.usageStats;
     }
-    return this.mockService.requestAuthorization();
+    if (this.iosService) {
+      return this.iosService.requestAuthorization();
+    }
+    return false;
   }
 
   /**
@@ -995,7 +1054,10 @@ class ScreenTimeService {
     if (Platform.OS === 'android') {
       return true; // Android 8.0+ is required, handled at module level
     }
-    return Platform.OS === 'ios' || __DEV__;
+    if (Platform.OS === 'ios') {
+      return IOSScreenTime.isAvailable();
+    }
+    return __DEV__;
   }
 
   /**
@@ -1007,7 +1069,15 @@ class ScreenTimeService {
     if (this.androidService) {
       return this.androidService.getTodayUsage(selectedApps, customPackages);
     }
-    return this.mockService.getTodayUsage();
+    if (this.iosService) {
+      return this.iosService.getTodayUsage();
+    }
+    return {
+      totalMinutes: 0,
+      apps: [],
+      peakHours: [],
+      lastUpdated: new Date().toISOString(),
+    };
   }
 
   /**
@@ -1020,7 +1090,7 @@ class ScreenTimeService {
   /**
    * Get weekly usage statistics
    * Android: Uses real data from UsageStatsManager
-   * iOS: Uses mock data (pending Family Controls)
+   * iOS: Uses threshold counting (limited to today's data)
    * @param selectedApps - Array of TargetAppId that user has selected
    * @param customPackages - Additional package names to include (e.g., user-added apps)
    */
@@ -1033,15 +1103,21 @@ class ScreenTimeService {
       return this.androidService.getWeeklyUsage(selectedApps, customPackages);
     }
 
-    // iOS: Use mock data (pending Family Controls)
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    return generateWeeklyMockData();
+    if (this.iosService) {
+      return this.iosService.getWeeklyUsage();
+    }
+
+    return {
+      weeklyTotal: 0,
+      dailyAverage: 0,
+      dailyBreakdown: [],
+    };
   }
 
   /**
    * Get monthly usage statistics (past 30 days)
    * Android: Uses real data from UsageStatsManager
-   * iOS: Uses mock data (pending Family Controls)
+   * iOS: Uses threshold counting (limited to today's data)
    * @param selectedApps - Array of TargetAppId that user has selected
    * @param customPackages - Additional package names to include (e.g., user-added apps)
    */
@@ -1054,13 +1130,14 @@ class ScreenTimeService {
       return this.androidService.getMonthlyUsage(selectedApps, customPackages);
     }
 
-    // iOS: Use mock data (pending Family Controls)
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const weeklyData = generateWeeklyMockData();
+    if (this.iosService) {
+      return this.iosService.getMonthlyUsage();
+    }
+
     return {
-      monthlyTotal: weeklyData.weeklyTotal * 4.3, // Approximate monthly from weekly
-      dailyAverage: weeklyData.dailyAverage,
-      weeklyAverage: weeklyData.weeklyTotal,
+      monthlyTotal: 0,
+      dailyAverage: 0,
+      weeklyAverage: 0,
     };
   }
 
@@ -1083,7 +1160,7 @@ class ScreenTimeService {
    * Set shielded apps (iOS only, mock)
    */
   async setShieldedApps(bundleIds: string[]): Promise<boolean> {
-    console.log('[ScreenTime] Setting shielded apps:', bundleIds);
+    if (__DEV__) console.log('[ScreenTime] Setting shielded apps:', bundleIds);
     await new Promise((resolve) => setTimeout(resolve, 200));
     return true;
   }
@@ -1092,7 +1169,7 @@ class ScreenTimeService {
    * Remove shields from all apps (iOS only, mock)
    */
   async unshieldApps(): Promise<boolean> {
-    console.log('[ScreenTime] Removing shields from all apps');
+    if (__DEV__) console.log('[ScreenTime] Removing shields from all apps');
     await new Promise((resolve) => setTimeout(resolve, 200));
     return true;
   }
@@ -1104,13 +1181,17 @@ class ScreenTimeService {
 
   /**
    * Get list of installed launcher apps (excludes system apps)
-   * Android only - iOS requires Family Controls Entitlement
+   * Android: Uses PackageManager
+   * iOS: Uses FamilyActivityPicker (not direct list)
    */
   async getInstalledApps(): Promise<InstalledApp[]> {
     if (this.androidService) {
       return this.androidService.getInstalledApps();
     }
-    return this.mockService.getInstalledApps();
+    if (this.iosService) {
+      return this.iosService.getInstalledApps();
+    }
+    return [];
   }
 
   /**
@@ -1121,7 +1202,10 @@ class ScreenTimeService {
     if (this.androidService) {
       return this.androidService.getAppIcon(packageName);
     }
-    return this.mockService.getAppIcon(packageName);
+    if (this.iosService) {
+      return this.iosService.getAppIcon(packageName);
+    }
+    return null;
   }
 
   /**
@@ -1132,7 +1216,10 @@ class ScreenTimeService {
     if (this.androidService) {
       return this.androidService.getAppName(packageName);
     }
-    return this.mockService.getAppName(packageName);
+    if (this.iosService) {
+      return this.iosService.getAppName(packageName);
+    }
+    return packageName;
   }
 
   /**
@@ -1143,7 +1230,10 @@ class ScreenTimeService {
     if (this.androidService) {
       return this.androidService.isAppInstalled(packageName);
     }
-    return this.mockService.isAppInstalled(packageName);
+    if (this.iosService) {
+      return this.iosService.isAppInstalled(packageName);
+    }
+    return false;
   }
 
   // ============================================
@@ -1152,51 +1242,60 @@ class ScreenTimeService {
 
   /**
    * Start monitoring target apps - shows check-in overlay when apps are detected
-   * Android only - requires SYSTEM_ALERT_WINDOW and USAGE_STATS permissions
+   * Android: Uses ForegroundService with overlay
+   * iOS: Uses DeviceActivityMonitor extension
    */
   async startMonitoring(packageNames: string[]): Promise<boolean> {
     if (this.androidService) {
       return this.androidService.startMonitoring(packageNames);
     }
-    return this.mockService.startMonitoring(packageNames);
+    if (this.iosService) {
+      return this.iosService.startMonitoring(packageNames);
+    }
+    return false;
   }
 
   /**
    * Stop monitoring target apps
-   * Android only
    */
   async stopMonitoring(): Promise<boolean> {
     if (this.androidService) {
       return this.androidService.stopMonitoring();
     }
-    return this.mockService.stopMonitoring();
+    if (this.iosService) {
+      return this.iosService.stopMonitoring();
+    }
+    return false;
   }
 
   /**
    * Update target apps while monitoring is active
-   * Android only
    */
   async updateTargetApps(packageNames: string[]): Promise<boolean> {
     if (this.androidService) {
       return this.androidService.updateTargetApps(packageNames);
     }
-    return this.mockService.updateTargetApps(packageNames);
+    if (this.iosService) {
+      return this.iosService.updateTargetApps(packageNames);
+    }
+    return false;
   }
 
   /**
    * Check if monitoring service is currently running
-   * Android only
    */
   async isMonitoringActive(): Promise<boolean> {
     if (this.androidService) {
       return this.androidService.isMonitoringActive();
     }
-    return this.mockService.isMonitoringActive();
+    if (this.iosService) {
+      return this.iosService.isMonitoringActive();
+    }
+    return false;
   }
 
   /**
    * Set intervention settings (timing mode and delay)
-   * Android only
    * @param timing "immediate" or "delayed"
    * @param delayMinutes 5, 10, or 15
    */
@@ -1204,24 +1303,29 @@ class ScreenTimeService {
     if (this.androidService) {
       return this.androidService.setInterventionSettings(timing, delayMinutes);
     }
-    return this.mockService.setInterventionSettings(timing, delayMinutes);
+    if (this.iosService) {
+      return this.iosService.setInterventionSettings(timing, delayMinutes);
+    }
+    return false;
   }
 
   /**
    * Get current intervention settings
-   * Android only
    */
   async getInterventionSettings(): Promise<{ timing: string; delayMinutes: number } | null> {
     if (this.androidService) {
       return this.androidService.getInterventionSettings();
     }
-    return this.mockService.getInterventionSettings();
+    if (this.iosService) {
+      return this.iosService.getInterventionSettings();
+    }
+    return null;
   }
 
   /**
    * Get monthly usage with per-app breakdown
    * Android: Uses real data from UsageStatsManager
-   * iOS: Uses mock data (pending Family Controls)
+   * iOS: Uses threshold counting (limited to today's data, no app breakdown)
    * @param selectedApps - Array of TargetAppId that user has selected
    * @param customPackages - Additional package names to include (e.g., user-added apps)
    */
@@ -1234,7 +1338,15 @@ class ScreenTimeService {
     if (this.androidService) {
       return this.androidService.getMonthlyUsageWithApps(selectedApps, customPackages);
     }
-    return this.mockService.getMonthlyUsageWithApps();
+    if (this.iosService) {
+      return this.iosService.getMonthlyUsageWithApps();
+    }
+    return {
+      monthlyTotal: 0,
+      dailyAverage: 0,
+      weeklyAverage: 0,
+      apps: [],
+    };
   }
 
   /**
@@ -1258,7 +1370,84 @@ class ScreenTimeService {
         customPackages
       );
     }
-    return this.mockService.getUsageStatsForRange();
+    if (this.iosService) {
+      return this.iosService.getUsageStatsForRange();
+    }
+    return [];
+  }
+
+  // ============================================
+  // iOS-specific methods
+  // ============================================
+
+  /**
+   * Check if urge surfing was requested from Shield (iOS only)
+   */
+  consumeUrgeSurfingRequest(): boolean {
+    if (this.iosService) {
+      return this.iosService.consumeUrgeSurfingRequest();
+    }
+    return false;
+  }
+
+  /**
+   * Poll for intervention events from Shield (iOS only)
+   */
+  pollInterventionEvents(): IOSScreenTime.InterventionEvent[] {
+    if (this.iosService) {
+      return this.iosService.pollInterventionEvents();
+    }
+    return [];
+  }
+
+  /**
+   * Get selection summary (iOS only)
+   */
+  getSelectionSummary(): IOSScreenTime.SelectionSummary {
+    if (this.iosService) {
+      return this.iosService.getSelectionSummary();
+    }
+    return {
+      applicationCount: 0,
+      categoryCount: 0,
+      webDomainCount: 0,
+      isEmpty: true,
+      totalCount: 0,
+    };
+  }
+
+  /**
+   * Present FamilyActivityPicker to select apps (iOS only)
+   */
+  async presentFamilyActivityPicker(
+    options?: IOSScreenTime.FamilyActivityPickerOptions
+  ): Promise<IOSScreenTime.FamilyActivityPickerResult> {
+    if (this.iosService) {
+      return this.iosService.presentFamilyActivityPicker(options);
+    }
+    return {
+      success: false,
+      error: 'FamilyActivityPicker is only available on iOS',
+    };
+  }
+
+  /**
+   * Check if shield is in cooldown (iOS only)
+   */
+  isInShieldCooldown(): boolean {
+    if (this.iosService) {
+      return this.iosService.isInShieldCooldown();
+    }
+    return false;
+  }
+
+  /**
+   * Set shield cooldown (iOS only)
+   */
+  setShieldCooldown(seconds: number): void {
+    if (this.iosService) {
+      this.iosService.setShieldCooldown(seconds);
+    }
   }
 }
 

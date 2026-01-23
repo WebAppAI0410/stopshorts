@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
@@ -7,7 +7,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button, Header, GlowOrb } from '../../src/components/ui';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
+import { usePurchase } from '../../src/hooks/usePurchase';
 import { t } from '../../src/i18n';
+import * as ScreenTime from '../../modules/screen-time';
 
 type PlanType = 'monthly' | 'quarterly' | 'annual';
 
@@ -27,8 +29,15 @@ export default function PricingScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
     const { completeOnboarding, setSubscriptionPlan } = useAppStore();
+    const { offerings, isLoading, error, purchase, restore, initialize } = usePurchase();
     const [selectedPlan, setSelectedPlan] = useState<PlanType>('annual');
     const [skipTrial, setSkipTrial] = useState(false);
+    const [isPurchasing, setIsPurchasing] = useState(false);
+
+    // Initialize RevenueCat on mount
+    useEffect(() => {
+        initialize();
+    }, [initialize]);
 
     const plans: PlanOption[] = [
         {
@@ -61,19 +70,147 @@ export default function PricingScreen() {
         },
     ];
 
-    const handleStartWithTrial = () => {
-        // In real app: trigger StoreKit with trial offer for selected plan
-        setSubscriptionPlan('trial');
-        completeOnboarding();
-        router.replace('/(main)' as Href);
-    };
+    /**
+     * Complete onboarding with iOS monitoring setup
+     * Starts Screen Time monitoring on iOS before navigating to main app
+     */
+    const finishOnboarding = useCallback(async () => {
+        // Start iOS monitoring if available
+        if (Platform.OS === 'ios' && ScreenTime.isAvailable()) {
+            try {
+                const status = ScreenTime.getAuthorizationStatus();
+                if (status === 'approved') {
+                    const result = await ScreenTime.startMonitoring();
+                    if (result.success) {
+                        if (__DEV__) console.log('[Pricing] iOS monitoring started successfully');
+                    } else {
+                        console.warn('[Pricing] iOS monitoring failed to start:', result.error);
+                    }
+                } else {
+                    if (__DEV__) console.log('[Pricing] iOS monitoring skipped - authorization status:', status);
+                }
+            } catch (error) {
+                console.error('[Pricing] iOS monitoring error:', error);
+                // Continue with onboarding even if monitoring fails
+            }
+        }
 
-    const handleStartWithoutTrial = () => {
-        // In real app: trigger StoreKit for immediate payment
-        setSubscriptionPlan(selectedPlan);
         completeOnboarding();
         router.replace('/(main)' as Href);
-    };
+    }, [completeOnboarding, router]);
+
+    /**
+     * Get the RevenueCat package for the selected plan
+     */
+    const getPackageForPlan = useCallback((planId: PlanType) => {
+        if (!offerings?.availablePackages) return null;
+
+        // Map plan ID to RevenueCat package identifier
+        const packageMap: Record<PlanType, string> = {
+            monthly: '$rc_monthly',
+            quarterly: '$rc_three_month',
+            annual: '$rc_annual',
+        };
+
+        const identifier = packageMap[planId];
+        return offerings.availablePackages.find(pkg => pkg.identifier === identifier) ?? null;
+    }, [offerings]);
+
+    /**
+     * Handle purchase with trial (free trial start)
+     */
+    const handleStartWithTrial = useCallback(async () => {
+        const pkg = getPackageForPlan(selectedPlan);
+
+        if (!pkg) {
+            // Fallback to mock flow if RevenueCat not available
+            if (__DEV__) console.log('[Pricing] RevenueCat not available, using mock flow');
+            setSubscriptionPlan('trial');
+            await finishOnboarding();
+            return;
+        }
+
+        setIsPurchasing(true);
+        try {
+            const result = await purchase(pkg);
+
+            if (result.success) {
+                await finishOnboarding();
+            } else if (result.error) {
+                Alert.alert(
+                    t('common.error'),
+                    result.error,
+                    [{ text: t('common.ok') }]
+                );
+            }
+        } finally {
+            setIsPurchasing(false);
+        }
+    }, [selectedPlan, getPackageForPlan, purchase, finishOnboarding, setSubscriptionPlan]);
+
+    /**
+     * Handle immediate purchase (skip trial)
+     */
+    const handleStartWithoutTrial = useCallback(async () => {
+        const pkg = getPackageForPlan(selectedPlan);
+
+        if (!pkg) {
+            // Fallback to mock flow if RevenueCat not available
+            if (__DEV__) console.log('[Pricing] RevenueCat not available, using mock flow');
+            setSubscriptionPlan(selectedPlan);
+            await finishOnboarding();
+            return;
+        }
+
+        setIsPurchasing(true);
+        try {
+            const result = await purchase(pkg);
+
+            if (result.success) {
+                await finishOnboarding();
+            } else if (result.error) {
+                Alert.alert(
+                    t('common.error'),
+                    result.error,
+                    [{ text: t('common.ok') }]
+                );
+            }
+        } finally {
+            setIsPurchasing(false);
+        }
+    }, [selectedPlan, getPackageForPlan, purchase, finishOnboarding, setSubscriptionPlan]);
+
+    /**
+     * Handle restore purchases
+     */
+    const handleRestore = useCallback(async () => {
+        setIsPurchasing(true);
+        try {
+            const result = await restore();
+
+            if (result.restored) {
+                Alert.alert(
+                    t('subscription.restoreSuccess'),
+                    t('subscription.restoreSuccessMessage'),
+                    [{
+                        text: t('common.ok'),
+                        onPress: () => {
+                            // Start iOS monitoring and complete onboarding
+                            finishOnboarding();
+                        }
+                    }]
+                );
+            } else {
+                Alert.alert(
+                    t('subscription.restoreFailed'),
+                    result.error ?? t('subscription.noPurchasesToRestore'),
+                    [{ text: t('common.ok') }]
+                );
+            }
+        } finally {
+            setIsPurchasing(false);
+        }
+    }, [restore, finishOnboarding]);
 
     const commitmentReasons = [
         {
@@ -355,6 +492,16 @@ export default function PricingScreen() {
                 entering={FadeInUp.duration(600).delay(1000)}
                 style={[styles.footer, { paddingHorizontal: spacing.gutter }]}
             >
+                {/* Loading Indicator */}
+                {(isLoading || isPurchasing) && (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="small" color={colors.accent} />
+                        <Text style={[typography.caption, { color: colors.textMuted, marginLeft: spacing.sm }]}>
+                            {isPurchasing ? t('subscription.processing') : t('common.loading')}
+                        </Text>
+                    </View>
+                )}
+
                 <Button
                     title={skipTrial
                         ? t('onboarding.pricing.startNowButton', { plan: plans.find(p => p.id === selectedPlan)?.name ?? '' })
@@ -362,7 +509,19 @@ export default function PricingScreen() {
                     }
                     onPress={skipTrial ? handleStartWithoutTrial : handleStartWithTrial}
                     size="lg"
+                    disabled={isPurchasing}
                 />
+
+                {/* Restore Purchases Link */}
+                <TouchableOpacity
+                    style={styles.restoreButton}
+                    onPress={handleRestore}
+                    disabled={isPurchasing}
+                >
+                    <Text style={[typography.caption, { color: colors.textMuted }]}>
+                        {t('subscription.restore')}
+                    </Text>
+                </TouchableOpacity>
             </Animated.View>
         </SafeAreaView>
     );
@@ -478,5 +637,16 @@ const styles = StyleSheet.create({
     footer: {
         paddingTop: 16,
         paddingBottom: 40,
+    },
+    loadingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 12,
+    },
+    restoreButton: {
+        alignItems: 'center',
+        marginTop: 16,
+        paddingVertical: 8,
     },
 });

@@ -26,7 +26,16 @@ export function FeatureLinkSection({ features }: FeatureLinkSectionProps) {
   }
 
   const handleFeaturePress = (route: string) => {
-    router.push(route as Href);
+    // For urge surfing, explicitly pass practiceType to show the breathing exercise
+    // (not the user's configured intervention type)
+    if (route === '/(main)/urge-surfing') {
+      router.push({
+        pathname: '/(main)/urge-surfing',
+        params: { practiceType: 'breathing', source: 'training' },
+      });
+    } else {
+      router.push(route as Href);
+    }
   };
 
   return (
