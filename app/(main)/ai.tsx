@@ -58,7 +58,6 @@ import {
 import {
   getConversationStarters,
   getTimeOfDay,
-  getDefaultStarters,
 } from '../../src/data/conversationStarters';
 import {
   ModelDownloadCard,
@@ -71,7 +70,6 @@ import type {
   ConversationModeId,
   ContextualSuggestion,
   ConversationStarter,
-  GuidedConversationState,
 } from '../../src/types/ai';
 
 export default function AIScreen() {

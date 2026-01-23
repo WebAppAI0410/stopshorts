@@ -99,7 +99,7 @@ const getRecommendedIntervention = (
 
 export default function InterventionPracticeScreen() {
   const router = useRouter();
-  const { colors, spacing, borderRadius } = useTheme();
+  const { colors, spacing } = useTheme();
   const modelStatus = useAIStore((state) => state.modelStatus);
   const isAIModelReady = modelStatus === 'ready';
   const getInterventionStatsByType = useStatisticsStore((state) => state.getInterventionStatsByType);

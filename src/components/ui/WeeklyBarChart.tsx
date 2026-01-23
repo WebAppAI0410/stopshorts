@@ -17,7 +17,7 @@ interface WeeklyBarChartProps {
 const DAYS_SHORT = ['月', '火', '水', '木', '金', '土', '日'];
 
 export function WeeklyBarChart({ data, maxValue, highlightDay }: WeeklyBarChartProps) {
-    const { colors, typography, spacing } = useTheme();
+    const { colors } = useTheme();
 
     const chartHeight = 180;
     // Account for screen padding (gutter * 2 = ~48px) plus some margin
