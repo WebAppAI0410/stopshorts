@@ -37,13 +37,13 @@ interface UrgeSurfingScreenProps {
   source?: 'shield' | 'training' | 'manual' | 'shortcut';
 }
 
-const BREATH_CYCLES = 3;
+// const BREATH_CYCLES = 3; // Reserved for future customization
 
 export function UrgeSurfingScreen({
   blockedAppName = 'TikTok',
   onProceed,
   onDismiss,
-  source = 'shield',
+  source: _source = 'shield',
 }: UrgeSurfingScreenProps) {
   const { colors, typography, spacing, borderRadius } = useTheme();
   const [phase, setPhase] = useState<SurfingPhase>('initial');
@@ -79,7 +79,7 @@ export function UrgeSurfingScreen({
     // Reanimated SharedValue mutation is valid pattern - disable React Compiler check
     // eslint-disable-next-line react-hooks/immutability
     progress.value = 0;
-    // eslint-disable-next-line react-hooks/immutability
+     
     progress.value = withTiming(1, {
       duration: cycleCount * 10000, // 10s per cycle
       easing: Easing.linear,

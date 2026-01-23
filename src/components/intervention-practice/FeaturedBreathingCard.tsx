@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, G } from 'react-native-svg';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../../contexts/ThemeContext';
-import { palette, typography } from '../../design/theme';
+import { palette } from '../../design/theme';
 import { t } from '../../i18n';
 
 type FeaturedBreathingCardProps = {
@@ -38,7 +38,7 @@ const LeafIllustration = () => (
 );
 
 export const FeaturedBreathingCard = ({ onPress, testID }: FeaturedBreathingCardProps) => {
-  const { borderRadius, spacing, colors } = useTheme();
+  const { borderRadius, spacing } = useTheme();
 
   return (
     <Animated.View entering={FadeInDown.duration(800).delay(200)}>
@@ -58,15 +58,15 @@ export const FeaturedBreathingCard = ({ onPress, testID }: FeaturedBreathingCard
           </View>
 
           {/* Content */}
-          <View style={styles.content}>
+          <View style={[styles.content, { padding: spacing.gutter, paddingBottom: spacing.md }]}>
             {/* Recommended Badge */}
-            <View style={styles.badge}>
+            <View style={[styles.badge, { paddingHorizontal: spacing.smd, paddingVertical: 6 }]}>
               <Text style={styles.badgeText}>{t('intervention.practice.recommended')}</Text>
             </View>
 
             {/* Title & Subtitle */}
-            <View style={styles.textSection}>
-              <View style={styles.iconRow}>
+            <View style={[styles.textSection, { marginTop: spacing.smd }]}>
+              <View style={[styles.iconRow, { marginBottom: spacing.sm }]}>
                 <Ionicons name="leaf" size={24} color="#FFF" />
               </View>
               <Text style={styles.title}>{t('intervention.practice.options.breathing.title')}</Text>
@@ -77,17 +77,17 @@ export const FeaturedBreathingCard = ({ onPress, testID }: FeaturedBreathingCard
             </View>
 
             {/* Bottom Row */}
-            <View style={styles.bottomRow}>
-              <View style={styles.durationBadge}>
-                <Ionicons name="time-outline" size={12} color="#FFF" style={{ marginRight: 4 }} />
+            <View style={[styles.bottomRow, { marginTop: spacing.smd }]}>
+              <View style={[styles.durationBadge, { paddingHorizontal: 10, paddingVertical: spacing.xs }]}>
+                <Ionicons name="time-outline" size={12} color="#FFF" style={{ marginRight: spacing.xs }} />
                 <Text style={styles.durationText}>
                   {t('intervention.practice.options.breathing.duration')}
                 </Text>
               </View>
 
-              <View style={styles.ctaButton}>
+              <View style={[styles.ctaButton, { paddingHorizontal: spacing.md, paddingVertical: 10 }]}>
                 <Text style={styles.ctaText}>{t('intervention.practice.tryIt')}</Text>
-                <Ionicons name="arrow-forward" size={16} color={palette.emerald[600]} style={{ marginLeft: 4 }} />
+                <Ionicons name="arrow-forward" size={16} color={palette.emerald[600]} style={{ marginLeft: spacing.xs }} />
               </View>
             </View>
           </View>
@@ -117,15 +117,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
-    paddingBottom: 16,
+    // padding: spacing.gutter (20), paddingBottom: spacing.md (16) - applied via inline style
     justifyContent: 'space-between',
   },
   badge: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    // paddingHorizontal: spacing.smd (12) - applied via inline style
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
@@ -136,15 +134,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   textSection: {
-    marginTop: 12,
+    // marginTop: spacing.smd (12) - applied via inline style
   },
   iconRow: {
-    marginBottom: 8,
+    // marginBottom: spacing.sm (8) - applied via inline style
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
     color: '#FFF',
+    // marginBottom: spacing.xs (4)
     marginBottom: 4,
     letterSpacing: -0.5,
   },
@@ -152,6 +151,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.9)',
+    // marginBottom: spacing.xs (4)
     marginBottom: 4,
   },
   description: {
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 12,
+    // marginTop: spacing.smd (12) - applied via inline style
     flexShrink: 0,
   },
   durationBadge: {
@@ -172,8 +172,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.4)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    // paddingHorizontal: 10, paddingVertical: spacing.xs (4) - applied via inline style
     borderRadius: 12,
   },
   durationText: {
@@ -185,8 +184,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    // paddingHorizontal: spacing.md (16), paddingVertical: 10 - applied via inline style
     borderRadius: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

@@ -21,6 +21,7 @@ export const SectionMarker: React.FC<SectionMarkerProps> = ({
 
     useEffect(() => {
         progress.value = withDelay(400, withTiming(1, { duration: 800 }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const animatedStyle = useAnimatedStyle(() => ({

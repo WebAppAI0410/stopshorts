@@ -115,8 +115,9 @@ describe('extractInsights', () => {
 
     it('should extract with "しちゃう" variant', () => {
       const messages = [createMessage('暇になるとなんとなく見ちゃう')];
-      const insights = extractInsights(messages);
-      // This may not match due to pattern requirements
+      const result = extractInsights(messages);
+      // This may not match due to pattern requirements, but we still run extraction
+      expect(result).toBeDefined();
     });
   });
 

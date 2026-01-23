@@ -111,10 +111,8 @@ async function simulateTyping(
   onChunk: StreamCallback
 ): Promise<void> {
   const words = text.split(' ');
-  let accumulated = '';
 
   for (let i = 0; i < words.length; i++) {
-    accumulated += (i > 0 ? ' ' : '') + words[i];
     // Random delay between 30-80ms per word
     await new Promise((resolve) =>
       setTimeout(resolve, 30 + Math.random() * 50)

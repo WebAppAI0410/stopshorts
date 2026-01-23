@@ -21,7 +21,7 @@ export function ProgressBar({
     variant = 'primary',
     animated = true,
 }: ProgressBarProps) {
-    const { colors, borderRadius } = useTheme();
+    const { colors } = useTheme();
     const clampedProgress = Math.min(100, Math.max(0, progress));
 
     const gradientColors = {

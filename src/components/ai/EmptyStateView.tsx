@@ -17,7 +17,6 @@ import type {
   ContextualSuggestion,
   ConversationStarter,
   ConversationModeId,
-  SuggestionAction,
 } from '../../types/ai';
 
 interface EmptyStateViewProps {

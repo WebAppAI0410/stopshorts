@@ -21,7 +21,6 @@ import { FrictionIntervention, MirrorIntervention, AIIntervention } from '../../
 import { Header } from '../../src/components/ui';
 import { useAppStore } from '../../src/stores/useAppStore';
 import { useAIStore } from '../../src/stores/useAIStore';
-import { useTheme } from '../../src/contexts/ThemeContext';
 
 // Map package names to display names
 const PACKAGE_TO_APP_NAME: Record<string, string> = {
@@ -36,7 +35,6 @@ const PACKAGE_TO_APP_NAME: Record<string, string> = {
 
 export default function UrgeSurfingPage() {
   const router = useRouter();
-  const { colors } = useTheme();
   const params = useLocalSearchParams<{
     app?: string;       // Package name (from deep link)
     appName?: string;   // Display name (optional)

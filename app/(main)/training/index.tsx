@@ -37,7 +37,7 @@ export default function TrainingScreen() {
 
   const completedTopicIds = useMemo(() => {
     return getCompletedTopicIds();
-  }, [trainingProgress, getCompletedTopicIds]);
+  }, [getCompletedTopicIds]);
 
   const completedTopicCount = completedTopicIds.length;
   const totalTopicCount = TRAINING_TOPICS.length;

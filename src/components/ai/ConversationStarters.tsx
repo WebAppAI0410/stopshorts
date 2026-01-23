@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useTheme } from '../../contexts/ThemeContext';
 import { t } from '../../i18n';
@@ -45,7 +45,7 @@ export function ConversationStarters({
         {t('ai.starters.title')}
       </Text>
       <View style={styles.startersContainer}>
-        {starters.map((starter, index) => (
+        {starters.map((starter) => (
           <Pressable
             key={starter.id}
             onPress={() => onStarterPress(starter)}

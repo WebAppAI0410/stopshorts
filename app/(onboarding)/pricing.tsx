@@ -33,7 +33,7 @@ export default function PricingScreen() {
     const router = useRouter();
     const { colors, typography, spacing, borderRadius } = useTheme();
     const { completeOnboarding, setSubscriptionPlan } = useAppStore();
-    const { offerings, isLoading, error, purchase, restore, initialize } = usePurchase();
+    const { offerings, isLoading, purchase, restore, initialize } = usePurchase();
     const [selectedPlan, setSelectedPlan] = useState<PlanType>('annual');
     const [skipTrial, setSkipTrial] = useState(false);
     const [isPurchasing, setIsPurchasing] = useState(false);

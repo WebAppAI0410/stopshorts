@@ -32,7 +32,7 @@ interface FrictionInterventionProps {
 }
 
 export function FrictionIntervention({
-  blockedAppName = 'TikTok',
+  blockedAppName: _blockedAppName = 'TikTok',
   appPackage,
   onProceed,
   onDismiss,
@@ -55,10 +55,10 @@ export function FrictionIntervention({
   const waitSeconds = calculateWaitTime(dailyOpenCount);
 
   // Reset daily count if new day and increment on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally run only on mount
   useEffect(() => {
     resetOpenCountIfNeeded();
     incrementOpenCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Start mount time measurement (useLayoutEffect runs before paint)
