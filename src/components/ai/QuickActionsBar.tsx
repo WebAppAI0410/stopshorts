@@ -72,7 +72,7 @@ export function QuickActionsBar({ onActionPress }: QuickActionsBarProps) {
               name={action.icon}
               size={20}
               color={colors.primary}
-              style={{ marginBottom: 4 }}
+              style={{ marginBottom: spacing.xs }}
             />
             <Text
               style={[

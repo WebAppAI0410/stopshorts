@@ -122,6 +122,7 @@ export const typography = {
 export const spacing = {
     xs: 4,
     sm: 8,
+    smd: 12, // small-medium: between sm(8) and md(16)
     md: 16,
     lg: 24,
     xl: 32,
@@ -215,6 +216,30 @@ export const darkTheme = {
     // Special
     shieldGlow: 'rgba(16, 185, 129, 0.3)',
     cardGlow: 'rgba(16, 185, 129, 0.15)',
+
+    // Fixed colors (for contrast on colored backgrounds)
+    white: '#FFFFFF',
+    black: '#000000',
+
+    // Glass effect colors
+    glassBackground: 'rgba(22, 27, 34, 0.7)',
+    glassBackgroundLight: 'rgba(22, 27, 34, 0.6)',
+    glassBackgroundMedium: 'rgba(22, 27, 34, 0.8)',
+    glassBackgroundStrong: 'rgba(22, 27, 34, 0.9)',
+    glassBorder: 'rgba(48, 54, 61, 0.6)',
+    glassBorderLight: 'rgba(48, 54, 61, 0.5)',
+    glassBorderSubtle: 'rgba(48, 54, 61, 0.4)',
+
+    // Semantic transparent backgrounds
+    successMuted: 'rgba(16, 185, 129, 0.2)',
+    errorMuted: 'rgba(239, 68, 68, 0.2)',
+
+    // Track colors (for gauges/progress)
+    track: palette.dark[500],
+
+    // Camera overlay (fixed, not theme-dependent)
+    cameraOverlay: 'rgba(0, 0, 0, 0.4)',
+    cameraTextShadow: 'rgba(0, 0, 0, 0.8)',
 };
 
 // Light theme - Ink & Paper design
@@ -257,6 +282,30 @@ export const lightTheme = {
     // Special
     shieldGlow: 'rgba(16, 185, 129, 0.2)',
     cardGlow: 'rgba(16, 185, 129, 0.1)',
+
+    // Fixed colors (for contrast on colored backgrounds)
+    white: '#FFFFFF',
+    black: '#000000',
+
+    // Glass effect colors
+    glassBackground: 'rgba(255, 255, 255, 0.7)',
+    glassBackgroundLight: 'rgba(255, 255, 255, 0.6)',
+    glassBackgroundMedium: 'rgba(255, 255, 255, 0.8)',
+    glassBackgroundStrong: 'rgba(255, 255, 255, 0.9)',
+    glassBorder: 'rgba(0, 0, 0, 0.08)',
+    glassBorderLight: 'rgba(0, 0, 0, 0.08)',
+    glassBorderSubtle: 'rgba(0, 0, 0, 0.06)',
+
+    // Semantic transparent backgrounds
+    successMuted: 'rgba(16, 185, 129, 0.15)',
+    errorMuted: 'rgba(239, 68, 68, 0.2)',
+
+    // Track colors (for gauges/progress)
+    track: '#E5E5E5',
+
+    // Camera overlay (fixed, not theme-dependent)
+    cameraOverlay: 'rgba(0, 0, 0, 0.4)',
+    cameraTextShadow: 'rgba(0, 0, 0, 0.8)',
 };
 
 export type Theme = typeof darkTheme;

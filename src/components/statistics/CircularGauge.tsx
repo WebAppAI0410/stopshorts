@@ -15,7 +15,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { useTheme } from '../../contexts/ThemeContext';
-import { palette } from '../../design/theme';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -36,7 +35,7 @@ export const CircularGauge: React.FC<CircularGaugeProps> = ({
   strokeWidth = 10,
   animated = true,
 }) => {
-  const { isDark, typography } = useTheme();
+  const { typography, colors } = useTheme();
 
   // Clamp value to 0-100
   const clampedValue = Math.max(0, Math.min(100, value));
@@ -47,8 +46,8 @@ export const CircularGauge: React.FC<CircularGaugeProps> = ({
   const circumference = 2 * Math.PI * radius;
 
   // Colors based on theme
-  const accentColor = isDark ? palette.emerald[500] : palette.emerald[600];
-  const trackColor = isDark ? palette.dark[500] : '#E5E5E5';
+  const accentColor = colors.accent;
+  const trackColor = colors.track;
 
   // Animation
   const progress = useSharedValue(0);
@@ -100,7 +99,7 @@ export const CircularGauge: React.FC<CircularGaugeProps> = ({
           style={[
             styles.valueText,
             {
-              color: isDark ? palette.text.primary : palette.textLight.primary,
+              color: colors.textPrimary,
               fontSize: 32,
               fontWeight: typography.hero.fontWeight,
             },

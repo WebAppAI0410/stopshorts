@@ -215,6 +215,7 @@ export function ModelDownloadCard({
             {
               backgroundColor: statusConfig.bgColor,
               borderRadius: borderRadius.full,
+              marginRight: spacing.smd,
             },
           ]}
         >
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    // marginRight: spacing.smd (12) - applied via inline style
   },
   headerText: {
     flex: 1,
@@ -261,8 +262,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   skipButton: {
+    // marginTop: spacing.smd (12)
     marginTop: 12,
     alignItems: 'center',
+    // paddingVertical: spacing.sm (8)
     paddingVertical: 8,
   },
 });

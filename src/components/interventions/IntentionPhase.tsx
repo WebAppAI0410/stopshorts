@@ -41,9 +41,9 @@ export function IntentionPhase({ onSelect }: IntentionPhaseProps) {
     <Animated.View
       entering={FadeIn.duration(400)}
       exiting={FadeOut.duration(300)}
-      style={styles.container}
+      style={[styles.container, { paddingHorizontal: spacing.lg }]}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { marginTop: spacing.lg, marginBottom: spacing.lg }]}>
         <Text style={[typography.h2, { color: colors.textPrimary, textAlign: 'center' }]}>
           {t('intervention.friction.intention.title')}
         </Text>
@@ -59,7 +59,7 @@ export function IntentionPhase({ onSelect }: IntentionPhaseProps) {
 
       <ScrollView
         style={styles.optionsList}
-        contentContainerStyle={styles.optionsContent}
+        contentContainerStyle={[styles.optionsContent, { paddingBottom: spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
         {INTENTION_OPTIONS.map((option) => {
@@ -78,6 +78,8 @@ export function IntentionPhase({ onSelect }: IntentionPhaseProps) {
                   backgroundColor: isSelected ? colors.accent + '15' : colors.surface,
                   borderColor: isSelected ? colors.accent : colors.border,
                   borderRadius: borderRadius.md,
+                  padding: spacing.md,
+                  marginBottom: spacing.smd,
                 },
               ]}
             >
@@ -114,7 +116,7 @@ export function IntentionPhase({ onSelect }: IntentionPhaseProps) {
 
         {/* Custom text input when "other" is selected */}
         {selectedId === 'other' && (
-          <Animated.View entering={FadeIn.duration(300)} style={styles.customInputContainer}>
+          <Animated.View entering={FadeIn.duration(300)} style={[styles.customInputContainer, { marginTop: spacing.sm }]}>
             <TextInput
               style={[
                 styles.customInput,
@@ -123,6 +125,7 @@ export function IntentionPhase({ onSelect }: IntentionPhaseProps) {
                   borderColor: colors.border,
                   color: colors.textPrimary,
                   borderRadius: borderRadius.md,
+                  padding: spacing.md,
                 },
               ]}
               placeholder={t('intervention.friction.intention.customPlaceholder')}
@@ -150,23 +153,23 @@ export function IntentionPhase({ onSelect }: IntentionPhaseProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 24,
+    // paddingHorizontal: spacing.lg (24) - applied via inline style
   },
   header: {
-    marginTop: 24,
-    marginBottom: 24,
+    // marginTop: spacing.lg (24) - applied via inline style
+    // marginBottom: spacing.lg (24) - applied via inline style
   },
   optionsList: {
     flex: 1,
   },
   optionsContent: {
-    paddingBottom: 24,
+    // paddingBottom: spacing.lg (24) - applied via inline style
   },
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    marginBottom: 12,
+    // padding: spacing.md (16) - applied via inline style
+    // marginBottom: spacing.smd (12) - applied via inline style
     borderWidth: 1,
   },
   iconContainer: {
@@ -177,11 +180,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   customInputContainer: {
-    marginTop: 8,
+    // marginTop: spacing.sm (8) - applied via inline style
   },
   customInput: {
     borderWidth: 1,
-    padding: 16,
+    // padding: spacing.md (16) - applied via inline style
     fontSize: 16,
     minHeight: 80,
     textAlignVertical: 'top',

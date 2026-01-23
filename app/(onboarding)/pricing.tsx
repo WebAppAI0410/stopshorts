@@ -10,6 +10,10 @@ import { useAppStore } from '../../src/stores/useAppStore';
 import { usePurchase } from '../../src/hooks/usePurchase';
 import { t } from '../../src/i18n';
 import * as ScreenTime from '../../modules/screen-time';
+import type { Ionicons as IoniconsType } from '@expo/vector-icons';
+
+/** Ionicons name type extracted from component props */
+type IoniconsName = React.ComponentProps<typeof IoniconsType>['name'];
 
 type PlanType = 'monthly' | 'quarterly' | 'annual';
 
@@ -453,16 +457,16 @@ export default function PricingScreen() {
                         {t('onboarding.pricing.features.title')}
                     </Text>
                     <View style={styles.featuresList}>
-                        {Object.entries({
+                        {(Object.entries({
                             intervention: 'timer-outline',
                             unlimited: 'infinite-outline',
                             personalized: 'person-outline',
                             statistics: 'stats-chart-outline',
                             coaching: 'school-outline',
                             checkIn: 'checkbox-outline',
-                        }).map(([key, icon]) => (
+                        }) as [string, IoniconsName][]).map(([key, icon]) => (
                             <View key={key} style={styles.featureRow}>
-                                <Ionicons name={icon as any} size={18} color={colors.accent} />
+                                <Ionicons name={icon} size={18} color={colors.accent} />
                                 <Text style={[typography.bodySmall, { color: colors.textSecondary, marginLeft: spacing.sm }]}>
                                     {t(`onboarding.pricing.features.list.${key}`)}
                                 </Text>

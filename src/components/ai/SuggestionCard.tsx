@@ -88,6 +88,7 @@ export function SuggestionCard({
               {
                 backgroundColor: config.bgColor,
                 borderRadius: borderRadius.full,
+                marginRight: spacing.smd,
               },
             ]}
           >
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    // marginRight: spacing.smd (12) - applied via inline style
   },
   textContainer: {
     flex: 1,

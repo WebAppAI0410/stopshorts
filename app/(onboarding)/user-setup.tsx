@@ -19,6 +19,16 @@ import { Button, ProgressIndicator, Header, GlowOrb } from '../../src/components
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAppStore } from '../../src/stores/useAppStore';
 import screenTimeService, { PermissionStatus } from '../../src/services/screenTime';
+import type { Theme, Typography, Spacing, BorderRadius } from '../../src/design/theme';
+
+/** Props for Android settings mockup components */
+interface AndroidSettingsMockupProps {
+    colors: Theme;
+    typography: Typography;
+    spacing: Spacing;
+    borderRadius: BorderRadius;
+    highlightApp: boolean;
+}
 
 // Android Overlay Settings Mockup Component
 function AndroidOverlaySettingsMockup({
@@ -27,13 +37,7 @@ function AndroidOverlaySettingsMockup({
     spacing,
     borderRadius,
     highlightApp,
-}: {
-    colors: any;
-    typography: any;
-    spacing: any;
-    borderRadius: any;
-    highlightApp: boolean;
-}) {
+}: AndroidSettingsMockupProps) {
     const mockApps = [
         { name: 'Chrome', enabled: false },
         { name: 'Instagram', enabled: true },
@@ -119,13 +123,7 @@ function AndroidSettingsMockup({
     spacing,
     borderRadius,
     highlightApp,
-}: {
-    colors: any;
-    typography: any;
-    spacing: any;
-    borderRadius: any;
-    highlightApp: boolean;
-}) {
+}: AndroidSettingsMockupProps) {
     const mockApps = [
         { name: 'Chrome', enabled: true },
         { name: 'Instagram', enabled: false },
@@ -648,7 +646,7 @@ export default function UserSetupScreen() {
                 )}
 
                 <View style={{ marginTop: spacing.lg }}>
-                    <ProgressIndicator totalSteps={11} currentStep={2} />
+                    <ProgressIndicator totalSteps={9} currentStep={2} />
                 </View>
             </Animated.View>
         </SafeAreaView>

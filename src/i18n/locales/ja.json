@@ -1,4 +1,46 @@
 {
+  "badges": {
+    "first_wave": {
+      "name": "初めての波",
+      "description": "第一歩を踏み出しました"
+    },
+    "surfs_100": {
+      "name": "100回サーファー",
+      "description": "波乗りの達人"
+    },
+    "saved_10h": {
+      "name": "10時間救済者",
+      "description": "貴重な時間を取り戻しました"
+    },
+    "reduction_25": {
+      "name": "25%削減達成",
+      "description": "ベースラインから25%削減"
+    },
+    "reduction_50": {
+      "name": "50%削減達成",
+      "description": "ベースラインから50%削減"
+    },
+    "reduction_75": {
+      "name": "75%削減達成",
+      "description": "ベースラインから75%削減！"
+    },
+    "intervention_success_50": {
+      "name": "介入50回成功",
+      "description": "誘惑に打ち勝った50回"
+    },
+    "intervention_success_100": {
+      "name": "介入100回成功",
+      "description": "誘惑を完全に制御"
+    },
+    "habit_score_70": {
+      "name": "習慣スコア70",
+      "description": "良好な習慣を形成中"
+    },
+    "habit_score_90": {
+      "name": "習慣スコア90",
+      "description": "素晴らしい習慣を達成！"
+    }
+  },
   "common": {
     "appName": "StopShorts",
     "tagline": "5分で止める、人生を取り戻す",
@@ -11,7 +53,9 @@
     "next": "次へ",
     "done": "完了",
     "close": "閉じる",
-    "retry": "再試行"
+    "retry": "再試行",
+    "hours": "時間",
+    "minutes": "分"
   },
   "onboarding": {
     "welcome": {
@@ -371,6 +415,24 @@
           }
         }
       },
+      "realityCheckIOS": {
+        "title": "スクリーンタイムを教えてください",
+        "subtitle": "iOSの設定からショート動画の使用時間を確認して入力してください",
+        "guideTitle": "確認手順",
+        "guide": {
+          "step1": "「設定」アプリを開く",
+          "step2": "「スクリーンタイム」をタップ",
+          "step3": "「すべてのアクティビティを確認する」をタップ",
+          "step4": "グラフを左にスワイプして「先週」を表示",
+          "step5": "「1日平均」の時間を確認"
+        },
+        "openSettings": "設定アプリを開く",
+        "inputTitle": "1日平均",
+        "inputSubtitle": "ショート動画アプリの使用時間を入力",
+        "validation": "使用時間を入力してください",
+        "preview": "このペースで1年続けると...",
+        "yearlyHours": "年間 {{hours}} 時間"
+      },
       "alternative": {
         "title": "取り戻した時間で、\n何をしますか？",
         "subtitle": "ショート動画をやめた先にある、あなたの長期目標を選んでください",
@@ -502,6 +564,26 @@
       },
       "continue": "このまま続ける",
       "tryAnother": "他の方法も試す"
+    },
+    "urgeSurfingDemo": {
+      "buttons": {
+        "breathing": "🌊 波に乗る（30秒）",
+        "friction": "⏱️ フリクション介入を体験",
+        "mirror": "🪞 ミラー介入を体験",
+        "ai": "🤖 AIと会話する"
+      },
+      "ai": {
+        "title": "AI介入について",
+        "description": "衝動を感じた時、AIがあなたと対話して原因を一緒に探ります。",
+        "feature1": "衝動の原因を対話で深掘り",
+        "feature2": "共感的で励ましのあるサポート",
+        "feature3": "完全オフラインで動作",
+        "continue": "続ける"
+      },
+      "complete": {
+        "continue": "次へ",
+        "tryAnother": "他の介入も試す"
+      }
     },
     "aiPreview": {
       "title": "あなた専用のサポート",
@@ -769,8 +851,12 @@
     "restore": "購入を復元",
     "restoring": "復元中...",
     "restoreSuccess": "購入を復元しました",
+    "restoreSuccessMessage": "サブスクリプションが正常に復元されました。",
+    "restoreFailed": "復元できませんでした",
+    "noPurchasesToRestore": "復元できる購入が見つかりませんでした",
     "restoreNoSubscription": "復元できるサブスクリプションが見つかりませんでした",
     "restoreError": "復元中にエラーが発生しました",
+    "processing": "処理中...",
     "managePlan": "プランを管理",
     "currentPlan": "現在のプラン",
     "cancelled": "解約予約中",
@@ -1540,7 +1626,7 @@
   },
   "ai": {
     "screenTitle": "AIコーチ",
-    "subtitle": "何でも相談してください",
+    "subtitle": "衝動や習慣について話しましょう",
     "greeting": "こんにちは！今日はどんなことを話しましょうか？",
     "emptyMessage": "何でも話してください。一緒に考えましょう。",
     "inputPlaceholder": "メッセージを入力...",
@@ -1575,8 +1661,8 @@
     "chatDisabled": "チャットはモデルダウンロード後に利用できます",
     "quickActions": {
       "title": "クイックアクション",
-      "explore": "探る",
-      "plan": "計画",
+      "explore": "原因を探る",
+      "plan": "対策を決める",
       "training": "学習",
       "reflect": "振返",
       "explorePrompt": "最近、ショート動画を見たくなるパターンについて相談したい",
@@ -1735,6 +1821,53 @@
           "sns": "SNSを見ていた"
         },
         "saved": "トリガー分析を保存しました！"
+      },
+      "urgeRecord": {
+        "title": "衝動記録",
+        "description": "今の衝動を記録して、パターンを見つけましょう",
+        "step1": "今の衝動の強さはどれくらいですか？（1-10）",
+        "step2": "何がきっかけでしたか？",
+        "step3": "今の気持ちを教えてください",
+        "intensity": {
+          "1": "1 - ほぼない",
+          "2": "2",
+          "3": "3 - 少し",
+          "4": "4",
+          "5": "5 - 中程度",
+          "6": "6",
+          "7": "7 - 強い",
+          "8": "8",
+          "9": "9",
+          "10": "10 - 非常に強い"
+        },
+        "trigger": {
+          "notification": "通知を見た",
+          "bored": "暇だった",
+          "stressed": "ストレスを感じた",
+          "habit": "なんとなく習慣で",
+          "other": "その他"
+        },
+        "saved": "衝動記録を保存しました！"
+      },
+      "successRecord": {
+        "title": "成功記録",
+        "description": "衝動を乗り越えた経験を記録しましょう",
+        "step1": "どうやって衝動を乗り越えましたか？",
+        "step2": "今の気持ちは？",
+        "step3": "次に使えるコツがあれば教えてください",
+        "method": {
+          "breathe": "深呼吸した",
+          "alternative": "代替行動をした",
+          "waited": "時間を置いた",
+          "talked": "誰かと話した",
+          "other": "その他"
+        },
+        "feeling": {
+          "proud": "達成感がある",
+          "relieved": "安心した",
+          "neutral": "特に何も感じない"
+        },
+        "saved": "成功記録を保存しました！"
       }
     },
     "training": {

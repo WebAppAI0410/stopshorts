@@ -4,6 +4,7 @@
  */
 
 import type { Badge, BadgeCondition, LifetimeStatistics, DailyStatistics } from '../types/statistics';
+import { t } from '../i18n';
 
 // Additional context for badge evaluation
 export interface BadgeEvaluationContext {
@@ -22,85 +23,94 @@ export function shouldShowConfetti(badgeId: string): boolean {
   return CONFETTI_BADGES.includes(badgeId);
 }
 
-// Badge Definitions (without earnedAt)
-export const BADGE_DEFINITIONS: Omit<Badge, 'earnedAt'>[] = [
-  // First surf badge
-  {
-    id: 'first_wave',
-    name: '初めての波',
-    description: '第一歩を踏み出しました',
-    icon: '🌊',
-    condition: { type: 'first_surf' },
-  },
-  // Total surfs badge
-  {
-    id: 'surfs_100',
-    name: '100回サーファー',
-    description: '波乗りの達人',
-    icon: '🏄',
-    condition: { type: 'total_surfs', count: 100 },
-  },
-  // Saved hours badge
-  {
-    id: 'saved_10h',
-    name: '10時間救済者',
-    description: '貴重な時間を取り戻しました',
-    icon: '⏰',
-    condition: { type: 'saved_hours', hours: 10 },
-  },
-  // Reduction badges (requires baseline)
-  {
-    id: 'reduction_25',
-    name: '25%削減達成',
-    description: 'ベースラインから25%削減',
-    icon: '📉',
-    condition: { type: 'reduction', percent: 25 },
-  },
-  {
-    id: 'reduction_50',
-    name: '50%削減達成',
-    description: 'ベースラインから50%削減',
-    icon: '📊',
-    condition: { type: 'reduction', percent: 50 },
-  },
-  {
-    id: 'reduction_75',
-    name: '75%削減達成',
-    description: 'ベースラインから75%削減！',
-    icon: '🎯',
-    condition: { type: 'reduction', percent: 75 },
-  },
-  // Intervention success badges
-  {
-    id: 'intervention_success_50',
-    name: '介入50回成功',
-    description: '誘惑に打ち勝った50回',
-    icon: '💪',
-    condition: { type: 'intervention_success', count: 50 },
-  },
-  {
-    id: 'intervention_success_100',
-    name: '介入100回成功',
-    description: '誘惑を完全に制御',
-    icon: '🏆',
-    condition: { type: 'intervention_success', count: 100 },
-  },
-  // Habit score badges
-  {
-    id: 'habit_score_70',
-    name: '習慣スコア70',
-    description: '良好な習慣を形成中',
-    icon: '⭐',
-    condition: { type: 'habit_score', score: 70 },
-  },
-  {
-    id: 'habit_score_90',
-    name: '習慣スコア90',
-    description: '素晴らしい習慣を達成！',
-    icon: '👑',
-    condition: { type: 'habit_score', score: 90 },
-  },
-];
+/**
+ * Get badge definitions with localized name and description
+ * This function is called to get the current localized badge definitions
+ */
+export function getBadgeDefinitions(): Omit<Badge, 'earnedAt'>[] {
+  return [
+    // First surf badge
+    {
+      id: 'first_wave',
+      name: t('badges.first_wave.name'),
+      description: t('badges.first_wave.description'),
+      icon: '🌊',
+      condition: { type: 'first_surf' },
+    },
+    // Total surfs badge
+    {
+      id: 'surfs_100',
+      name: t('badges.surfs_100.name'),
+      description: t('badges.surfs_100.description'),
+      icon: '🏄',
+      condition: { type: 'total_surfs', count: 100 },
+    },
+    // Saved hours badge
+    {
+      id: 'saved_10h',
+      name: t('badges.saved_10h.name'),
+      description: t('badges.saved_10h.description'),
+      icon: '⏰',
+      condition: { type: 'saved_hours', hours: 10 },
+    },
+    // Reduction badges (requires baseline)
+    {
+      id: 'reduction_25',
+      name: t('badges.reduction_25.name'),
+      description: t('badges.reduction_25.description'),
+      icon: '📉',
+      condition: { type: 'reduction', percent: 25 },
+    },
+    {
+      id: 'reduction_50',
+      name: t('badges.reduction_50.name'),
+      description: t('badges.reduction_50.description'),
+      icon: '📊',
+      condition: { type: 'reduction', percent: 50 },
+    },
+    {
+      id: 'reduction_75',
+      name: t('badges.reduction_75.name'),
+      description: t('badges.reduction_75.description'),
+      icon: '🎯',
+      condition: { type: 'reduction', percent: 75 },
+    },
+    // Intervention success badges
+    {
+      id: 'intervention_success_50',
+      name: t('badges.intervention_success_50.name'),
+      description: t('badges.intervention_success_50.description'),
+      icon: '💪',
+      condition: { type: 'intervention_success', count: 50 },
+    },
+    {
+      id: 'intervention_success_100',
+      name: t('badges.intervention_success_100.name'),
+      description: t('badges.intervention_success_100.description'),
+      icon: '🏆',
+      condition: { type: 'intervention_success', count: 100 },
+    },
+    // Habit score badges
+    {
+      id: 'habit_score_70',
+      name: t('badges.habit_score_70.name'),
+      description: t('badges.habit_score_70.description'),
+      icon: '⭐',
+      condition: { type: 'habit_score', score: 70 },
+    },
+    {
+      id: 'habit_score_90',
+      name: t('badges.habit_score_90.name'),
+      description: t('badges.habit_score_90.description'),
+      icon: '👑',
+      condition: { type: 'habit_score', score: 90 },
+    },
+  ];
+}
+
+// Badge Definitions (without earnedAt) - for backward compatibility
+// Note: This is now a getter that returns localized badge definitions
+export const BADGE_DEFINITIONS: Omit<Badge, 'earnedAt'>[] = getBadgeDefinitions();
 
 /**
  * Check if a badge condition is met

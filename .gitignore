@@ -50,3 +50,18 @@ File*.jpg
 .claude/settings.local.json
 CLAUDE.local.md
 secrets/
+
+# Local iOS credentials
+credentials.json
+ios/certs/
+
+# Build artifacts
+*.apk
+report.xml
+
+# Temporary directories
+training-ui/
+mockup/
+
+# Root screenshots (keep in docs/screenshots/)
+/*.png

@@ -47,6 +47,7 @@ export function TrainingRecommendationCard({
             {
               backgroundColor: colors.primary + '20',
               borderRadius: borderRadius.full,
+              marginRight: spacing.sm,
             },
           ]}
         >
@@ -117,7 +118,7 @@ export function TrainingRecommendationCard({
           name="arrow-forward-outline"
           size={14}
           color={colors.textInverse}
-          style={{ marginLeft: 4 }}
+          style={{ marginLeft: spacing.xs }}
         />
       </Pressable>
     </Animated.View>
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
     height: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    // marginRight: spacing.sm (8) - applied via inline style
   },
   content: {},
   actionButton: {

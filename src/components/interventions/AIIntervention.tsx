@@ -339,6 +339,8 @@ export function AIIntervention({
             {
               backgroundColor: isUser ? colors.primary : colors.backgroundCard,
               borderRadius: borderRadius.lg,
+              padding: spacing.smd,
+              marginBottom: spacing.sm,
               marginLeft: isUser ? spacing.xl : 0,
               marginRight: isUser ? 0 : spacing.xl,
             },
@@ -349,7 +351,7 @@ export function AIIntervention({
         >
           {!isUser && (
             <View
-              style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full }]}
+              style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full, marginRight: spacing.sm }]}
               importantForAccessibility="no-hide-descendants"
             >
               <Ionicons name="sparkles" size={16} color={colors.primary} />
@@ -358,7 +360,7 @@ export function AIIntervention({
           <Text
             style={[
               typography.body,
-              { color: isUser ? '#FFFFFF' : colors.textPrimary, flex: 1 },
+              { color: isUser ? colors.white : colors.textPrimary, flex: 1 },
             ]}
             importantForAccessibility="no"
           >
@@ -456,7 +458,7 @@ export function AIIntervention({
     <Animated.View
       style={[
         styles.typingIndicator,
-        { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg },
+        { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.lg, padding: spacing.smd },
         typingStyle,
       ]}
       accessible={true}
@@ -465,7 +467,7 @@ export function AIIntervention({
       accessibilityLiveRegion="assertive"
     >
       <View
-        style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full }]}
+        style={[styles.aiAvatar, { backgroundColor: colors.primary + '20', borderRadius: borderRadius.full, marginRight: spacing.sm }]}
         importantForAccessibility="no-hide-descendants"
       >
         <Ionicons name="sparkles" size={16} color={colors.primary} />
@@ -532,9 +534,9 @@ export function AIIntervention({
         {/* Header */}
         <Animated.View
           entering={FadeInDown.duration(400)}
-          style={[styles.header, { paddingHorizontal: spacing.gutter, borderBottomColor: colors.border }]}
+          style={[styles.header, { paddingHorizontal: spacing.gutter, paddingVertical: spacing.smd, borderBottomColor: colors.border }]}
         >
-          <View style={[styles.headerIcon, { backgroundColor: colors.primary + '15', borderRadius: borderRadius.full }]}>
+          <View style={[styles.headerIcon, { backgroundColor: colors.primary + '15', borderRadius: borderRadius.full, marginRight: spacing.smd }]}>
             <Ionicons name="chatbubbles-outline" size={24} color={colors.primary} />
           </View>
           <View style={styles.headerText}>
@@ -559,7 +561,7 @@ export function AIIntervention({
             keyExtractor={(item) => item.id}
             contentContainerStyle={[
               styles.messagesList,
-              { paddingHorizontal: spacing.gutter, paddingBottom: spacing.lg },
+              { paddingHorizontal: spacing.gutter, paddingTop: spacing.md, paddingBottom: spacing.lg },
             ]}
             showsVerticalScrollIndicator={false}
             ListFooterComponent={isGenerating ? renderTypingIndicator : null}
@@ -654,7 +656,7 @@ export function AIIntervention({
               <Ionicons
                 name="send"
                 size={20}
-                color={inputText.trim() ? '#FFFFFF' : colors.textMuted}
+                color={inputText.trim() ? colors.white : colors.textMuted}
               />
             </Pressable>
           </Animated.View>
@@ -674,7 +676,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    // paddingVertical and paddingHorizontal applied via inline style with spacing
     borderBottomWidth: 1,
   },
   headerIcon: {
@@ -682,20 +684,20 @@ const styles = StyleSheet.create({
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    // marginRight applied via inline style with spacing.smd
   },
   headerText: {
     flex: 1,
   },
   messagesList: {
-    paddingTop: 16,
+    // paddingTop applied via inline style with spacing.md
     flexGrow: 1,
   },
   messageBubble: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 12,
-    marginBottom: 8,
+    // padding: spacing.smd (12) - applied via inline style
+    // marginBottom: spacing.sm (8) - applied via inline style
     maxWidth: '85%',
   },
   userBubble: {
@@ -709,12 +711,12 @@ const styles = StyleSheet.create({
     height: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    // marginRight: spacing.sm (8) - applied via inline style
   },
   typingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    // padding: spacing.smd (12) - applied via inline style
     alignSelf: 'flex-start',
     maxWidth: '40%',
   },
@@ -731,23 +733,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    // paddingVertical: 40 - intentionally larger for empty state visual balance
     paddingVertical: 40,
   },
   quickActionsContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    // paddingVertical: 40 - intentionally larger for visual balance
     paddingVertical: 40,
+    // paddingHorizontal: spacing.md (16) - could be applied via inline style
     paddingHorizontal: 16,
   },
   quickActionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
+    // gap: spacing.smd (12)
     gap: 12,
   },
   quickActionButton: {
     width: 140,
+    // padding: spacing.md (16)
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
@@ -759,6 +766,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonsContainer: {
+    // paddingTop: spacing.sm (8)
     paddingTop: 8,
   },
   inputContainer: {
@@ -770,6 +778,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 40,
     maxHeight: 100,
+    // marginRight: spacing.sm (8)
     marginRight: 8,
   },
   sendButton: {

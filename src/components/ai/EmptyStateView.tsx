@@ -49,7 +49,7 @@ export function EmptyStateView({
       {/* Title */}
       <Animated.View
         entering={FadeIn.duration(300)}
-        style={styles.titleContainer}
+        style={[styles.titleContainer, { paddingVertical: spacing.md }]}
       >
         <Text style={[typography.h2, { color: colors.textPrimary }]}>
           {t('ai.emptyState.title')}
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     alignItems: 'center',
-    paddingVertical: 16,
+    // paddingVertical: spacing.md (16) - applied via inline style
   },
   section: {},
 });

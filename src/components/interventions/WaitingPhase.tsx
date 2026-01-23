@@ -57,9 +57,9 @@ export function WaitingPhase({ waitSeconds, onComplete }: WaitingPhaseProps) {
     <Animated.View
       entering={FadeIn.duration(400)}
       exiting={FadeOut.duration(300)}
-      style={styles.container}
+      style={[styles.container, { paddingHorizontal: spacing.lg }]}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { marginBottom: spacing['2xl'] }]}>
         <Text style={[typography.h2, { color: colors.textPrimary, textAlign: 'center' }]}>
           {t('intervention.friction.waiting.title')}
         </Text>
@@ -118,10 +118,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    // paddingHorizontal: spacing.lg (24) - applied via inline style
   },
   header: {
-    marginBottom: 48,
+    // marginBottom: spacing['2xl'] (48) - applied via inline style
   },
   countdownContainer: {
     alignItems: 'center',

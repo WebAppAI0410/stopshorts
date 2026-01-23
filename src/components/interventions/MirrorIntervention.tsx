@@ -214,7 +214,7 @@ export function MirrorIntervention({
       return (
         <Animated.View
           entering={FadeIn.duration(400)}
-          style={[styles.fallbackContainer, { backgroundColor: colors.backgroundCard }]}
+          style={[styles.fallbackContainer, { backgroundColor: colors.backgroundCard, borderRadius: spacing.lg, padding: spacing.lg }]}
         >
           <Ionicons name="eye-outline" size={80} color={colors.textMuted} />
           <Animated.Text
@@ -235,7 +235,7 @@ export function MirrorIntervention({
               onPress={handleRequestPermission}
               style={[
                 styles.permissionButton,
-                { backgroundColor: colors.primary + '20', borderRadius: borderRadius.lg },
+                { backgroundColor: colors.primary + '20', borderRadius: borderRadius.lg, marginTop: spacing.lg, paddingHorizontal: spacing.lg, paddingVertical: spacing.smd },
               ]}
               accessibilityRole="button"
               accessibilityLabel={t('intervention.mirror.enableCamera')}
@@ -258,14 +258,14 @@ export function MirrorIntervention({
           mirror={true}
         />
         {/* Dark overlay for text readability */}
-        <View style={[styles.cameraOverlay, { backgroundColor: 'rgba(0,0,0,0.4)' }]} />
+        <View style={[styles.cameraOverlay, { backgroundColor: colors.cameraOverlay }]} />
         {/* Goal text overlay */}
         <View style={styles.goalOverlay}>
           <Animated.Text
             style={[
               typography.h1,
               styles.goalTextCamera,
-              { color: '#FFFFFF', textShadowColor: 'rgba(0,0,0,0.8)' },
+              { color: colors.white, textShadowColor: colors.cameraTextShadow },
               pulseStyle,
             ]}
           >
@@ -281,7 +281,7 @@ export function MirrorIntervention({
       {/* Header */}
       <Animated.View
         entering={FadeInDown.duration(400)}
-        style={[styles.header, { paddingHorizontal: spacing.gutter }]}
+        style={[styles.header, { paddingHorizontal: spacing.gutter, paddingTop: spacing.md, paddingBottom: spacing.md }]}
       >
         <Text style={[typography.h3, { color: colors.textPrimary, textAlign: 'center' }]}>
           {t('intervention.mirror.title', { app: blockedAppName })}
@@ -294,7 +294,7 @@ export function MirrorIntervention({
       {/* Camera / Fallback View */}
       <Animated.View
         entering={FadeIn.duration(600).delay(200)}
-        style={[styles.cameraWrapper, { marginHorizontal: spacing.gutter }]}
+        style={[styles.cameraWrapper, { marginHorizontal: spacing.gutter, borderRadius: spacing.lg }]}
       >
         {renderCameraView()}
       </Animated.View>
@@ -308,7 +308,7 @@ export function MirrorIntervention({
           <View
             style={[
               styles.countdownBadge,
-              { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.full },
+              { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.full, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
             ]}
           >
             <Ionicons name="time-outline" size={20} color={colors.textMuted} />
@@ -327,7 +327,7 @@ export function MirrorIntervention({
         <Animated.View
           entering={FadeInUp.duration(400)}
           exiting={FadeOut.duration(200)}
-          style={[styles.buttonsContainer, { paddingHorizontal: spacing.gutter }]}
+          style={[styles.buttonsContainer, { paddingHorizontal: spacing.gutter, marginBottom: spacing.lg }]}
         >
           <Button
             title={t('intervention.mirror.quit')}
@@ -373,13 +373,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingTop: 16,
-    paddingBottom: 16,
+    // paddingTop/Bottom: spacing.md (16) - applied via inline style
   },
   cameraWrapper: {
     flex: 1,
     maxHeight: '50%',
-    borderRadius: 24,
+    // borderRadius: spacing.lg (24) - applied via inline style
     overflow: 'hidden',
   },
   cameraContainer: {
@@ -396,6 +395,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
+    // padding: spacing.lg (24) - keep as is for camera overlay
     padding: 24,
   },
   goalTextCamera: {
@@ -407,18 +407,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 24,
-    padding: 24,
+    // borderRadius/padding: spacing.lg (24) - applied via inline style
   },
   goalTextFallback: {
     textAlign: 'center',
+    // marginTop: spacing.lg (24), paddingHorizontal: spacing.md (16) - keep static for visual balance
     marginTop: 24,
     paddingHorizontal: 16,
   },
   permissionButton: {
-    marginTop: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    // marginTop/paddingHorizontal: spacing.lg (24), paddingVertical: spacing.smd (12) - applied via inline style
   },
   countdownContainer: {
     alignItems: 'center',
@@ -426,17 +424,17 @@ const styles = StyleSheet.create({
   countdownBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    // paddingHorizontal: spacing.md (16), paddingVertical: spacing.sm (8) - applied via inline style
   },
   buttonsContainer: {
     marginTop: 'auto',
-    marginBottom: 24,
+    // marginBottom: spacing.lg (24) - applied via inline style
   },
   skipContainer: {
     alignItems: 'center',
   },
   skipButton: {
+    // padding: spacing.smd (12)
     padding: 12,
   },
 });

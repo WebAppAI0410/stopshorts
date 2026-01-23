@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, Text, Pressable, StyleSheet, LayoutChangeEvent, Platform } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withSpring,
 } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
 import { t } from '../../i18n';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -19,7 +20,7 @@ const SPRING_CONFIG = {
 };
 
 export function TabSelector({ selectedTab, onTabChange }: TabSelectorProps) {
-    const { colors, typography, spacing, borderRadius } = useTheme();
+    const { colors, typography, spacing, borderRadius, isDark } = useTheme();
     const [containerWidth, setContainerWidth] = useState(0);
 
     const indicatorPosition = useSharedValue(selectedTab === 'day' ? 0 : 1);
@@ -49,27 +50,26 @@ export function TabSelector({ selectedTab, onTabChange }: TabSelectorProps) {
         setContainerWidth(width - spacing.xs * 2);
     };
 
-    return (
-        <View
-            style={[
-                styles.container,
-                {
-                    backgroundColor: colors.surface,
-                    borderRadius: borderRadius.lg,
-                    padding: spacing.xs,
-                },
-            ]}
-            onLayout={handleLayout}
-            accessibilityRole="tablist"
-        >
+    // Glassmorphism styling
+    const glassBackground = colors.glassBackgroundLight;
+    const glassBorder = colors.glassBorderLight;
+
+    const tabContent = (
+        <>
             {containerWidth > 0 && (
                 <Animated.View
                     style={[
                         styles.indicator,
                         {
-                            backgroundColor: colors.backgroundCard,
+                            backgroundColor: colors.successMuted,
                             borderRadius: borderRadius.md,
                             width: containerWidth / 2,
+                            // Glow effect on indicator
+                            shadowColor: colors.accent,
+                            shadowOffset: { width: 0, height: 0 },
+                            shadowOpacity: isDark ? 0.5 : 0.3,
+                            shadowRadius: 8,
+                            elevation: 4,
                         },
                         animatedIndicatorStyle,
                     ]}
@@ -86,7 +86,8 @@ export function TabSelector({ selectedTab, onTabChange }: TabSelectorProps) {
                     style={[
                         typography.button,
                         {
-                            color: selectedTab === 'day' ? colors.textPrimary : colors.textMuted,
+                            color: selectedTab === 'day' ? colors.accent : colors.textMuted,
+                            fontWeight: selectedTab === 'day' ? '600' : '400',
                         },
                     ]}
                 >
@@ -104,22 +105,82 @@ export function TabSelector({ selectedTab, onTabChange }: TabSelectorProps) {
                     style={[
                         typography.button,
                         {
-                            color: selectedTab === 'week' ? colors.textPrimary : colors.textMuted,
+                            color: selectedTab === 'week' ? colors.accent : colors.textMuted,
+                            fontWeight: selectedTab === 'week' ? '600' : '400',
                         },
                     ]}
                 >
                     {t('statistics.week')}
                 </Text>
             </Pressable>
+        </>
+    );
+
+    return (
+        <View
+            style={[
+                styles.outerContainer,
+                {
+                    // Subtle glow on the container
+                    shadowColor: colors.accent,
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: isDark ? 0.1 : 0.05,
+                    shadowRadius: 12,
+                    elevation: 2,
+                },
+            ]}
+        >
+            {Platform.OS === 'ios' ? (
+                <BlurView
+                    intensity={30}
+                    tint={isDark ? 'dark' : 'light'}
+                    style={[
+                        styles.container,
+                        {
+                            borderRadius: borderRadius.lg,
+                            borderWidth: 1,
+                            borderColor: glassBorder,
+                            padding: spacing.xs,
+                        },
+                    ]}
+                    onLayout={handleLayout}
+                    accessibilityRole="tablist"
+                >
+                    {tabContent}
+                </BlurView>
+            ) : (
+                <View
+                    style={[
+                        styles.container,
+                        {
+                            backgroundColor: glassBackground,
+                            borderRadius: borderRadius.lg,
+                            borderWidth: 1,
+                            borderColor: glassBorder,
+                            padding: spacing.xs,
+                        },
+                    ]}
+                    onLayout={handleLayout}
+                    accessibilityRole="tablist"
+                >
+                    {tabContent}
+                </View>
+            )}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
+    outerContainer: {
+        alignSelf: 'center',
+        borderRadius: 12,
+        overflow: 'hidden',
+    },
     container: {
         flexDirection: 'row',
         position: 'relative',
         height: 44,
+        minWidth: 160,
     },
     indicator: {
         position: 'absolute',
@@ -132,5 +193,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 1,
+        paddingHorizontal: 24,
     },
 });

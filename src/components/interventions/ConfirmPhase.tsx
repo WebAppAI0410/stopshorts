@@ -46,9 +46,9 @@ export function ConfirmPhase({
     <Animated.View
       entering={FadeIn.duration(400)}
       exiting={FadeOut.duration(300)}
-      style={styles.container}
+      style={[styles.container, { paddingHorizontal: spacing.lg }]}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { marginBottom: spacing.xl }]}>
         <Text style={[typography.h2, { color: colors.textPrimary, textAlign: 'center' }]}>
           {t('intervention.friction.confirm.title')}
         </Text>
@@ -62,6 +62,8 @@ export function ConfirmPhase({
             backgroundColor: colors.surface,
             borderColor: colors.border,
             borderRadius: borderRadius.lg,
+            padding: spacing.gutter,
+            marginBottom: spacing.md,
           },
         ]}
         accessible={true}
@@ -94,6 +96,8 @@ export function ConfirmPhase({
               backgroundColor: colors.warning + '15',
               borderColor: colors.warning,
               borderRadius: borderRadius.md,
+              padding: spacing.smd,
+              marginBottom: spacing.xl,
             },
           ]}
           accessible={true}
@@ -113,7 +117,7 @@ export function ConfirmPhase({
       )}
 
       {/* Action Buttons */}
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, { gap: spacing.smd }]}>
         <Button
           title={t('intervention.friction.confirm.dismiss')}
           variant="primary"
@@ -134,16 +138,16 @@ export function ConfirmPhase({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 24,
+    // paddingHorizontal: spacing.lg (24) - applied via inline style
     justifyContent: 'center',
   },
   header: {
-    marginBottom: 32,
+    // marginBottom: spacing.xl (32) - applied via inline style
   },
   summaryCard: {
-    padding: 20,
+    // padding: spacing.gutter (20) - applied via inline style
     borderWidth: 1,
-    marginBottom: 16,
+    // marginBottom: spacing.md (16) - applied via inline style
   },
   summaryRow: {
     flexDirection: 'row',
@@ -152,13 +156,13 @@ const styles = StyleSheet.create({
   warningBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    // padding: spacing.smd (12) - applied via inline style
     borderWidth: 1,
-    marginBottom: 32,
+    // marginBottom: spacing.xl (32) - applied via inline style
   },
   buttonContainer: {
     flexDirection: 'row',
-    gap: 12,
+    // gap: spacing.smd (12) - applied via inline style
   },
   button: {
     flex: 1,

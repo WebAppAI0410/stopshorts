@@ -27,7 +27,7 @@ export function ExpiredSubscriptionScreen({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
+      <View style={[styles.content, { paddingHorizontal: spacing.lg }]}>
         <Animated.View
           entering={FadeIn.duration(600)}
           style={[styles.iconContainer, { backgroundColor: colors.warning + '20' }]}
@@ -54,7 +54,7 @@ export function ExpiredSubscriptionScreen({
 
         <Animated.View
           entering={FadeInUp.duration(600).delay(400)}
-          style={[styles.featuresCard, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.xl }]}
+          style={[styles.featuresCard, { backgroundColor: colors.backgroundCard, borderRadius: borderRadius.xl, padding: spacing.gutter, marginTop: spacing.xl }]}
         >
           <Text style={[typography.label, { color: colors.textPrimary, marginBottom: spacing.md }]}>
             {t('subscription.expired.featuresTitle')}
@@ -63,7 +63,7 @@ export function ExpiredSubscriptionScreen({
           {['interventions', 'training', 'statistics'].map((feature) => (
             <View
               key={feature}
-              style={styles.featureRow}
+              style={[styles.featureRow, { marginBottom: spacing.smd }]}
               accessible={true}
               accessibilityLabel={t(`subscription.expired.features.${feature}`)}
             >
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    // paddingHorizontal: spacing.lg (24) - applied via inline style
   },
   iconContainer: {
     width: 120,
@@ -119,15 +119,16 @@ const styles = StyleSheet.create({
   },
   featuresCard: {
     width: '100%',
-    padding: 20,
-    marginTop: 32,
+    // padding: spacing.gutter (20) - applied via inline style
+    // marginTop: spacing.xl (32) - applied via inline style
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    // marginBottom: spacing.smd (12) - applied via inline style
   },
   footer: {
+    // paddingBottom: 40 - intentionally larger for footer spacing
     paddingBottom: 40,
   },
 });

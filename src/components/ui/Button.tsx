@@ -93,7 +93,7 @@ export const Button: React.FC<ButtonProps> = ({
 
         switch (variant) {
             case 'primary':
-                return { ...base, color: '#FFFFFF' };
+                return { ...base, color: colors.white };
             case 'secondary':
                 return { ...base, color: colors.textPrimary };
             case 'outline':
@@ -143,7 +143,7 @@ export const Button: React.FC<ButtonProps> = ({
             ]}
         >
             {loading ? (
-                <ActivityIndicator color={variant === 'primary' ? '#FFFFFF' : colors.primary} />
+                <ActivityIndicator color={variant === 'primary' ? colors.white : colors.primary} />
             ) : (
                 <Text style={getTextStyle()}>{title}</Text>
             )}
