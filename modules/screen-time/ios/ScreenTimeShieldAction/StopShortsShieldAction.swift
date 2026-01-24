@@ -4,7 +4,7 @@ import DeviceActivity
 /// ShieldAction Extension for StopShorts
 /// Handles user interactions with the shield buttons
 @available(iOS 15.0, *)
-class StopShortsShieldAction: ShieldActionExtension {
+class StopShortsShieldAction: ShieldActionDelegate {
 
     // ManagedSettingsStore for removing shields
     private let store = ManagedSettingsStore()
@@ -16,16 +16,17 @@ class StopShortsShieldAction: ShieldActionExtension {
         for application: ApplicationToken,
         completionHandler: @escaping (ShieldActionResponse) -> Void
     ) {
-        handleAction(action, appToken: application.hashValue, completionHandler: completionHandler)
+        handleAction(action: action, appToken: application.hashValue, completionHandler: completionHandler)
     }
+
+    // MARK: - Handle Shield Actions for Categories
 
     override func handle(
         action: ShieldAction,
-        for application: ApplicationToken,
-        in category: ActivityCategoryToken,
+        for category: ActivityCategoryToken,
         completionHandler: @escaping (ShieldActionResponse) -> Void
     ) {
-        handleAction(action, appToken: application.hashValue, completionHandler: completionHandler)
+        handleAction(action: action, appToken: category.hashValue, completionHandler: completionHandler)
     }
 
     // MARK: - Handle Shield Actions for Web Domains
@@ -35,16 +36,7 @@ class StopShortsShieldAction: ShieldActionExtension {
         for webDomain: WebDomainToken,
         completionHandler: @escaping (ShieldActionResponse) -> Void
     ) {
-        handleAction(action, appToken: webDomain.hashValue, completionHandler: completionHandler)
-    }
-
-    override func handle(
-        action: ShieldAction,
-        for webDomain: WebDomainToken,
-        in category: ActivityCategoryToken,
-        completionHandler: @escaping (ShieldActionResponse) -> Void
-    ) {
-        handleAction(action, appToken: webDomain.hashValue, completionHandler: completionHandler)
+        handleAction(action: action, appToken: webDomain.hashValue, completionHandler: completionHandler)
     }
 
     // MARK: - Private Methods

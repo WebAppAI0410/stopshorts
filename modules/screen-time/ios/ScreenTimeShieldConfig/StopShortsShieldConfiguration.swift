@@ -5,7 +5,7 @@ import UIKit
 /// ShieldConfiguration Extension for StopShorts
 /// Customizes the appearance of the shield overlay when blocked apps are opened
 @available(iOS 15.0, *)
-class StopShortsShieldConfiguration: ShieldConfigurationExtension {
+class StopShortsShieldConfiguration: ShieldConfigurationDataSource {
 
     // MARK: - Shield Configuration for Applications
 
