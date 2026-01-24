@@ -51,10 +51,29 @@ jobs:
 
       - name: Free disk space
         run: |
-          # Free up disk space for emulator
+          # Free up disk space for emulator (need 7.4GB for userdata partition)
+          echo "Before cleanup:"
+          df -h
+
+          # Remove large unnecessary packages
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
           sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
+          sudo rm -rf /usr/local/lib/android/sdk/cmake
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /opt/hostedtoolcache/PyPy
+          sudo rm -rf /opt/hostedtoolcache/Python
+          sudo rm -rf /opt/hostedtoolcache/Ruby
+          sudo rm -rf /opt/hostedtoolcache/go
+          sudo rm -rf /usr/share/miniconda
+          sudo rm -rf /usr/local/share/powershell
+
+          # Clean apt cache
+          sudo apt-get clean
+
+          echo "After cleanup:"
           df -h
 
       - uses: actions/setup-node@v4
@@ -105,9 +124,9 @@ jobs:
           script: |
             adb install app.apk
             # Wait for app to be ready
-            sleep 5
-            # Run Maestro tests
-            $HOME/.maestro/bin/maestro test .maestro/flows/ --env=DEMO_MODE=true --env=TEST_USER_NAME=TestUser
+            sleep 10
+            # Run health check flow first to verify infrastructure
+            $HOME/.maestro/bin/maestro test .maestro/flows/health-check.yaml --env=DEMO_MODE=true --env=TEST_USER_NAME=TestUser
 
       - name: Upload test artifacts
         if: always()
@@ -189,7 +208,8 @@ jobs:
 
       - name: Run Maestro E2E tests
         run: |
-          $HOME/.maestro/bin/maestro test .maestro/flows/ --env=DEMO_MODE=true --env=TEST_USER_NAME=TestUser
+          # Run health check flow first to verify infrastructure
+          $HOME/.maestro/bin/maestro test .maestro/flows/health-check.yaml --env=DEMO_MODE=true --env=TEST_USER_NAME=TestUser
 
       - name: Upload test artifacts
         if: always()

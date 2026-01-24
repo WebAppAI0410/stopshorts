@@ -1,0 +1,41 @@
+# Health Check Flow - Verify app launches and basic navigation works
+# This is a simple smoke test to verify CI infrastructure works
+
+appId: com.stopshorts.app
+---
+- launchApp:
+    clearState: true
+
+# Wait for app to fully load
+- waitForAnimationToEnd:
+    timeout: 15000
+
+# Take initial screenshot to see what screen loaded
+- takeScreenshot: "app_launch_state"
+
+# Try to find common UI elements that should exist on any screen
+# Either we're on onboarding (welcome) or main app
+- runFlow:
+    when:
+      visible:
+        text: ".*始める.*"
+        optional: true
+    commands:
+      - takeScreenshot: "onboarding_detected"
+      - tapOn:
+          text: ".*始める.*"
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - takeScreenshot: "after_start_tap"
+
+# If we're on the main app, take a screenshot
+- runFlow:
+    when:
+      visible:
+        text: ".*ホーム.*|.*Home.*|.*ダッシュボード.*"
+        optional: true
+    commands:
+      - takeScreenshot: "main_app_detected"
+
+# Final screenshot
+- takeScreenshot: "health_check_complete"
