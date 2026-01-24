@@ -24,6 +24,7 @@
 | 2026-01-06 | トライアル期間を1日と誤記（実際は3日） | `ja.json`や`types/index.ts`で`trial_3day`を確認すれば分かった |
 | 2026-01-19 | Ghosttyの`working-directory`オプションを推測で試行錯誤 | context7 MCPで公式ドキュメントを確認すれば一発で解決できた |
 | 2026-01-24 | `/verify`をスキップしてコミット・PR作成（Lintエラー30件見逃し） | **コミット前に必ず`/verify`を実行**。部分的な検証（tsc, test）だけで満足しない |
+| 2026-01-24 | iOS Screen Time Extensionsがビルドに含まれていないと気づかず「テスト完了」と誤報告 | ローカルビルドでは`ENABLE_FAMILY_CONTROLS=true`が必須。health-checkテストはUIスモークテストのみで、ネイティブ機能はテストしていない |
 
 ### AIへの注意
 - **エアプ禁止**: 既存実装を確認せずに推測で回答しない
@@ -100,7 +101,7 @@ StopShortsは、ショート動画（TikTok、YouTube Shorts、Instagram Reels�
 
 ### ネイティブモジュール
 - `@stopshorts/screen-time-android` - Android UsageStats API
-- `modules/screen-time` - iOS ScreenTime API（未実装）
+- `modules/screen-time` - iOS Screen Time API (Family Controls) ※実機テスト未完了
 
 ## デザインシステム
 
@@ -232,17 +233,47 @@ Requirements → Design → Tasks → Implementation
 
 ### コマンド一覧
 
+#### 開発ワークフロー
+
 | コマンド | 用途 |
 |---------|------|
 | `/impl-loop` | TDD + レビューループ（仕様に基づく実装） |
 | `/verify` | 全検証チェック（tsc, lint, test, build） |
 | `/simplify` | 最近変更したコードを簡潔化 |
 | `/commit-push-pr` | コミット → プッシュ → PR作成 |
+
+#### 仕様駆動開発（SDD）
+
+| コマンド | 用途 |
+|---------|------|
 | `/kiro:spec-init` | 仕様書初期化 |
 | `/kiro:spec-requirements` | 要件定義 |
 | `/kiro:spec-design` | 技術設計 |
 | `/kiro:spec-tasks` | タスク分解 |
 | `/kiro:validate-impl` | 仕様適合性検証 |
+
+#### ビルド・配信
+
+| コマンド | 用途 |
+|---------|------|
+| `/dev` | Expo 開発サーバー起動 |
+| `/build-dev` | Development Build 作成（実機テスト用） |
+| `/build-preview` | Preview Build 作成（内部配信用 APK） |
+| `/build-prod` | Production Build 作成（ストア提出用 AAB） |
+| `/prebuild` | Expo prebuild（ネイティブプロジェクト再生成） |
+| `/submit-testflight` | TestFlight にビルド提出 |
+| `/submit-playstore` | Play Store にビルド提出 |
+
+### スキル一覧
+
+| スキル | 用途 |
+|--------|------|
+| `store-screenshots` | ストア用スクリーンショット自動生成 |
+| `video-debug` | 動画録画によるデバッグ・ドキュメンテーション |
+| `maestro-e2e` | Maestro E2E テスト |
+| `quality-check` | 品質検証（tsc, lint, test） |
+| `expo-deployment` | EAS Build & Store 提出 |
+| `upgrading-expo` | Expo SDK アップグレード |
 
 ---
 
@@ -357,6 +388,46 @@ npm test -- --passWithNoTests  # テスト全パス
 - **Android優先**: デバッグ容易なためAndroidで先に実装・検証
 - **iOS後続**: Android検証後に実装
 - `Platform.OS` 分岐は最小限に
+
+---
+
+## ⚠️ ビルドポリシー（重要）
+
+### ローカルビルドのみ使用
+
+**EAS Cloud Build は使用しない。すべてローカルビルドで行う。**
+
+| ビルド方法 | 使用 | 備考 |
+|-----------|------|------|
+| ローカル (gradlew/xcodebuild) | ✅ 使用 | CI/CDでも使用 |
+| EAS Cloud Build | ❌ 禁止 | 使用しない |
+
+### iOS ビルド時の注意（Family Controls）
+
+iOSビルドでは**必ず**`ENABLE_FAMILY_CONTROLS=true`を設定すること。
+これがないとScreen Time Extensions（DeviceActivityMonitor, ShieldConfig, ShieldAction）が生成されない。
+
+```bash
+# ✅ 正しい
+ENABLE_FAMILY_CONTROLS=true npx expo prebuild --platform ios --clean
+
+# ❌ 間違い（Extensions が含まれない）
+npx expo prebuild --platform ios --clean
+```
+
+### CI設定
+
+`.github/workflows/maestro-e2e.yml` では自動的に`ENABLE_FAMILY_CONTROLS=true`が設定される。
+
+### Screen Time Extensions 構成
+
+| Extension | 用途 |
+|-----------|------|
+| ScreenTimeMonitor | DeviceActivityMonitor - 使用状況監視 |
+| ScreenTimeShieldConfig | ShieldConfiguration - Shield UI設定 |
+| ScreenTimeShieldAction | ShieldAction - Shieldボタン操作ハンドラ |
+
+生成場所: `ios/ScreenTimeExtensions/`
 
 ## 主要な依存関係
 

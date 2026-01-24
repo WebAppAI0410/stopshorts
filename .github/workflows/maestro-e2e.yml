@@ -162,8 +162,8 @@ jobs:
       - name: Install CocoaPods
         run: gem install cocoapods
 
-      - name: Generate native project
-        run: npx expo prebuild --platform ios --clean
+      - name: Generate native project with Family Controls
+        run: ENABLE_FAMILY_CONTROLS=true npx expo prebuild --platform ios --clean
 
       - name: Install pods
         run: cd ios && pod install
