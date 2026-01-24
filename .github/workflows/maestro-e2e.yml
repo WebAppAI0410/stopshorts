@@ -126,7 +126,7 @@ jobs:
             # Wait for app to be ready
             sleep 10
             # Run health check flow first to verify infrastructure
-            $HOME/.maestro/bin/maestro test .maestro/flows/health-check.yaml --env=DEMO_MODE=true --env=TEST_USER_NAME=TestUser
+            $HOME/.maestro/bin/maestro test .maestro/flows/health-check.yaml --env=APP_ID=com.stopshorts.app --env=DEMO_MODE=true --env=TEST_USER_NAME=TestUser
 
       - name: Upload test artifacts
         if: always()
@@ -211,7 +211,7 @@ jobs:
           MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
         run: |
           # Run health check flow first to verify infrastructure
-          $HOME/.maestro/bin/maestro test .maestro/flows/health-check.yaml --env=DEMO_MODE=true --env=TEST_USER_NAME=TestUser
+          $HOME/.maestro/bin/maestro test .maestro/flows/health-check.yaml --env=APP_ID=com.nverse.stopshorts --env=DEMO_MODE=true --env=TEST_USER_NAME=TestUser
 
       - name: Upload test artifacts
         if: always()
