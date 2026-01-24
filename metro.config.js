@@ -1,6 +1,5 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const { withStorybook } = require('@storybook/react-native/metro/withStorybook');
-const { withNativeWind } = require('nativewind/metro');
 
 const config = getDefaultConfig(__dirname);
 
@@ -9,11 +8,9 @@ const storybookConfig = withStorybook(config, {
   configPath: './.rnstorybook',
 });
 
-const finalConfig = withNativeWind(storybookConfig, { input: './global.css' });
-
-finalConfig.resolver = {
-  ...finalConfig.resolver,
+storybookConfig.resolver = {
+  ...storybookConfig.resolver,
   unstable_enablePackageExports: true,
 };
 
-module.exports = finalConfig;
+module.exports = storybookConfig;
