@@ -207,6 +207,8 @@ jobs:
         run: xcrun simctl install "$SIMULATOR_UDID" app.app
 
       - name: Run Maestro E2E tests
+        env:
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
         run: |
           # Run health check flow first to verify infrastructure
           $HOME/.maestro/bin/maestro test .maestro/flows/health-check.yaml --env=DEMO_MODE=true --env=TEST_USER_NAME=TestUser
