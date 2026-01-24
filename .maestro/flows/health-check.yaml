@@ -3,8 +3,9 @@
 
 appId: com.stopshorts.app
 ---
-- launchApp:
-    clearState: true
+# Note: clearState: true causes issues on iOS simulator in CI
+# The app state will be fresh after install anyway
+- launchApp
 
 # Wait for app to fully load
 - waitForAnimationToEnd:
