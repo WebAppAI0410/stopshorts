@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAppStore } from '../../stores/useAppStore';
 import { useStatisticsStore } from '../../stores/useStatisticsStore';
-import { getSelectedPackages } from '../../native/ScreenTimeModule';
+import { getSelectedPackages } from '../../native/ScreenTimeModule.utils';
 
 interface ProgressCardProps {
   onPress?: () => void;

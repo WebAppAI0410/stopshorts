@@ -17,15 +17,33 @@ import { useStatisticsStore } from '../stores/useStatisticsStore';
 import type { TargetAppId } from '../types';
 import type { EmitterSubscription } from 'react-native';
 
-// Map TargetAppId to Android package names
-const TARGET_APP_PACKAGES: Record<TargetAppId, string[]> = {
-  tiktok: TARGET_APPS.android.tiktok,
-  youtubeShorts: TARGET_APPS.android.youtube,
-  instagramReels: TARGET_APPS.android.instagram,
-  twitter: ['com.twitter.android', 'com.twitter.android.lite'],
-  facebookReels: ['com.facebook.katana', 'com.facebook.lite'],
-  snapchat: ['com.snapchat.android'],
-};
+/**
+ * Get TARGET_APP_PACKAGES lazily to avoid circular dependency issues
+ * at module initialization time
+ */
+function getTargetAppPackages(): Record<TargetAppId, string[]> {
+  // Check if TARGET_APPS is available (may be undefined during early initialization)
+  if (!TARGET_APPS || !TARGET_APPS.android) {
+    // Fallback values if TARGET_APPS is not yet loaded
+    return {
+      tiktok: ['com.zhiliaoapp.musically', 'com.ss.android.ugc.trill'],
+      youtubeShorts: ['com.google.android.youtube'],
+      instagramReels: ['com.instagram.android'],
+      twitter: ['com.twitter.android', 'com.twitter.android.lite'],
+      facebookReels: ['com.facebook.katana', 'com.facebook.lite'],
+      snapchat: ['com.snapchat.android'],
+    };
+  }
+
+  return {
+    tiktok: TARGET_APPS.android.tiktok,
+    youtubeShorts: TARGET_APPS.android.youtube,
+    instagramReels: TARGET_APPS.android.instagram,
+    twitter: ['com.twitter.android', 'com.twitter.android.lite'],
+    facebookReels: ['com.facebook.katana', 'com.facebook.lite'],
+    snapchat: ['com.snapchat.android'],
+  };
+}
 
 /**
  * Get all package names for selected apps
@@ -35,10 +53,11 @@ function getPackageNamesForSelectedApps(
   customAppPackages: string[]
 ): string[] {
   const packages: string[] = [];
+  const targetAppPackages = getTargetAppPackages();
 
   // Add predefined app packages
   for (const appId of selectedApps) {
-    const appPackages = TARGET_APP_PACKAGES[appId];
+    const appPackages = targetAppPackages[appId];
     if (appPackages) {
       packages.push(...appPackages);
     }
@@ -81,33 +100,33 @@ export function useMonitoringService() {
     try {
       // Check permissions first
       const permissionStatus = await screenTimeService.getPermissionStatus();
-      console.log('[MonitoringService] Permission status:', permissionStatus);
+      if (__DEV__) console.log('[MonitoringService] Permission status:', permissionStatus);
 
       // Only usageStats is required - overlay is optional for deep-link intervention
       if (!permissionStatus.usageStats) {
-        console.log('[MonitoringService] Missing usageStats permission - not starting');
+        if (__DEV__) console.log('[MonitoringService] Missing usageStats permission - not starting');
         return;
       }
 
       if (!permissionStatus.overlay) {
-        console.log('[MonitoringService] Overlay permission missing - will use deep-link only');
+        if (__DEV__) console.log('[MonitoringService] Overlay permission missing - will use deep-link only');
       }
 
       const packages = getPackageNamesForSelectedApps(selectedApps, customAppPackages);
-      console.log('[MonitoringService] Selected apps:', selectedApps);
-      console.log('[MonitoringService] Custom app packages:', customAppPackages);
+      if (__DEV__) console.log('[MonitoringService] Selected apps:', selectedApps);
+      if (__DEV__) console.log('[MonitoringService] Custom app packages:', customAppPackages);
 
       if (packages.length === 0) {
-        console.log('[MonitoringService] No apps selected - not starting');
+        if (__DEV__) console.log('[MonitoringService] No apps selected - not starting');
         return;
       }
 
-      console.log('[MonitoringService] Starting with packages:', packages);
+      if (__DEV__) console.log('[MonitoringService] Starting with packages:', packages);
       const success = await screenTimeService.startMonitoring(packages);
 
       if (success) {
         isMonitoringRef.current = true;
-        console.log('[MonitoringService] Started successfully');
+        if (__DEV__) console.log('[MonitoringService] Started successfully');
       } else {
         console.error('[MonitoringService] Failed to start');
       }
@@ -125,7 +144,7 @@ export function useMonitoringService() {
     try {
       await screenTimeService.stopMonitoring();
       isMonitoringRef.current = false;
-      console.log('[MonitoringService] Stopped');
+      if (__DEV__) console.log('[MonitoringService] Stopped');
     } catch (error) {
       console.error('[MonitoringService] Error stopping:', error);
     }
@@ -142,12 +161,12 @@ export function useMonitoringService() {
       const packages = getPackageNamesForSelectedApps(selectedApps, customAppPackages);
 
       if (packages.length === 0) {
-        console.log('[MonitoringService] No apps selected - stopping');
+        if (__DEV__) console.log('[MonitoringService] No apps selected - stopping');
         await stopMonitoring();
         return;
       }
 
-      console.log('[MonitoringService] Updating target apps:', packages);
+      if (__DEV__) console.log('[MonitoringService] Updating target apps:', packages);
       await screenTimeService.updateTargetApps(packages);
     } catch (error) {
       console.error('[MonitoringService] Error updating target apps:', error);
@@ -227,7 +246,7 @@ export function useMonitoringService() {
           interventionSettings.delayMinutes
         );
         lastSyncedSettingsRef.current = settingsKey;
-        console.log('[MonitoringService] Synced intervention settings:', interventionSettings);
+        if (__DEV__) console.log('[MonitoringService] Synced intervention settings:', interventionSettings);
       } catch (error) {
         console.error('[MonitoringService] Failed to sync intervention settings:', error);
       }
@@ -264,7 +283,7 @@ export function useMonitoringService() {
 
         // Add new listener
         interventionListenerRef.current = addInterventionListener((event) => {
-          console.log('[MonitoringService] Intervention event received:', event);
+          if (__DEV__) console.log('[MonitoringService] Intervention event received:', event);
 
           // Validate event structure before using
           if (event && typeof event.proceeded === 'boolean') {
@@ -283,7 +302,7 @@ export function useMonitoringService() {
           }
         });
 
-        console.log('[MonitoringService] Intervention listener set up');
+        if (__DEV__) console.log('[MonitoringService] Intervention listener set up');
       } catch (error) {
         console.warn('[MonitoringService] Failed to set up intervention listener:', error);
       }
